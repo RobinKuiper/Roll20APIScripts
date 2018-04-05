@@ -4,8 +4,9 @@
 * Discord: Atheos#1014
 * Roll20: https://app.roll20.net/users/1226016/robin-k
 
-[StatusInfo](#StatusInfo)
-[BeyondImporter](#BeyondImporter)
+[StatusInfo](#statusinfo)
+
+[BeyondImporter](#beyondimporter)
 
 ### StatusInfo
 
