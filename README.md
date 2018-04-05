@@ -4,13 +4,15 @@
 * Discord: Atheos#1014
 * Roll20: https://app.roll20.net/users/1226016/robin-k
 
-**Table of Content**
+---
+
+**Table of Contents**
 * [StatusInfo](#statusinfo)
 * [BeyondImporter](#beyondimporter)
 
 ---
 
-### StatusInfo
+## StatusInfo
 
 StatusInfo works nicely together with [Tokenmod](https://app.roll20.net/forum/post/4225825/script-update-tokenmod-an-interface-to-adjusting-properties-of-a-token-from-a-macro-or-the-chat-area/?pageforid=4225825#post-4225825).
 It shows condition descriptions whenever a statusmarker is set or when the command `!condition` is used, eg: `!condition prone`.
@@ -42,7 +44,7 @@ I run this with the following Tokenmod macro:
 
 ---
 
-### BeyondImporter
+## BeyondImporter
 
 Beyond Importer let's you import a character sheet from DNDBeyond into Roll20 **5eOGL Character Sheet**.
 
