@@ -100,11 +100,15 @@
         let conditionName = args[0];
 
         if(command === 'condition'){
-            let condition;
-            if(condition = getConditionByName(conditionName)){
-                sendConditionToChat(condition);
+            if(conditionName){
+                let condition;
+                if(condition = getConditionByName(conditionName)){
+                    sendConditionToChat(condition);
+                }else{
+                    sendChat('Error', whisper + 'Condition ' + conditionName + ' does not exist.');
+                }
             }else{
-                sendChat('Error', whisper + 'Condition ' + conditionName + ' does not exist.');
+                sendChat('', '<div style="'+style+'">Type `!condition` with the condition name behind it, eg: `!condition prone`</div>')
             }
         }
     });
@@ -129,10 +133,12 @@
             var statusmarkers = obj.get('statusmarkers').split(",");
 
             statusmarkers.forEach(function(marker){
-                if(!prevstatusmarkers.includes(marker)){
-                    let condition;
-                    if(condition = getConditionByMarker(marker)){
-                        sendConditionToChat(condition);
+                if(marker !== ""){
+                    if(!prevstatusmarkers.includes(marker)){
+                        let condition;
+                        if(condition = getConditionByMarker(marker)){
+                            sendConditionToChat(condition);
+                        }
                     }
                 }
             });
