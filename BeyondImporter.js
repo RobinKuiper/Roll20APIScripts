@@ -265,6 +265,19 @@
                 createRepeatingTrait(object, t);
             }
 
+            // Feats
+            for(var i = 0; i < character.features.feats.length; i++){
+                let feat = character.features.feats[i]
+                let t = {
+                    name: feat.definition.name,
+                    description: feat.definition.description,
+                    source: 'Feat',
+                    source_type: feat.definition.name
+                }
+
+                createRepeatingTrait(object, t);
+            }
+
             let contacts = '';
             contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
             contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
