@@ -70,7 +70,7 @@
                         for(var j = 0; j < item.definition.properties.length; j++){
                             properties += item.definition.properties[j].name + ', ';
 
-                            if(item.definition.properties[j].name === 'Finesse'){ finesse = true }
+                            //if(item.definition.properties[j].name === 'Finesse'){ finesse = true }
                         }
                         attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
                         attributes["repeating_inventory_"+row+"_hasattack"] = '0';
@@ -81,12 +81,12 @@
                             name: item.definition.name,
                             range: item.definition.range + '/' + item.definition.longRange,
                             attack: {
-                                attribute: (finesse && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : 'strength'
+                                attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
                             },
                             damage: {
                                 diceString: item.definition.damage.diceString,
                                 type: item.definition.damageType,
-                                attribute: (finesse && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : 'strength'
+                                attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
                             },
                             description: item.definition.description
                         }
