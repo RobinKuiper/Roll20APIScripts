@@ -1,5 +1,9 @@
 # Roll20 API Scripts
 
+Skype: RobinKuiper.eu
+Discord: Atheos#1014
+Roll20: https://app.roll20.net/users/1226016/robin-k
+
 ### StatusInfo
 
 StatusInfo works nicely together with [Tokenmod](https://app.roll20.net/forum/post/4225825/script-update-tokenmod-an-interface-to-adjusting-properties-of-a-token-from-a-macro-or-the-chat-area/?pageforid=4225825#post-4225825).
