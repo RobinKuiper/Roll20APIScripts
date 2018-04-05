@@ -1,4 +1,7 @@
 (function() {
+    const OVERWRITE = true; // True to overwrite characters with the same name
+    const DEBUG = true;
+
     const _ABILITY = {
         'STR': 'strength',
         'DEX': 'dexterity',
@@ -10,20 +13,19 @@
 
     on('ready',()=>{ 
         log('DNDBeyond Importer Ready!');
-        //sendChat('', 'DNDBeyond Importer Ready!');
+        if(DEBUG){ sendChat('', 'DNDBeyond Importer Ready!'); }
     });
 
     on('chat:message', function(msg) {
         if (msg.type != 'api') return;
 
         var command = msg.content.split(' ', 1).shift().substring(1);
-        const overwrite = false; // True to overwrite characters with the same name
 
         if (command == 'beyond') {
             var json = msg.content.substring(7);
             var character = JSON.parse(json).character;
 
-            if(overwrite){
+            if(OVERWRITE){
                 var objects = findObjs({                                                          
                     _type: "character",
                     name: character.name                      
@@ -56,7 +58,7 @@
                     attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
                     attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
                     attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
-                    attributes["repeating_inventory_"+row+"_itemweight"] = item.definition.weight / item.quantity;
+                    attributes["repeating_inventory_"+row+"_itemweight"] = item.definition.weight / item.definition.bundleSize;
                     attributes["repeating_inventory_"+row+"_itemcontent"] = item.definition.description;
                     let _itemmodifiers = 'Item Type: ' + item.definition.type;
                     if(item.definition.hasOwnProperty('armorClass')){
