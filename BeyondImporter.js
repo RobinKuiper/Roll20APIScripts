@@ -1,6 +1,6 @@
 (function() {
-    const OVERWRITE = true; // True to overwrite characters with the same name
-    const DEBUG = true;
+    const OVERWRITE = false; // True to overwrite characters with the same name
+    const DEBUG = false;
 
     const _ABILITY = {
         'STR': 'strength',
