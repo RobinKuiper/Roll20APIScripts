@@ -133,12 +133,10 @@
             var statusmarkers = obj.get('statusmarkers').split(",");
 
             statusmarkers.forEach(function(marker){
-                if(marker !== ""){
-                    if(!prevstatusmarkers.includes(marker)){
-                        let condition;
-                        if(condition = getConditionByMarker(marker)){
-                            sendConditionToChat(condition);
-                        }
+                if(marker !== "" && !prevstatusmarkers.includes(marker)){
+                    let condition;
+                    if(condition = getConditionByMarker(marker)){
+                        sendConditionToChat(condition);
                     }
                 }
             });
