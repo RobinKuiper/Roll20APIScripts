@@ -279,10 +279,19 @@
 
             // Race Features
             for(var i = 0; i < character.features.racialTraits.length; i++){
+                let trait  = character.features.racialTraits[i];
+
+                let description = '';
+                trait.options.forEach((option) => {
+                    description += option.name + '\n';
+                    description += (option.description !== '') ? option.description + '\n\n' : '\n';
+                });
+
+                description += trait.definition.description;
 
                 let t = {
-                    name: character.features.racialTraits[i].definition.name,
-                    description: replaceChars(character.features.racialTraits[i].definition.description),
+                    name: trait.definition.name,
+                    description: replaceChars(description),
                     source: 'Race',
                     source_type: character.race
                 }
