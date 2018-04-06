@@ -316,6 +316,7 @@
                 'eyes': character.eyes,
                 'hair': character.hair,
                 'skin': character.skin,
+                'character_appearance': character.traits.appearance,
 
                 // Ability Scores
                 'strength_base': getTotalAbilityScore(character, 'strength', 'str'),
