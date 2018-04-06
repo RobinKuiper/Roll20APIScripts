@@ -21,6 +21,27 @@
         'CHA': 'charisma'
     }
 
+    const skills = [
+        'acrobatics',
+        'animal_handling',
+        'arcana',
+        'athletics',
+        'deception',
+        'history',
+        'insight',
+        'intimidation',
+        'investigation',
+        'medicine',
+        'nature',
+        'perception',
+        'performance',
+        'persuasion',
+        'religion',
+        'sleight_of_hand',
+        'stealth',
+        'survival'
+    ]
+
     on('ready',()=>{ 
         log('DNDBeyond Importer Ready!');
         if(DEBUG){ sendChat('', 'DNDBeyond Importer Ready!'); }
@@ -123,26 +144,6 @@
             }
 
             // Import Proficiencies
-            const skills = [
-                'acrobatics',
-                'animal_handling',
-                'arcana',
-                'athletics',
-                'deception',
-                'history',
-                'insight',
-                'intimidation',
-                'investigation',
-                'medicine',
-                'nature',
-                'perception',
-                'performance',
-                'persuasion',
-                'religion',
-                'sleight_of_hand',
-                'stealth',
-                'survival'
-            ]
             const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
             let proficiencies = getObjects(character, 'type', 'proficiency');
             for(var i = 0; i < proficiencies.length; i++){
@@ -298,6 +299,27 @@
 
             createRepeatingTrait(object, btrait);
 
+            let bonusses = getObjects(character, 'type', 'bonus');
+            let bonus_attributes = {}
+            bonusses.forEach(function(bonus){
+                switch(bonus.subType){
+                    case 'saving-throws':
+                        bonus_attributes['strength_save_mod'] = bonus.value;
+                        bonus_attributes['dexterity_save_mod'] = bonus.value;
+                        bonus_attributes['constitution_save_mod'] = bonus.value;
+                        bonus_attributes['intelligence_save_mod'] = bonus.value;
+                        bonus_attributes['wisdom_save_mod'] = bonus.value;
+                        bonus_attributes['charisma_save_mod'] = bonus.value;
+                    break;
+
+                    default:
+                        if(skills.includes(bonus.subType)){
+                            bonus_attributes[bonus.subType + '_flat'] = bonus.value;
+                        }
+                    break;
+                }
+            })
+
             let contacts = '';
             contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
             contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
@@ -367,8 +389,8 @@
                 'additional_feature_and_traits': otherNotes,
                 'treasure': treasure,
             }
-            
-            setAttrs(object.id, other_attributes); 
+
+            setAttrs(object.id, Object.assign(other_attributes, bonus_attributes)); 
 
             let hp = Math.floor(character.hitPoints.max + (character.level * ((other_attributes.constitution_base-10)/2)));
 
