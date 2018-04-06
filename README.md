@@ -3,6 +3,7 @@
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1014
 * Roll20: https://app.roll20.net/users/1226016/robin-k
+* Reddit: https://www.reddit.com/user/robinkuiper/
 
 ---
 
@@ -33,6 +34,8 @@ In the Roll20 chat type the command !beyond and paste the copied contents after 
 ```
 
 Your character will be imported now!
+
+Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
 
 ---
 
@@ -65,3 +68,5 @@ I run this with the following Tokenmod macro:
 ```
 !token-mod ?{Status|Blinded, --set statusmarkers#!bleeding-eye --flip light_hassight|Charmed, --set statusmarkers#!broken-heart|Concentrating, --set statusmarkers#!blue|Deafened, --set statusmarkers#!edge-crack|Frightened, --set statusmarkers#!screaming|Grappled, --set statusmarkers#!grab|Invisibility, --set statusmarkers#!ninja-mask|Incapacitated, --set statusmarkers#!interdiction|Paralyzed, --set statusmarkers#!pummeled|Petrified, --set statusmarkers#!frozen-orb|Poisoned, --set statusmarkers#!chemical-bolt|Prone, --set statusmarkers#!back-pain|Restrained, --set statusmarkers#!fishing-net|Stunned, --set statusmarkers#!fist|Unconscious, --set statusmarkers#!sleepy|Dead, --set statusmarkers#!dead|Clear, --set statusmarkers#-bleeding-eye#-broken-heart#-edge-crack#-screaming#-grab#-pummeled#-aura#-chemical-bolt#-back-pain#-fishing-net#-fist#-frozen-orb#-interdiction#-sleepy#-ninja-mask}
 ```
+
+Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
