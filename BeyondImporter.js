@@ -288,6 +288,16 @@
                 createRepeatingTrait(object, t);
             }
 
+            // Background Feature
+            let btrait = {
+                name: character.features.background.definition.featureName,
+                description: character.features.background.definition.featureDescription,
+                source: 'Background',
+                source_type: character.features.background.definition.name
+            }
+
+            createRepeatingTrait(object, btrait);
+
             let contacts = '';
             contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
             contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
