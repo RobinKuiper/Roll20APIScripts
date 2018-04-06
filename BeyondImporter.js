@@ -304,8 +304,13 @@
             contacts += (character.notes.enemies) ? 'ENEMIES:\n' + character.notes.enemies : '';
 
             let treasure = '';
-            treasure = (character.notes.personalPossessions) ? 'PERSONAL POSSESSIONS:\n' + character.notes.personalPossessions + '\n\n' : '';
-            treasure = (character.notes.otherHoldings) ? 'OTHER HOLDINGS:\n' + character.notes.otherHoldings : '';
+            treasure += (character.notes.personalPossessions) ? 'PERSONAL POSSESSIONS:\n' + character.notes.personalPossessions + '\n\n' : '';
+            treasure += (character.notes.otherHoldings) ? 'OTHER HOLDINGS:\n' + character.notes.otherHoldings : '';
+
+            let otherNotes = '';
+            otherNotes += (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes + '\n\n' : '';
+            otherNotes += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
+            otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle : '';
 
             let other_attributes = { 
                 // Base Info
@@ -359,7 +364,7 @@
 
                 'character_backstory': character.notes.backstory,
                 'allies_and_organizations': contacts,
-                'additional_feature_and_traits': (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes : '',
+                'additional_feature_and_traits': otherNotes,
                 'treasure': treasure,
             }
             
