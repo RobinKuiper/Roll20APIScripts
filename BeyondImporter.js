@@ -296,7 +296,7 @@
             }
 
             // Background Feature
-            if(character.features.background.definition.featureName){
+            if(character.features.background.definition && character.features.background.definition.featureName){
                 let btrait = {
                     name: character.features.background.definition.featureName,
                     description: character.features.background.definition.featureDescription,
