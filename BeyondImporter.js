@@ -310,7 +310,7 @@
             let otherNotes = '';
             otherNotes += (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes + '\n\n' : '';
             otherNotes += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
-            otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle : '';
+            otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.' : '';
 
             let other_attributes = { 
                 // Base Info
