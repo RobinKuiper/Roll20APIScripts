@@ -44,6 +44,15 @@
 
     let jack = '0';
 
+    // I use this mainly for debugging.
+    const import_inventory = true;
+    const import_proficiencies = true;
+    const import_traits = true;
+    const import_classes = true;
+    const import_notes = true;
+    const import_languages = true;
+    const import_bonusses = true;
+
     on('ready',()=>{ 
         log('DNDBeyond Importer Ready!');
         if(DEBUG){ sendChat('', 'DNDBeyond Importer Ready!'); }
@@ -82,107 +91,209 @@
             }
 
             // Import Character Inventory
-            const inventory = character.inventory;
-            for(var key in inventory){
-                inventory[key].forEach((item) => {
-                    var row = getOrMakeRowID(object,"repeating_inventory_",item.definition.name);
+            if(import_inventory){
+                const inventory = character.inventory;
+                for(var key in inventory){
+                    inventory[key].forEach((item) => {
+                        var row = getOrMakeRowID(object,"repeating_inventory_",item.definition.name);
+
+                        let attributes = {}
+                        attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
+                        attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
+                        attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
+                        attributes["repeating_inventory_"+row+"_itemweight"] = item.definition.weight / item.definition.bundleSize;
+                        attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
+                        let _itemmodifiers = 'Item Type: ' + item.definition.type;
+                        if(item.definition.hasOwnProperty('armorClass')){
+                            _itemmodifiers += ', AC: ' + item.definition.armorClass;
+                        }
+                        if(item.definition.hasOwnProperty('damage')){
+                            let properties = '';
+                            let finesse = false;
+                            for(var j = 0; j < item.definition.properties.length; j++){
+                                properties += item.definition.properties[j].name + ', ';
+
+                                //if(item.definition.properties[j].name === 'Finesse'){ finesse = true }
+                            }
+                            attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
+                            attributes["repeating_inventory_"+row+"_hasattack"] = '0';
+                            _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + ', Damage: ' + item.definition.damage.diceString + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
+
+                            // CREATE ATTACK
+                            let attack = {
+                                name: item.definition.name,
+                                range: item.definition.range + '/' + item.definition.longRange,
+                                attack: {
+                                    attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
+                                },
+                                damage: {
+                                    diceString: item.definition.damage.diceString,
+                                    type: item.definition.damageType,
+                                    attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
+                                },
+                                description: replaceChars(item.definition.description)
+                            }
+
+                            let attackid = createRepeatingAttack(object, attack);
+                            // /CREATE ATTACK
+                        }
+                        attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
+                        setAttrs(object.id, attributes);
+                    });
+                }
+            }
+
+            // Languages
+            if(import_languages){
+                let languages = getObjects(character, 'type', 'language');
+                languages.forEach((language) => {
+                    var row = getOrMakeRowID(object,"repeating_proficiencies_",language.friendlySubtypeName);
 
                     let attributes = {}
-                    attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
-                    attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
-                    attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
-                    attributes["repeating_inventory_"+row+"_itemweight"] = item.definition.weight / item.definition.bundleSize;
-                    attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
-                    let _itemmodifiers = 'Item Type: ' + item.definition.type;
-                    if(item.definition.hasOwnProperty('armorClass')){
-                        _itemmodifiers += ', AC: ' + item.definition.armorClass;
-                    }
-                    if(item.definition.hasOwnProperty('damage')){
-                        let properties = '';
-                        let finesse = false;
-                        for(var j = 0; j < item.definition.properties.length; j++){
-                            properties += item.definition.properties[j].name + ', ';
+                    attributes["repeating_proficiencies_"+row+"_name"] = language.friendlySubtypeName;
+                    attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
+                    attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
-                            //if(item.definition.properties[j].name === 'Finesse'){ finesse = true }
-                        }
-                        attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
-                        attributes["repeating_inventory_"+row+"_hasattack"] = '0';
-                        _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + ', Damage: ' + item.definition.damage.diceString + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
-
-                        // CREATE ATTACK
-                        let attack = {
-                            name: item.definition.name,
-                            range: item.definition.range + '/' + item.definition.longRange,
-                            attack: {
-                                attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
-                            },
-                            damage: {
-                                diceString: item.definition.damage.diceString,
-                                type: item.definition.damageType,
-                                attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
-                            },
-                            description: replaceChars(item.definition.description)
-                        }
-
-                        let attackid = createRepeatingAttack(object, attack);
-                        // /CREATE ATTACK
-                    }
-                    attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
                     setAttrs(object.id, attributes);
                 });
             }
 
-            // Languages
-            let languages = getObjects(character, 'type', 'language');
-            languages.forEach((language) => {
-                var row = getOrMakeRowID(object,"repeating_proficiencies_",language.friendlySubtypeName);
-
-                let attributes = {}
-                attributes["repeating_proficiencies_"+row+"_name"] = language.friendlySubtypeName;
-                attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
-                attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
-
-                setAttrs(object.id, attributes);
-            });
-
             // Import Proficiencies
-            const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
-            let proficiencies = getObjects(character, 'type', 'proficiency');
-            proficiencies.forEach((prof) => {
-                var row = getOrMakeRowID(object,"repeating_proficiencies_",prof.friendlySubtypeName);
+            if(import_proficiencies){
+                const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
+                let proficiencies = getObjects(character, 'type', 'proficiency');
+                proficiencies.forEach((prof) => {
+                    var row = getOrMakeRowID(object,"repeating_proficiencies_",prof.friendlySubtypeName);
 
-                let attributes = {}
-                attributes["repeating_proficiencies_"+row+"_name"] = prof.friendlySubtypeName;
-                attributes["repeating_proficiencies_"+row+"_prof_type"] = (prof.subType.includes('weapon') || weapons.includes(prof.friendlySubtypeName)) ? 'WEAPON' : (prof.subType.includes('armor') || prof.subType.includes('shield')) ? 'ARMOR' : 'OTHER';
+                    let attributes = {}
+                    attributes["repeating_proficiencies_"+row+"_name"] = prof.friendlySubtypeName;
+                    attributes["repeating_proficiencies_"+row+"_prof_type"] = (prof.subType.includes('weapon') || weapons.includes(prof.friendlySubtypeName)) ? 'WEAPON' : (prof.subType.includes('armor') || prof.subType.includes('shield')) ? 'ARMOR' : 'OTHER';
 
-                let skill = prof.subType.replace('-', '_');
-                if(skills.includes(skill)){
-                    attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
-                }
+                    let skill = prof.subType.replace('-', '_');
+                    if(skills.includes(skill)){
+                        attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
+                    }
 
-                attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
+                    attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
-                setAttrs(object.id, attributes);
-            });
+                    setAttrs(object.id, attributes);
+                });
+            }
 
             // Handle (Multi)Class Features
             let multiclass_level = 0;
-            character.classes.forEach((current_class) => {
-                if(!current_class.isStartingClass){
-                    let multiclasses = {};
-                    multiclasses['multiclass'+i+'_flag'] = '1';
-                    multiclasses['multiclass'+i+'_lvl'] = current_class.level;
-                    multiclasses['multiclass'+i] = current_class.class.name.toLowerCase();
-                    setAttrs(object.id, multiclasses);
+            if(import_classes){
+                character.classes.forEach((current_class) => {
+                    if(!current_class.isStartingClass){
+                        let multiclasses = {};
+                        multiclasses['multiclass'+i+'_flag'] = '1';
+                        multiclasses['multiclass'+i+'_lvl'] = current_class.level;
+                        multiclasses['multiclass'+i] = current_class.class.name.toLowerCase();
+                        setAttrs(object.id, multiclasses);
 
-                    multiclass_level += current_class.level;
-                }
-
-                current_class.features.forEach(function(trait)
-                {
-                    if(trait.definition.name.includes('Jack')){
-                        jack = '@{jack}';
+                        multiclass_level += current_class.level;
                     }
+
+                    current_class.features.forEach(function(trait)
+                    {
+                        if(trait.definition.name.includes('Jack')){
+                            jack = '@{jack}';
+                        }
+
+                        let description = '';
+                        trait.options.forEach((option) => {
+                            description += option.name + '\n';
+                            description += (option.description !== '') ? option.description + '\n\n' : '\n';
+                        });
+
+                        description += trait.definition.description;
+
+                        let t = {
+                            name: trait.definition.name,
+                            description: replaceChars(description),
+                            source: 'Class',
+                            source_type: current_class.class.name
+                        }
+
+                        createRepeatingTrait(object, t);
+                    });
+
+                    // Class Spells
+                    if(current_class.hasOwnProperty('spells')){
+                        current_class.spells.forEach((spell) => {
+                            let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
+                            var row = getOrMakeRowID(object,"repeating_spell-"+level+"_",spell.definition.name);
+                            
+                            let attributes = {}
+                            attributes["repeating_spell-"+level+"_"+row+"_spellprepared"] = (spell.prepared || spell.alwaysPrepared) ? '1' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellname"] = spell.definition.name;
+                            attributes["repeating_spell-"+level+"_"+row+"_spellschool"] = spell.definition.school.toLowerCase();
+                            attributes["repeating_spell-"+level+"_"+row+"_spellritual"] = (spell.ritual) ? '{{ritual=1}}' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellcastingtime"] = spell.castingTime.castingTimeInterval + ' ' + spell.castingTime.castingTimeUnit;
+                            attributes["repeating_spell-"+level+"_"+row+"_spellrange"] = (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue + 'ft.' : spell.definition.range.origin;
+                            attributes["repeating_spell-"+level+"_"+row+"_options-flag"] = '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellritual"] = (spell.definition.ritual) ? '1' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellconcentration"] = (spell.definition.concentration) ? '{{concentration=1}}' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellduration"] = (spell.definition.duration.durationUnit !== null) ? spell.definition.duration.durationInterval + ' ' + spell.definition.duration.durationUnit : spell.definition.duration.durationType;
+
+                            let descriptions = spell.definition.description.split('At Higher Levels. ');
+                            attributes["repeating_spell-"+level+"_"+row+"_spelldescription"] = replaceChars(descriptions[0]);
+                            attributes["repeating_spell-"+level+"_"+row+"_spellathigherlevels"] = (descriptions.length > 1) ? replaceChars(descriptions[1]) : '';
+
+                            let components = spell.definition.components.split(', ');
+                            attributes["repeating_spell-"+level+"_"+row+"_spellcomp_v"] = (components.includes('V')) ? '{{v=1}}' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellcomp_s"] = (components.includes('S')) ? '{{s=1}}' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellcomp_m"] = (components.includes('M')) ? '{{m=1}}' : '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellcomp_materials"] = (components.includes('M')) ? replaceChars(spell.definition.componentsDescription) : '';
+
+                            // Damage/Attack
+                            let damage = getObjects(spell, 'type', 'damage');
+                            if(damage.length !== 0){
+                                damage = damage[0];
+
+                                //attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+                                attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.range.origin === 'Ranged') ? 'Ranged' : 'Melee';
+                                attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = (damage.die.fixedValue !== null) ? damage.die.fixedValue : damage.die.diceString;
+                                attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = damage.friendlySubtypeName;
+
+                                // FOR SPELLS WITH MULTIPLE DAMAGE OUTPUTS
+                                //attributes["repeating_spell-"+level+"_"+row+"_spelldamage2"] = damage.die.diceString;
+                                //attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype2"] = damage.friendlySubtypeName;
+
+                                // CREATE ATTACK
+                                let attack = {
+                                    name: spell.definition.name,
+                                    range: (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue + 'ft.' : spell.definition.range.origin,
+                                    attack: {
+                                        attribute: _ABILITY[current_class.class.spellCastingAbility]
+                                    },
+                                    damage: {
+                                        diceString: (damage.die.fixedValue !== null) ? damage.die.fixedValue : damage.die.diceString,
+                                        type: damage.friendlySubtypeName,
+                                        attribute: '0'
+                                    },
+                                    description: replaceChars(spell.definition.description)
+                                }
+
+                                let attackid = createRepeatingAttack(object, attack);
+                                attributes["repeating_spell-"+level+"_"+row+"_rollcontent"] = '%{'+object.id+'|repeating_attack_'+attackid+'_attack}';
+                                // /CREATE ATTACK
+
+                                if(damage.hasOwnProperty('atHigherLevels') && damage.atHigherLevels.scaleType === 'spellscale'){
+                                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
+                                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+damage.die.diceValue;
+                                }
+                            }
+
+                            setAttrs(object.id, attributes);
+                        });
+                    }
+                });
+            }
+
+            if(import_traits){
+                // Race Features
+                character.features.racialTraits.forEach((trait) => {
 
                     let description = '';
                     trait.options.forEach((option) => {
@@ -195,164 +306,78 @@
                     let t = {
                         name: trait.definition.name,
                         description: replaceChars(description),
-                        source: 'Class',
-                        source_type: current_class.class.name
+                        source: 'Race',
+                        source_type: character.race
                     }
 
                     createRepeatingTrait(object, t);
                 });
 
-                // Class Spells
-                if(current_class.hasOwnProperty('spells')){
-                    current_class.spells.forEach((spell) => {
-                        let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
-                        var row = getOrMakeRowID(object,"repeating_spell-"+level+"_",spell.definition.name);
-                        
-                        let attributes = {}
-                        attributes["repeating_spell-"+level+"_"+row+"_spellprepared"] = (spell.prepared || spell.alwaysPrepared) ? '1' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellname"] = spell.definition.name;
-                        attributes["repeating_spell-"+level+"_"+row+"_spellschool"] = spell.definition.school.toLowerCase();
-                        attributes["repeating_spell-"+level+"_"+row+"_spellritual"] = (spell.ritual) ? '{{ritual=1}}' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellcastingtime"] = spell.castingTime.castingTimeInterval + ' ' + spell.castingTime.castingTimeUnit;
-                        attributes["repeating_spell-"+level+"_"+row+"_spellrange"] = (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue + 'ft.' : spell.definition.range.origin;
-                        attributes["repeating_spell-"+level+"_"+row+"_options-flag"] = '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellritual"] = (spell.definition.ritual) ? '1' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellconcentration"] = (spell.definition.concentration) ? '{{concentration=1}}' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellduration"] = (spell.definition.duration.durationUnit !== null) ? spell.definition.duration.durationInterval + ' ' + spell.definition.duration.durationUnit : spell.definition.duration.durationType;
+                // Feats
+                character.features.feats.forEach((feat) => {
+                    let t = {
+                        name: feat.definition.name,
+                        description: replaceChars(feat.definition.description),
+                        source: 'Feat',
+                        source_type: feat.definition.name
+                    }
 
-                        let descriptions = spell.definition.description.split('At Higher Levels. ');
-                        attributes["repeating_spell-"+level+"_"+row+"_spelldescription"] = replaceChars(descriptions[0]);
-                        attributes["repeating_spell-"+level+"_"+row+"_spellathigherlevels"] = (descriptions.length > 1) ? replaceChars(descriptions[1]) : '';
-
-                        let components = spell.definition.components.split(', ');
-                        attributes["repeating_spell-"+level+"_"+row+"_spellcomp_v"] = (components.includes('V')) ? '{{v=1}}' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellcomp_s"] = (components.includes('S')) ? '{{s=1}}' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellcomp_m"] = (components.includes('M')) ? '{{m=1}}' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellcomp_materials"] = (components.includes('M')) ? replaceChars(spell.definition.componentsDescription) : '';
-
-                        // Damage/Attack
-                        let damage = getObjects(spell, 'type', 'damage');
-                        if(damage.length !== 0){
-                            damage = damage[0];
-
-                            //attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
-                            attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.range.origin === 'Ranged') ? 'Ranged' : 'Melee';
-                            attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = (damage.die.fixedValue !== null) ? damage.die.fixedValue : damage.die.diceString;
-                            attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = damage.friendlySubtypeName;
-
-                            // FOR SPELLS WITH MULTIPLE DAMAGE OUTPUTS
-                            //attributes["repeating_spell-"+level+"_"+row+"_spelldamage2"] = damage.die.diceString;
-                            //attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype2"] = damage.friendlySubtypeName;
-
-                            // CREATE ATTACK
-                            let attack = {
-                                name: spell.definition.name,
-                                range: (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue + 'ft.' : spell.definition.range.origin,
-                                attack: {
-                                    attribute: _ABILITY[current_class.class.spellCastingAbility]
-                                },
-                                damage: {
-                                    diceString: (damage.die.fixedValue !== null) ? damage.die.fixedValue : damage.die.diceString,
-                                    type: damage.friendlySubtypeName,
-                                    attribute: '0'
-                                },
-                                description: replaceChars(spell.definition.description)
-                            }
-
-                            let attackid = createRepeatingAttack(object, attack);
-                            attributes["repeating_spell-"+level+"_"+row+"_rollcontent"] = '%{'+object.id+'|repeating_attack_'+attackid+'_attack}';
-                            // /CREATE ATTACK
-
-                            if(damage.hasOwnProperty('atHigherLevels') && damage.atHigherLevels.scaleType === 'spellscale'){
-                                attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
-                                attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+damage.die.diceValue;
-                            }
-                        }
-
-                        setAttrs(object.id, attributes);
-                    });
-                }
-            });
-
-            // Race Features
-            character.features.racialTraits.forEach((trait) => {
-
-                let description = '';
-                trait.options.forEach((option) => {
-                    description += option.name + '\n';
-                    description += (option.description !== '') ? option.description + '\n\n' : '\n';
+                    createRepeatingTrait(object, t);
                 });
 
-                description += trait.definition.description;
+                // Background Feature
+                if(character.features.background.definition && character.features.background.definition.featureName){
+                    let btrait = {
+                        name: character.features.background.definition.featureName,
+                        description: replaceChars(character.features.background.definition.featureDescription),
+                        source: 'Background',
+                        source_type: character.features.background.definition.name
+                    }
 
-                let t = {
-                    name: trait.definition.name,
-                    description: replaceChars(description),
-                    source: 'Race',
-                    source_type: character.race
+                    createRepeatingTrait(object, btrait);
                 }
-
-                createRepeatingTrait(object, t);
-            });
-
-            // Feats
-            character.features.feats.forEach((feat) => {
-                let t = {
-                    name: feat.definition.name,
-                    description: replaceChars(feat.definition.description),
-                    source: 'Feat',
-                    source_type: feat.definition.name
-                }
-
-                createRepeatingTrait(object, t);
-            });
-
-            // Background Feature
-            if(character.features.background.definition && character.features.background.definition.featureName){
-                let btrait = {
-                    name: character.features.background.definition.featureName,
-                    description: replaceChars(character.features.background.definition.featureDescription),
-                    source: 'Background',
-                    source_type: character.features.background.definition.name
-                }
-
-                createRepeatingTrait(object, btrait);
             }
 
             let bonusses = getObjects(character, 'type', 'bonus');
             let bonus_attributes = {}
-            bonusses.forEach(function(bonus){
-                switch(bonus.subType){
-                    case 'saving-throws':
-                        bonus_attributes['strength_save_mod'] = bonus.value;
-                        bonus_attributes['dexterity_save_mod'] = bonus.value;
-                        bonus_attributes['constitution_save_mod'] = bonus.value;
-                        bonus_attributes['intelligence_save_mod'] = bonus.value;
-                        bonus_attributes['wisdom_save_mod'] = bonus.value;
-                        bonus_attributes['charisma_save_mod'] = bonus.value;
-                    break;
+            if(import_bonusses){
+                bonusses.forEach(function(bonus){
+                    if(!bonus.id.includes('spell')){
+                        switch(bonus.subType){
+                            case 'saving-throws':
+                                bonus_attributes['strength_save_mod'] = bonus.value;
+                                bonus_attributes['dexterity_save_mod'] = bonus.value;
+                                bonus_attributes['constitution_save_mod'] = bonus.value;
+                                bonus_attributes['intelligence_save_mod'] = bonus.value;
+                                bonus_attributes['wisdom_save_mod'] = bonus.value;
+                                bonus_attributes['charisma_save_mod'] = bonus.value;
+                            break;
 
-                    default:
-                        if(skills.includes(bonus.subType)){
-                            bonus_attributes[bonus.subType + '_flat'] = bonus.value;
+                            default:
+                                if(skills.includes(bonus.subType)){
+                                    bonus_attributes[bonus.subType + '_flat'] = bonus.value;
+                                }
+                            break;
                         }
-                    break;
-                }
-            })
+                    }
+                })
+            }
 
-            let contacts = '';
-            contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
-            contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
-            contacts += (character.notes.enemies) ? 'ENEMIES:\n' + character.notes.enemies : '';
+            let contacts = '',
+            treasure = '',
+            otherNotes = '';
+            if(import_notes){
+                contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
+                contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
+                contacts += (character.notes.enemies) ? 'ENEMIES:\n' + character.notes.enemies : '';
 
-            let treasure = '';
-            treasure += (character.notes.personalPossessions) ? 'PERSONAL POSSESSIONS:\n' + character.notes.personalPossessions + '\n\n' : '';
-            treasure += (character.notes.otherHoldings) ? 'OTHER HOLDINGS:\n' + character.notes.otherHoldings : '';
+                treasure += (character.notes.personalPossessions) ? 'PERSONAL POSSESSIONS:\n' + character.notes.personalPossessions + '\n\n' : '';
+                treasure += (character.notes.otherHoldings) ? 'OTHER HOLDINGS:\n' + character.notes.otherHoldings : '';
 
-            let otherNotes = '';
-            otherNotes += (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes + '\n\n' : '';
-            otherNotes += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
-            otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.' : '';
+                otherNotes += (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes + '\n\n' : '';
+                otherNotes += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
+                otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.' : '';
+            }
 
             let other_attributes = { 
                 // Base Info
