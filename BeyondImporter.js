@@ -296,14 +296,16 @@
             }
 
             // Background Feature
-            let btrait = {
-                name: character.features.background.definition.featureName,
-                description: character.features.background.definition.featureDescription,
-                source: 'Background',
-                source_type: character.features.background.definition.name
-            }
+            if(character.features.background.definition.featureName){
+                let btrait = {
+                    name: character.features.background.definition.featureName,
+                    description: character.features.background.definition.featureDescription,
+                    source: 'Background',
+                    source_type: character.features.background.definition.name
+                }
 
-            createRepeatingTrait(object, btrait);
+                createRepeatingTrait(object, btrait);
+            }
 
             let bonusses = getObjects(character, 'type', 'bonus');
             let bonus_attributes = {}
