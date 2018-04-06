@@ -58,6 +58,7 @@
             var json = msg.content.substring(7);
             var character = JSON.parse(json).character;
 
+            // Remove characters with the same name if overwrite is enabled.
             if(OVERWRITE){
                 var objects = findObjs({                                                          
                     _type: "character",
@@ -83,8 +84,7 @@
             // Import Character Inventory
             const inventory = character.inventory;
             for(var key in inventory){
-                for(var i = 0; i < inventory[key].length; i++){
-                    let item = inventory[key][i];
+                inventory[key].forEach((item) => {
                     var row = getOrMakeRowID(object,"repeating_inventory_",item.definition.name);
 
                     let attributes = {}
@@ -129,33 +129,33 @@
                     }
                     attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
                     setAttrs(object.id, attributes);
-                }
+                });
             }
 
             // Languages
             let languages = getObjects(character, 'type', 'language');
-            for(var i = 0; i < languages.length; i++){
-                var row = getOrMakeRowID(object,"repeating_proficiencies_",languages[i].friendlySubtypeName);
+            languages.forEach((language) => {
+                var row = getOrMakeRowID(object,"repeating_proficiencies_",language.friendlySubtypeName);
 
                 let attributes = {}
-                attributes["repeating_proficiencies_"+row+"_name"] = languages[i].friendlySubtypeName;
+                attributes["repeating_proficiencies_"+row+"_name"] = language.friendlySubtypeName;
                 attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
                 attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
                 setAttrs(object.id, attributes);
-            }
+            });
 
             // Import Proficiencies
             const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
             let proficiencies = getObjects(character, 'type', 'proficiency');
-            for(var i = 0; i < proficiencies.length; i++){
-                var row = getOrMakeRowID(object,"repeating_proficiencies_",proficiencies[i].friendlySubtypeName);
+            proficiencies.forEach((prof) => {
+                var row = getOrMakeRowID(object,"repeating_proficiencies_",prof.friendlySubtypeName);
 
                 let attributes = {}
-                attributes["repeating_proficiencies_"+row+"_name"] = proficiencies[i].friendlySubtypeName;
-                attributes["repeating_proficiencies_"+row+"_prof_type"] = (proficiencies[i].subType.includes('weapon') || weapons.includes(proficiencies[i].friendlySubtypeName)) ? 'WEAPON' : (proficiencies[i].subType.includes('armor') || proficiencies[i].subType.includes('shield')) ? 'ARMOR' : 'OTHER';
+                attributes["repeating_proficiencies_"+row+"_name"] = prof.friendlySubtypeName;
+                attributes["repeating_proficiencies_"+row+"_prof_type"] = (prof.subType.includes('weapon') || weapons.includes(prof.friendlySubtypeName)) ? 'WEAPON' : (prof.subType.includes('armor') || prof.subType.includes('shield')) ? 'ARMOR' : 'OTHER';
 
-                let skill = proficiencies[i].subType.replace('-', '_');
+                let skill = prof.subType.replace('-', '_');
                 if(skills.includes(skill)){
                     attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
                 }
@@ -163,12 +163,11 @@
                 attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
                 setAttrs(object.id, attributes);
-            }
+            });
 
             // Handle (Multi)Class Features
             let multiclass_level = 0;
-            for(var i = 0; i < character.classes.length; i++){
-                let current_class = character.classes[i];
+            character.classes.forEach((current_class) => {
                 if(!current_class.isStartingClass){
                     let multiclasses = {};
                     multiclasses['multiclass'+i+'_flag'] = '1';
@@ -205,8 +204,7 @@
 
                 // Class Spells
                 if(current_class.hasOwnProperty('spells')){
-                    for(var j = 0; j < current_class.spells.length; j++){
-                        let spell = current_class.spells[j];
+                    current_class.spells.forEach((spell) => {
                         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
                         var row = getOrMakeRowID(object,"repeating_spell-"+level+"_",spell.definition.name);
                         
@@ -219,7 +217,6 @@
                         attributes["repeating_spell-"+level+"_"+row+"_spellrange"] = (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue + 'ft.' : spell.definition.range.origin;
                         attributes["repeating_spell-"+level+"_"+row+"_options-flag"] = '0';
                         attributes["repeating_spell-"+level+"_"+row+"_spellritual"] = (spell.definition.ritual) ? '1' : '0';
-                        //attributes["repeating_spell-"+level+"_"+row+"_spelltarget"] = spell.definition.school.toLowerCase();
                         attributes["repeating_spell-"+level+"_"+row+"_spellconcentration"] = (spell.definition.concentration) ? '{{concentration=1}}' : '0';
                         attributes["repeating_spell-"+level+"_"+row+"_spellduration"] = (spell.definition.duration.durationUnit !== null) ? spell.definition.duration.durationInterval + ' ' + spell.definition.duration.durationUnit : spell.definition.duration.durationType;
 
@@ -273,13 +270,12 @@
                         }
 
                         setAttrs(object.id, attributes);
-                    }
+                    });
                 }
-            }
+            });
 
             // Race Features
-            for(var i = 0; i < character.features.racialTraits.length; i++){
-                let trait  = character.features.racialTraits[i];
+            character.features.racialTraits.forEach((trait) => {
 
                 let description = '';
                 trait.options.forEach((option) => {
@@ -297,11 +293,10 @@
                 }
 
                 createRepeatingTrait(object, t);
-            }
+            });
 
             // Feats
-            for(var i = 0; i < character.features.feats.length; i++){
-                let feat = character.features.feats[i]
+            character.features.feats.forEach((feat) => {
                 let t = {
                     name: feat.definition.name,
                     description: replaceChars(feat.definition.description),
@@ -310,7 +305,7 @@
                 }
 
                 createRepeatingTrait(object, t);
-            }
+            });
 
             // Background Feature
             if(character.features.background.definition && character.features.background.definition.featureName){
