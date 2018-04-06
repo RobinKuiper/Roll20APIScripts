@@ -109,6 +109,19 @@
                 }
             }
 
+            // Languages
+            let languages = getObjects(character, 'type', 'language');
+            for(var i = 0; i < languages.length; i++){
+                var row = getOrMakeRowID(object,"repeating_proficiencies_",languages[i].friendlySubtypeName);
+
+                let attributes = {}
+                attributes["repeating_proficiencies_"+row+"_name"] = languages[i].friendlySubtypeName;
+                attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
+                attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
+
+                setAttrs(object.id, attributes);
+            }
+
             // Import Proficiencies
             const skills = [
                 'acrobatics',
@@ -144,19 +157,6 @@
                     attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
                 }
 
-                attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
-
-                setAttrs(object.id, attributes);
-            }
-
-            // Languages
-            let languages = getObjects(character, 'type', 'language');
-            for(var i = 0; i < languages.length; i++){
-                var row = getOrMakeRowID(object,"repeating_proficiencies_",languages[i].friendlySubtypeName);
-
-                let attributes = {}
-                attributes["repeating_proficiencies_"+row+"_name"] = languages[i].friendlySubtypeName;
-                attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
                 attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
                 setAttrs(object.id, attributes);
