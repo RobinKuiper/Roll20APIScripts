@@ -42,6 +42,8 @@
         'survival'
     ]
 
+    let jack = '0';
+
     on('ready',()=>{ 
         log('DNDBeyond Importer Ready!');
         if(DEBUG){ sendChat('', 'DNDBeyond Importer Ready!'); }
@@ -179,6 +181,10 @@
 
                 current_class.features.forEach(function(trait)
                 {
+                    if(trait.definition.name.includes('Jack')){
+                        jack = '@{jack}';
+                    }
+
                     let t = {
                         name: trait.definition.name,
                         description: trait.definition.description,
@@ -384,10 +390,13 @@
                 'ep': character.currencies.ep,
                 'pp': character.currencies.pp,
 
+                // Notes/Bio
                 'character_backstory': character.notes.backstory,
                 'allies_and_organizations': contacts,
                 'additional_feature_and_traits': otherNotes,
                 'treasure': treasure,
+
+                jack_of_all_trades: jack
             }
 
             setAttrs(object.id, Object.assign(other_attributes, bonus_attributes)); 
