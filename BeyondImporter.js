@@ -92,7 +92,7 @@
                     attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
                     attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
                     attributes["repeating_inventory_"+row+"_itemweight"] = item.definition.weight / item.definition.bundleSize;
-                    attributes["repeating_inventory_"+row+"_itemcontent"] = item.definition.description;
+                    attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
                     let _itemmodifiers = 'Item Type: ' + item.definition.type;
                     if(item.definition.hasOwnProperty('armorClass')){
                         _itemmodifiers += ', AC: ' + item.definition.armorClass;
@@ -121,7 +121,7 @@
                                 type: item.definition.damageType,
                                 attribute: (item.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'dexterity' : (item.definition.statModifier.str) ? 'strength' : 'dexterity'
                             },
-                            description: item.definition.description
+                            description: replaceChars(item.definition.description)
                         }
 
                         let attackid = createRepeatingAttack(object, attack);
@@ -185,9 +185,17 @@
                         jack = '@{jack}';
                     }
 
+                    let description = '';
+                    trait.options.forEach((option) => {
+                        description += option.name + '\n';
+                        description += (option.description !== '') ? option.description + '\n\n' : '\n';
+                    });
+
+                    description += trait.definition.description;
+
                     let t = {
                         name: trait.definition.name,
-                        description: trait.definition.description,
+                        description: replaceChars(description),
                         source: 'Class',
                         source_type: current_class.class.name
                     }
@@ -216,14 +224,14 @@
                         attributes["repeating_spell-"+level+"_"+row+"_spellduration"] = (spell.definition.duration.durationUnit !== null) ? spell.definition.duration.durationInterval + ' ' + spell.definition.duration.durationUnit : spell.definition.duration.durationType;
 
                         let descriptions = spell.definition.description.split('At Higher Levels. ');
-                        attributes["repeating_spell-"+level+"_"+row+"_spelldescription"] = descriptions[0];
-                        attributes["repeating_spell-"+level+"_"+row+"_spellathigherlevels"] = (descriptions.length > 1) ? descriptions[1] : '';
+                        attributes["repeating_spell-"+level+"_"+row+"_spelldescription"] = replaceChars(descriptions[0]);
+                        attributes["repeating_spell-"+level+"_"+row+"_spellathigherlevels"] = (descriptions.length > 1) ? replaceChars(descriptions[1]) : '';
 
                         let components = spell.definition.components.split(', ');
                         attributes["repeating_spell-"+level+"_"+row+"_spellcomp_v"] = (components.includes('V')) ? '{{v=1}}' : '0';
                         attributes["repeating_spell-"+level+"_"+row+"_spellcomp_s"] = (components.includes('S')) ? '{{s=1}}' : '0';
                         attributes["repeating_spell-"+level+"_"+row+"_spellcomp_m"] = (components.includes('M')) ? '{{m=1}}' : '0';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellcomp_materials"] = (components.includes('M')) ? spell.definition.componentsDescription : '';
+                        attributes["repeating_spell-"+level+"_"+row+"_spellcomp_materials"] = (components.includes('M')) ? replaceChars(spell.definition.componentsDescription) : '';
 
                         // Damage/Attack
                         let damage = getObjects(spell, 'type', 'damage');
@@ -251,7 +259,7 @@
                                     type: damage.friendlySubtypeName,
                                     attribute: '0'
                                 },
-                                description: spell.definition.description
+                                description: replaceChars(spell.definition.description)
                             }
 
                             let attackid = createRepeatingAttack(object, attack);
@@ -274,7 +282,7 @@
 
                 let t = {
                     name: character.features.racialTraits[i].definition.name,
-                    description: character.features.racialTraits[i].definition.description,
+                    description: replaceChars(character.features.racialTraits[i].definition.description),
                     source: 'Race',
                     source_type: character.race
                 }
@@ -287,7 +295,7 @@
                 let feat = character.features.feats[i]
                 let t = {
                     name: feat.definition.name,
-                    description: feat.definition.description,
+                    description: replaceChars(feat.definition.description),
                     source: 'Feat',
                     source_type: feat.definition.name
                 }
@@ -299,7 +307,7 @@
             if(character.features.background.definition && character.features.background.definition.featureName){
                 let btrait = {
                     name: character.features.background.definition.featureName,
-                    description: character.features.background.definition.featureDescription,
+                    description: replaceChars(character.features.background.definition.featureDescription),
                     source: 'Background',
                     source_type: character.features.background.definition.name
                 }
@@ -416,6 +424,10 @@
         }
     });
 
+    const replaceChars = (text) => {
+        return text.replace('&rsquo;', '\'').replace('&nbsp;', ' ')
+    }
+
     const createRepeatingTrait = (object, trait) => {
         var row = getOrMakeRowID(object,"repeating_traits_",trait.name);
 
@@ -423,7 +435,7 @@
         attributes["repeating_traits_"+row+"_name"] = trait.name;
         attributes["repeating_traits_"+row+"_source"] = trait.source;
         attributes["repeating_traits_"+row+"_source_type"] = trait.source_type;
-        attributes["repeating_traits_"+row+"_description"] = trait.description;
+        attributes["repeating_traits_"+row+"_description"] = replaceChars(trait.description);
         attributes["repeating_traits_"+row+"_options-flag"] = '0';
         //attributes["repeating_traits_"+row+"_display_flag"] = false;
         setAttrs(object.id, attributes);
@@ -444,7 +456,7 @@
         attackattributes["repeating_attack_"+attackrow+"_dmgattr"] = (attack.damage.attribute === '0') ? '0' : '@{'+attack.damage.attribute+'_mod}';
         attackattributes["repeating_attack_"+attackrow+"_dmgtype"] = attack.damage.type;
         attackattributes["repeating_attack_"+attackrow+"_dmgcustcrit"] = attack.damage.diceString;
-        attackattributes["repeating_attack_"+attackrow+"_atk_desc"] = attack.description;
+        attackattributes["repeating_attack_"+attackrow+"_atk_desc"] = replaceChars(attack.description);
         setAttrs(object.id, attackattributes);
 
         return attackrow;
