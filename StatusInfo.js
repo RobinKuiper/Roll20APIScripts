@@ -1,4 +1,5 @@
 /*
+ * Version: 0.1.3
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -22,72 +23,124 @@
     const conditions = {
         blinded: {
             name: 'Blinded',
-            description: '<p>A blinded creature can’t see and automatically fails any ability check that requires sight.</p><p>Attack rolls against the creature have advantage, and the creature’s Attack rolls have disadvantage.</p>',
+            descriptions: [
+                'A blinded creature can’t see and automatically fails any ability check that requires sight.',
+                'Attack rolls against the creature have advantage, and the creature’s Attack rolls have disadvantage.'
+            ],
             icon: 'bleeding-eye'
         },
         charmed: {
             name: 'Charmed',
-            description: '<p>A charmed creature can’t Attack the charmer or target the charmer with harmful Abilities or magical effects.</p><p>The charmer has advantage on any ability check to interact socially with the creature.</p>',
+            descriptions: [
+                'A charmed creature can’t Attack the charmer or target the charmer with harmful Abilities or magical effects.',
+                'The charmer has advantage on any ability check to interact socially with the creature.'
+            ],
             icon: 'broken-heart'
         },
         deafened: {
             name: 'Deafened',
-            description: '<p>A deafened creature can’t hear and automatically fails any ability check that requires hearing.</p>',
+            descriptions: [
+                'A deafened creature can’t hear and automatically fails any ability check that requires hearing.'
+            ],
             icon: 'edge-crack'
         },
         frightened: {
             name: 'Frightened',
-            description: '<p>A frightened creature has disadvantage on Ability Checks and Attack rolls while the source of its fear is within line of sight.</p><p>The creature can’t willingly move closer to the source of its fear.</p>',
+            descriptions: [
+                'A frightened creature has disadvantage on Ability Checks and Attack rolls while the source of its fear is within line of sight.',
+                'The creature can’t willingly move closer to the source of its fear.'
+            ],
             icon: 'screaming'
         },
         grappled: {
             name: 'Grappled',
-            description: '<p>A grappled creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.</p><p>The condition ends if the Grappler is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>.</p><p>The condition also ends if an effect removes the grappled creature from the reach of the Grappler or Grappling effect, such as when a creature is hurled away by the Thunderwave spell.</p>',
+            descriptions: [
+                'A grappled creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.',
+                'The condition ends if the Grappler is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>.',
+                'The condition also ends if an effect removes the grappled creature from the reach of the Grappler or Grappling effect, such as when a creature is hurled away by the Thunderwave spell.'
+            ],
             icon: 'grab'
         },
         incapacitated: {
             name: 'Incapacitated',
-            description: '<p>An incapacitated creature can’t take actions or reactions.</p>',
+            descriptions: [
+                'An incapacitated creature can’t take actions or reactions.'
+            ],
             icon: 'interdiction'
         },
         invisibility: {
             name: 'Invisibility',
-            description: '<p>An invisible creature is impossible to see without the aid of magic or a Special sense. For the purpose of Hiding, the creature is heavily obscured. The creature’s location can be detected by any noise it makes or any tracks it leaves.</p><p>Attack rolls against the creature have disadvantage, and the creature’s Attack rolls have advantage.</p>',
+            descriptions: [
+                'An invisible creature is impossible to see without the aid of magic or a Special sense. For the purpose of Hiding, the creature is heavily obscured. The creature’s location can be detected by any noise it makes or any tracks it leaves.',
+                'Attack rolls against the creature have disadvantage, and the creature’s Attack rolls have advantage.'
+            ],
             icon: 'ninja-mask'
         },
         paralyzed: {
             name: 'Paralyzed',
-            description: '<p>A paralyzed creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a> and can’t move or speak.</p><p>The creature automatically fails Strength and Dexterity saving throws.</p><p>Attack rolls against the creature have advantage.</p><p>Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.</p>',
+            descriptions: [
+                'A paralyzed creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a> and can’t move or speak.',
+                'The creature automatically fails Strength and Dexterity saving throws.',
+                'Attack rolls against the creature have advantage.',
+                'Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.'
+            ],
             icon: 'pummeled'
         },
         petrified: {
             name: 'Petrified',
-            description: '<p>A petrified creature is transformed, along with any nonmagical object it is wearing or carrying, into a solid inanimate substance (usually stone). Its weight increases by a factor of ten, and it ceases aging.</p><p>The creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.</p><p>Attack rolls against the creature have advantage.</p><p>The creature automatically fails Strength and Dexterity saving throws.</p><p>The creature has Resistance to all damage.</p><p>The creature is immune to poison and disease, although a poison or disease already in its system is suspended, not neutralized.</p>',
+            descriptions: [
+                'A petrified creature is transformed, along with any nonmagical object it is wearing or carrying, into a solid inanimate substance (usually stone). Its weight increases by a factor of ten, and it ceases aging.',
+                'The creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'Attack rolls against the creature have advantage.',
+                'The creature automatically fails Strength and Dexterity saving throws.',
+                'The creature has Resistance to all damage.',
+                'The creature is immune to poison and disease, although a poison or disease already in its system is suspended, not neutralized.'
+            ],
             icon: 'frozen-orb'
         },
         poisoned: {
             name: 'Poisoned',
-            description: '<p>A poisoned creature has disadvantage on Attack rolls and Ability Checks.</p>',
+            descriptions: [
+                'A poisoned creature has disadvantage on Attack rolls and Ability Checks.'
+            ],
             icon: 'chemical-bolt'
         },
         prone: {
             name: 'Prone',
-            description: '<p>A prone creature’s only Movement option is to crawl, unless it stands up and thereby ends the condition.</p><p>The creature has disadvantage on Attack rolls.</p><p>An Attack roll against the creature has advantage if the attacker is within 5 feet of the creature. Otherwise, the Attack roll has disadvantage.</p>',
+            descriptions: [
+                'A prone creature’s only Movement option is to crawl, unless it stands up and thereby ends the condition.',
+                'The creature has disadvantage on Attack rolls.',
+                'An Attack roll against the creature has advantage if the attacker is within 5 feet of the creature. Otherwise, the Attack roll has disadvantage.'
+            ],
             icon: 'back-pain'
         },
         restrained: {
             name: 'Restrained',
-            description: '<p>A restrained creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.</p><p>Attack rolls against the creature have advantage, and the creature’s Attack rolls have disadvantage.</p><p>The creature has disadvantage on Dexterity saving throws.</p>',
+            descriptions: [
+                'A restrained creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.',
+                'Attack rolls against the creature have advantage, and the creature’s Attack rolls have disadvantage.',
+                'The creature has disadvantage on Dexterity saving throws.'
+            ],
             icon: 'fishing-net'
         },
         stunned: {
             name: 'Stunned',
-            description: '<p>A stunned creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.</p><p>The creature automatically fails Strength and Dexterity saving throws.</p><p>Attack rolls against the creature have advantage.</p>',
+            descriptions: [
+                'A stunned creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
+                'The creature automatically fails Strength and Dexterity saving throws.',
+                'Attack rolls against the creature have advantage.'
+            ],
             icon: 'fist'
         },
         unconscious: {
             name: 'Unconscious',
-            description: '<p>An unconscious creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings</p><p>The creature drops whatever it’s holding and falls prone.</p><p>The creature automatically fails Strength and Dexterity saving throws.</p><p>Attack rolls against the creature have advantage.</p><p>Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.</p>',
+            descriptions: [
+                'An unconscious creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'The creature drops whatever it’s holding and falls prone.',
+                'The creature automatically fails Strength and Dexterity saving throws.',
+                'Attack rolls against the creature have advantage.',
+                'Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.'
+            ],
             icon: 'sleepy'
         },
     }
@@ -166,7 +219,11 @@
     }
 
     const sendConditionToChat = (condition) => {
-        sendChat("", whisper + "<div style='" + style + "'><h2>"+condition.name+"</h2>"+ condition.description +"</div>");
+        let description = '';
+        condition.descriptions.forEach((desc) => {
+            description += '<p>'+desc+'</p>';
+        });
+        sendChat("", whisper + "<div style='" + style + "'><h2>"+condition.name+"</h2>"+ description +"</div>");
     }
 
     //return an array of objects according to key, value, or key and value matching
