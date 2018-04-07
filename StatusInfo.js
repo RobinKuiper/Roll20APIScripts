@@ -14,9 +14,11 @@
         showDescOnStatusChange: true // Show condition description on status marker change?
     }
 
+    // Styling for the chat responses.
     const style = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
     const buttonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
 
+    // All the conditions with descriptions/icons.
     const conditions = {
         blinded: {
             name: 'Blinded',
@@ -90,6 +92,7 @@
         },
     }
 
+    // Check if response needs to be whispered to the gm only.
     const whisper = (config.sendOnlyToGM) ? '/w gm ' : '';
 
     on('chat:message', function(msg) {
@@ -97,6 +100,7 @@
 
         // !condition Blinded
 
+        // Split the message into command and argument(s)
         let args = msg.content.split(' ');
         let command = args.shift().substring(1);
         let conditionName = args[0];
@@ -104,7 +108,9 @@
         if(command === 'condition'){
             if(conditionName){
                 let condition;
+                // Check if hte condition exists in the condition object.
                 if(condition = getConditionByName(conditionName)){
+                    // Send it to chat.
                     sendConditionToChat(condition);
                 }else{
                     sendChat('Error', whisper + 'Condition ' + conditionName + ' does not exist.');
@@ -117,6 +123,7 @@
 
     if(config.showDescOnStatusChange){
         on('ready', () => {
+            // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
             if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
                 TokenMod.ObserveTokenChange(function(obj,prev){
                 handleStatusmarkerChange(obj,prev);
@@ -124,17 +131,22 @@
             }
         });
 
+        // Handle condition descriptions when the statusmarkers are changed manually on a token.
         on('change:graphic:statusmarkers', (obj, prev) => {
             handleStatusmarkerChange(obj,prev);
         });
     }
 
     const handleStatusmarkerChange = (obj, prev) => {
+        // Check if the statusmarkers string is different from the previous statusmarkers string.
         if(obj.get('statusmarkers') !== prev.statusmarkers){
+            // Create arrays from the statusmarkers strings.
             var prevstatusmarkers = prev.statusmarkers.split(",");
             var statusmarkers = obj.get('statusmarkers').split(",");
 
+            // Loop through the statusmarkers array.
             statusmarkers.forEach(function(marker){
+                // If it is a new statusmarkers, get the condition from the conditions object, and send it to chat.
                 if(marker !== "" && !prevstatusmarkers.includes(marker)){
                     let condition;
                     if(condition = getConditionByMarker(marker)){
