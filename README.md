@@ -15,11 +15,15 @@
 
 ## BeyondImporter
 
+```
+NOTICE: The commands are changed since the last update, read the description below.
+```
+
 Beyond Importer let's you import a character sheet from DNDBeyond into Roll20 **5eOGL Character Sheet**.
 
 At the moment this is still in development. But the main import is working, let me know if you find any errors or if you have any suggestions.
 
-# How it works
+### How it works
 Go to the character page on DNDBeyond and put '/json' after the url, eg:
 
 ```
@@ -27,13 +31,21 @@ https://www.dndbeyond.com/profile/Atheos/characters/1307201/json
 ```
 
 Copy the entire content of that page, and go to Roll20.
-In the Roll20 chat type the command !beyond and paste the copied contents after that, eg:
+In the Roll20 chat type the command `!beyond import` and paste the copied contents after that, eg:
 
 ```
-!beyond {"character":{"id":1307201,"name":"Qroohk","player":"Atheos","age":null,"hair":null,"eyes":null,"skin":null,"height":null,"weight":null,"size":"Medium","alignment":"Lawful Good" ..........
+!beyond import {"character":{"id":1307201,"name":"Qroohk","player":"Atheos","age":null,"hair":null,"eyes":null,"skin":null,"height":null,"weight":null,"size":"Medium","alignment":"Lawful Good" ..........
 ```
 
 Your character will be imported now!
+
+### Commands
+
+* !beyond help - Shows the help menu.
+* !beyond config - Shows the config menu.
+* !beyond import [CHARACTER JSON] - Imports a character from the DNDBeyond json.
+
+![Config Menu](https://i.imgur.com/WLb76Uy.png "Config Menu")
 
 Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
 
