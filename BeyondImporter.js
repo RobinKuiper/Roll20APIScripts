@@ -593,8 +593,7 @@
     }
 
     // Find an existing repeatable item with the same name, or generate new row ID
-    const getOrMakeRowID = function(character,repeatPrefix,name)
-    {
+    const getOrMakeRowID = function(character,repeatPrefix,name){
         // Get list of all of the character's attributes
         var attrObjs = findObjs({ _type: "attribute", _characterid: character.get("_id") });
         
