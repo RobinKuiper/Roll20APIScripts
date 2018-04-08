@@ -10,14 +10,11 @@
 */
 
 (function() {
-    const config = {
-        sendOnlyToGM: false, // Send the descriptions only to the gm?
-        showDescOnStatusChange: true // Show condition description on status marker change?
-    }
-
     // Styling for the chat responses.
-    const style = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const buttonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
+    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
+    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
+    const conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
+    const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
 
     // All the conditions with descriptions/icons.
     const conditions = {
@@ -56,7 +53,7 @@
             name: 'Grappled',
             descriptions: [
                 'A grappled creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.',
-                'The condition ends if the Grappler is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>.',
+                'The condition ends if the Grappler is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>.',
                 'The condition also ends if an effect removes the grappled creature from the reach of the Grappler or Grappling effect, such as when a creature is hurled away by the Thunderwave spell.'
             ],
             icon: 'grab'
@@ -79,7 +76,7 @@
         paralyzed: {
             name: 'Paralyzed',
             descriptions: [
-                'A paralyzed creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a> and can’t move or speak.',
+                'A paralyzed creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a> and can’t move or speak.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.',
                 'Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.'
@@ -90,7 +87,7 @@
             name: 'Petrified',
             descriptions: [
                 'A petrified creature is transformed, along with any nonmagical object it is wearing or carrying, into a solid inanimate substance (usually stone). Its weight increases by a factor of ten, and it ceases aging.',
-                'The creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'The creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
                 'Attack rolls against the creature have advantage.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'The creature has Resistance to all damage.',
@@ -126,7 +123,7 @@
         stunned: {
             name: 'Stunned',
             descriptions: [
-                'A stunned creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
+                'A stunned creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.'
             ],
@@ -135,7 +132,7 @@
         unconscious: {
             name: 'Unconscious',
             descriptions: [
-                'An unconscious creature is <a style="' + buttonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'An unconscious creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
                 'The creature drops whatever it’s holding and falls prone.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.',
@@ -145,8 +142,19 @@
         },
     }
 
-    // Check if response needs to be whispered to the gm only.
-    const whisper = (config.sendOnlyToGM) ? '/w gm ' : '';
+    let whisper;
+
+    on('ready', () => {
+        checkInstall();
+        log('StatusInfo Ready!');
+
+        // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
+        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
+            TokenMod.ObserveTokenChange(function(obj,prev){
+                handleStatusmarkerChange(obj,prev);
+            });
+        }
+    });
 
     on('chat:message', function(msg) {
         if (msg.type != 'api') return;
@@ -156,57 +164,73 @@
         // Split the message into command and argument(s)
         let args = msg.content.split(' ');
         let command = args.shift().substring(1);
-        let conditionName = args[0];
+        let extracommand = args.shift();
+        //let conditionName = args[0];
 
         if(command === 'condition'){
-            if(conditionName){
-                let condition;
-                // Check if hte condition exists in the condition object.
-                if(condition = getConditionByName(conditionName)){
-                    // Send it to chat.
-                    sendConditionToChat(condition);
-                }else{
-                    sendChat('Error', whisper + 'Condition ' + conditionName + ' does not exist.');
-                }
-            }else{
-                sendChat('', '<div style="'+style+'">Type `!condition` with the condition name behind it, eg: `!condition prone`</div>')
+            switch(extracommand){
+                case 'help':
+                    sendHelpMenu();
+                break;
+
+                case 'config':
+                   if(args.length > 0){
+                        let setting = args.shift().split('|');
+                        let key = setting.shift();
+                        let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+
+                        if(key === 'prefix' && value.charAt(0) !== '_'){ value = '_' + value}
+
+                        state.STATUSINFO.config[key] = value;
+
+                        whisper = (state.STATUSINFO.config.sendOnlyToGM) ? '/w gm ' : '';
+                   }
+
+                   sendConfigMenu();
+                break;
+
+                default:
+                    if(conditionName = extracommand){
+                        let condition;
+                        // Check if hte condition exists in the condition object.
+                        if(condition = getConditionByName(conditionName)){
+                            // Send it to chat.
+                            sendConditionToChat(condition);
+                        }else{
+                            sendChat('Error', whisper + 'Condition ' + conditionName + ' does not exist.');
+                        }
+                    }else{
+                        sendHelpMenu();
+                    }
+                break;
             }
         }
     });
-
-    if(config.showDescOnStatusChange){
-        on('ready', () => {
-            // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
-            if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
-                TokenMod.ObserveTokenChange(function(obj,prev){
-                handleStatusmarkerChange(obj,prev);
-                });
-            }
-        });
-
-        // Handle condition descriptions when the statusmarkers are changed manually on a token.
-        on('change:graphic:statusmarkers', (obj, prev) => {
-            handleStatusmarkerChange(obj,prev);
-        });
-    }
+    
+    // Handle condition descriptions when the statusmarkers are changed manually on a token.
+    on('change:graphic:statusmarkers', (obj, prev) => {
+        handleStatusmarkerChange(obj,prev);
+    });
 
     const handleStatusmarkerChange = (obj, prev) => {
-        // Check if the statusmarkers string is different from the previous statusmarkers string.
-        if(obj.get('statusmarkers') !== prev.statusmarkers){
-            // Create arrays from the statusmarkers strings.
-            var prevstatusmarkers = prev.statusmarkers.split(",");
-            var statusmarkers = obj.get('statusmarkers').split(",");
+        if(state.STATUSINFO.config.showDescOnStatusChange){
+            // Check if the statusmarkers string is different from the previous statusmarkers string.
+            if(obj.get('statusmarkers') !== prev.statusmarkers){
+                // Create arrays from the statusmarkers strings.
+                var prevstatusmarkers = prev.statusmarkers.split(",");
+                var statusmarkers = obj.get('statusmarkers').split(",");
 
-            // Loop through the statusmarkers array.
-            statusmarkers.forEach(function(marker){
-                // If it is a new statusmarkers, get the condition from the conditions object, and send it to chat.
-                if(marker !== "" && !prevstatusmarkers.includes(marker)){
-                    let condition;
-                    if(condition = getConditionByMarker(marker)){
-                        sendConditionToChat(condition);
+                // Loop through the statusmarkers array.
+                statusmarkers.forEach(function(marker){
+                    // If it is a new statusmarkers, get the condition from the conditions object, and send it to chat.
+                    if(marker !== "" && !prevstatusmarkers.includes(marker)){
+                        let condition;
+                        if(condition = getConditionByMarker(marker)){
+                            sendConditionToChat(condition);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
@@ -223,7 +247,7 @@
         condition.descriptions.forEach((desc) => {
             description += '<p>'+desc+'</p>';
         });
-        sendChat("", whisper + "<div style='" + style + "'><h2>"+condition.name+"</h2>"+ description +"</div>");
+        sendChat("", whisper + "<div style='" + conditionStyle + "'><h2>"+condition.name+"</h2>"+ description +"</div>");
     }
 
     //return an array of objects according to key, value, or key and value matching
@@ -245,5 +269,67 @@
             }
         }
         return objects;
+    }
+
+    const sendConfigMenu = (first) => {
+        let toGMButton = '<a style="'+buttonStyle+'" href="!condition config sendOnlyToGM|'+!state.STATUSINFO.config.sendOnlyToGM+'">' + state.STATUSINFO.config.sendOnlyToGM + '</a>';
+        let statusChangeButton = '<a style="'+buttonStyle+'" href="!condition config showDescOnStatusChange|'+!state.STATUSINFO.config.showDescOnStatusChange+'">' + state.STATUSINFO.config.showDescOnStatusChange + '</a>';
+
+        let toGMListItem = '<li style="overflow: hidden"><span style="float: left">Only to GM:</span> '+toGMButton+'</li>';
+        let statusChangeListItem = '<li style="overflow: hidden"><span style="float: left">Show on Status Change:</span> '+statusChangeButton+'</li>';
+
+        let list = '<ul style="overflow: hidden; list-style: none; padding: 0; margin: 0;">'+toGMListItem+statusChangeListItem+'</ul>';
+
+        let title_text = (first) ? 'StatusInfo First Time Setup' : 'StatusInfo Config';
+        let title = '<h4>'+title_text+'</h4><hr>';
+
+        let text = '<div style="'+style+'">'+title+list+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!condition config`.</p></div>';
+
+        sendChat('', '/w gm ' + text);
+    }
+
+    const sendHelpMenu = (first) => {
+        let configButton = '<a style="'+buttonStyle+' width: 100%;" href="!condition config">Config</a>';
+
+        let title = '<h4>StatusInfo Help</h4><hr>';
+
+        let command_list = '<b>Commands:</b><ul style="list-style: none; padding: 0; margin: 0;"><li><span style="text-decoration: underline">!condition help</span> - Shows this menu.</li><li><span style="text-decoration: underline">!condition config</span> - Shows the configuration menu.</li><li><span style="text-decoration: underline">!condition [CONDITION NAME]</span> - Shows the description of the condition entered.</li></ul>'
+
+        let text = '<div style="'+style+'">'+title+'<hr>'+command_list+'<hr>'+configButton+'</div>';
+
+        sendChat('', '/w gm ' + text);
+    }
+
+    const checkInstall = () => {
+        if(!_.has(state, 'STATUSINFO')){
+            state.STATUSINFO = state.STATUSINFO || {};
+        }
+        setDefaults();
+    }
+
+    const setDefaults = (reset) => {
+        const defaults = {
+            sendOnlyToGM: false,
+            showDescOnStatusChange: true
+        };
+
+        if(!state.STATUSINFO.config){
+            state.STATUSINFO.config = defaults;
+        }else{
+            if(!state.STATUSINFO.config.hasOwnProperty('sendOnlyToGM')){
+                state.STATUSINFO.config.sendOnlyToGM = defaults.sendOnlyToGM;
+            }
+            if(!state.STATUSINFO.config.hasOwnProperty('showDescOnStatusChange')){
+                state.STATUSINFO.config.debug = defaults.showDescOnStatusChange;
+            }
+            if(!state.STATUSINFO.config.hasOwnProperty('firsttime')){
+                if(!reset){
+                    sendConfigMenu(true);
+                }
+                state.STATUSINFO.config.firsttime = false;
+            }
+        }
+
+        whisper = (state.STATUSINFO.config.sendOnlyToGM) ? '/w gm ' : '';
     }
 })();
