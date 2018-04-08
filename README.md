@@ -58,7 +58,7 @@ It shows condition descriptions whenever a statusmarker is set or when the comma
 
 ![Prone Description](https://i.imgur.com/NhASVq0.png "Prone Description")
 
-It uses the following condition/statusmarker list:
+It uses the following condition/statusmarker list by default (but you can always change this in the code):
 
 * Blinded, bleeding-eye
 * Charmed, broken-heart
