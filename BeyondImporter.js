@@ -484,37 +484,55 @@
 
     const sendConfigMenu = (first) => {
         let prefix = (state.BEYONDIMPORTER.config.prefix !== '') ? state.BEYONDIMPORTER.config.prefix : '[NONE]';
+        let prefixButton = makeButton(prefix, '!beyond config prefix|?{Prefix}', buttonStyle);
+        let overwriteButton = makeButton(state.BEYONDIMPORTER.config.overwrite, '!beyond config overwrite|'+!state.BEYONDIMPORTER.config.overwrite, buttonStyle);
 
-        let overwriteButton = '<a style="'+buttonStyle+'" href="!beyond config overwrite|'+!state.BEYONDIMPORTER.config.overwrite+'">' + state.BEYONDIMPORTER.config.overwrite + '</a>';
-        let debugButton = '<a style="'+buttonStyle+'" href="!beyond config debug|'+!state.BEYONDIMPORTER.config.debug+'">' + state.BEYONDIMPORTER.config.debug + '</a>';
-        let prefixButton = '<a style="'+buttonStyle+'" href="!beyond config prefix|?{Prefix}">' + prefix + '</a>';
+        let listItems = [
+            '<span style="float: left">Overwrite:</span> '+overwriteButton,
+            '<span style="float: left">Prefix:</span> '+prefixButton
+        ]
 
-        let overwriteListItem = '<li style="overflow: hidden"><span style="float: left">Overwrite:</span> '+overwriteButton+'</li>';
-        let debugListItem = ''//'<li style="overflow: hidden"><span style="float: left">Debug:</span> '+debugButton+'</li>';
-        let prefixListItem = '<li style="overflow: hidden"><span style="float: left">Prefix:</span> '+prefixButton+'</li>';
+        let list = makeList(listItems, 'overflow: hidden; list-style: none; padding: 0; margin: 0;', 'overflow: hidden');
 
-        let list = '<ul style="overflow: hidden; list-style: none; padding: 0; margin: 0;">'+overwriteListItem+debugListItem+prefixListItem+'</ul>';
-
-        let resetButton = '<a style="'+buttonStyle+' width: 100%;" href="!beyond reset">Reset</a>';
+        let resetButton = makeButton('Reset', '!beyond reset', buttonStyle + ' width: 100%');
 
         let title_text = (first) ? 'BeyondImporter First Time Setup' : 'BeyondImporter Config';
-        let title = '<h4>'+title_text+'</h4><hr>';
-
-        let text = '<div style="'+style+'">'+title+list+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!beyond config`.</p><hr>'+resetButton+'</div>';
+        let text = '<div style="'+style+'">'+makeTitle(title_text)+list+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!beyond config`.</p><hr>'+resetButton+'</div>';
 
         sendChat('', '/w gm ' + text);
     }
 
     const sendHelpMenu = (first) => {
-        let configButton = '<a style="'+buttonStyle+' width: 100%;" href="!beyond config">Config</a>';
+        let configButton = makeButton('Config', '!beyond config', buttonStyle+' width: 100%;');
 
-        let title = '<h4>BeyondImporter Help</h4><hr>';
+        let listItems = [
+            '<span style="text-decoration: underline">!beyond help</span> - Shows this menu.',
+            '<span style="text-decoration: underline">!beyond config</span> - Shows the configuration menu.',
+            '<span style="text-decoration: underline">!beyond import [CHARACTER JSON]</span> - Imports a character from <a href="http://www.dndbeyond.com" target="_blank">DNDBeyond</a>.',
+        ]
 
-        let command_list = '<b>Commands:</b><ul style="list-style: none; padding: 0; margin: 0;"><li><span style="text-decoration: underline">!beyond help</span> - Shows this menu.</li><li><span style="text-decoration: underline">!beyond config</span> - Shows the configuration menu.</li><li><span style="text-decoration: underline">!beyond import [CHARACTER JSON]</span> - Imports a character from <a href="http://www.dndbeyond.com" target="_blank">DNDBeyond</a>.</li></ul>'
-
-        let text = '<div style="'+style+'">'+title+'<p>Go to a character on <a href="http://www.dndbeyond.com" target="_blank">DNDBeyond</a>, and put `/json` behind the link. Copy the full contents of this page and paste it behind the command `!beyond import`.</p><p>For more information take a look at my <a style="text-decoration: underline" href="https://github.com/RobinKuiper/Roll20APIScripts" target="_blank">Github</a> repository.</p><hr>'+command_list+'<hr>'+configButton+'</div>';
+        let command_list = makeList(listItems, 'list-style: none; padding: 0; margin: 0;')
+        
+        let text = '<div style="'+style+'">'+makeTitle('BeyondImporter Help')+'<p>Go to a character on <a href="http://www.dndbeyond.com" target="_blank">DNDBeyond</a>, and put `/json` behind the link. Copy the full contents of this page and paste it behind the command `!beyond import`.</p><p>For more information take a look at my <a style="text-decoration: underline" href="https://github.com/RobinKuiper/Roll20APIScripts" target="_blank">Github</a> repository.</p><hr><b>Commands:</b>'+command_list+'<hr>'+configButton+'</div>';
 
         sendChat('', '/w gm ' + text);
+    }
+
+    const makeTitle = (title) => {
+        return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
+    }
+
+    const makeButton = (title, href, style) => {
+        return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
+    }
+
+    const makeList = (items, listStyle, itemStyle) => {
+        let list = '<ul style="'+listStyle+'">';
+        items.forEach((item) => {
+            list += '<li style="'+itemStyle+'">'+item+'</li>';
+        });
+        list += '</ul>';
+        return list;
     }
 
     const replaceChars = (text) => {

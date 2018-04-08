@@ -15,6 +15,7 @@
     const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
     const conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
     const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
+    const listStyle = 'list-style: none; padding: 0; margin: 0;';
 
     // All the conditions with descriptions/icons.
     const conditions = {
@@ -53,7 +54,7 @@
             name: 'Grappled',
             descriptions: [
                 'A grappled creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.',
-                'The condition ends if the Grappler is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>.',
+                'The condition ends if the Grappler is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>.',
                 'The condition also ends if an effect removes the grappled creature from the reach of the Grappler or Grappling effect, such as when a creature is hurled away by the Thunderwave spell.'
             ],
             icon: 'grab'
@@ -76,7 +77,7 @@
         paralyzed: {
             name: 'Paralyzed',
             descriptions: [
-                'A paralyzed creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a> and can’t move or speak.',
+                'A paralyzed creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a> and can’t move or speak.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.',
                 'Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.'
@@ -87,7 +88,7 @@
             name: 'Petrified',
             descriptions: [
                 'A petrified creature is transformed, along with any nonmagical object it is wearing or carrying, into a solid inanimate substance (usually stone). Its weight increases by a factor of ten, and it ceases aging.',
-                'The creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'The creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
                 'Attack rolls against the creature have advantage.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'The creature has Resistance to all damage.',
@@ -123,7 +124,7 @@
         stunned: {
             name: 'Stunned',
             descriptions: [
-                'A stunned creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
+                'A stunned creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.'
             ],
@@ -132,7 +133,7 @@
         unconscious: {
             name: 'Unconscious',
             descriptions: [
-                'An unconscious creature is <a style="' + conditionButtonStyle + '" href="!condition incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'An unconscious creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
                 'The creature drops whatever it’s holding and falls prone.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.',
@@ -167,8 +168,14 @@
         let extracommand = args.shift();
         //let conditionName = args[0];
 
-        if(command === 'condition'){
+        if(command === state.STATUSINFO.config.command){
             switch(extracommand){
+                case 'reset':
+                    state.STATUSINFO = {};
+                    setDefaults(true);
+                    sendConfigMenu();
+                break;
+
                 case 'help':
                     sendHelpMenu();
                 break;
@@ -272,32 +279,53 @@
     }
 
     const sendConfigMenu = (first) => {
-        let toGMButton = '<a style="'+buttonStyle+'" href="!condition config sendOnlyToGM|'+!state.STATUSINFO.config.sendOnlyToGM+'">' + state.STATUSINFO.config.sendOnlyToGM + '</a>';
-        let statusChangeButton = '<a style="'+buttonStyle+'" href="!condition config showDescOnStatusChange|'+!state.STATUSINFO.config.showDescOnStatusChange+'">' + state.STATUSINFO.config.showDescOnStatusChange + '</a>';
+        let commandButton = makeButton('!'+state.STATUSINFO.config.command, '!' + state.STATUSINFO.config.command + ' config command|?{Command (without !)}', buttonStyle)
+        let toGMButton = makeButton(state.STATUSINFO.config.sendOnlyToGM, '!' + state.STATUSINFO.config.command + ' config sendOnlyToGM|'+!state.STATUSINFO.config.sendOnlyToGM, buttonStyle)
+        let statusChangeButton = makeButton(state.STATUSINFO.config.showDescOnStatusChange, '!' + state.STATUSINFO.config.command + ' config showDescOnStatusChange|'+!state.STATUSINFO.config.showDescOnStatusChange, buttonStyle)
 
-        let toGMListItem = '<li style="overflow: hidden"><span style="float: left">Only to GM:</span> '+toGMButton+'</li>';
-        let statusChangeListItem = '<li style="overflow: hidden"><span style="float: left">Show on Status Change:</span> '+statusChangeButton+'</li>';
+        let listItems = [
+            '<span style="float: left">Command:</span> ' + commandButton,
+            '<span style="float: left">Only to GM:</span> '+toGMButton,
+            '<span style="float: left">Show on Status Change:</span> '+statusChangeButton
+        ];
 
-        let list = '<ul style="overflow: hidden; list-style: none; padding: 0; margin: 0;">'+toGMListItem+statusChangeListItem+'</ul>';
+        let resetButton = makeButton('Reset', '!' + state.STATUSINFO.config.command + ' reset', buttonStyle + ' width: 100%');
 
         let title_text = (first) ? 'StatusInfo First Time Setup' : 'StatusInfo Config';
-        let title = '<h4>'+title_text+'</h4><hr>';
-
-        let text = '<div style="'+style+'">'+title+list+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!condition config`.</p></div>';
+        let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state.STATUSINFO.config.command+' config`.</p><hr>'+resetButton+'</div>';
 
         sendChat('', '/w gm ' + text);
     }
 
     const sendHelpMenu = (first) => {
-        let configButton = '<a style="'+buttonStyle+' width: 100%;" href="!condition config">Config</a>';
+        let configButton = makeButton('Config', '!' + state.STATUSINFO.config.command + ' config', buttonStyle + ' width: 100%;')
 
-        let title = '<h4>StatusInfo Help</h4><hr>';
+        let listItems = [
+            '<span style="text-decoration: underline">!'+state.STATUSINFO.config.command+' help</span> - Shows this menu.',
+            '<span style="text-decoration: underline">!'+state.STATUSINFO.config.command+' config</span> - Shows the configuration menu.',
+            '<span style="text-decoration: underline">!'+state.STATUSINFO.config.command+' [CONDITION NAME]</span> - Shows the description of the condition entered.'
+        ]
 
-        let command_list = '<b>Commands:</b><ul style="list-style: none; padding: 0; margin: 0;"><li><span style="text-decoration: underline">!condition help</span> - Shows this menu.</li><li><span style="text-decoration: underline">!condition config</span> - Shows the configuration menu.</li><li><span style="text-decoration: underline">!condition [CONDITION NAME]</span> - Shows the description of the condition entered.</li></ul>'
-
-        let text = '<div style="'+style+'">'+title+'<hr>'+command_list+'<hr>'+configButton+'</div>';
+        let text = '<div style="'+style+'">'+makeTitle('StatusInfo Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
 
         sendChat('', '/w gm ' + text);
+    }
+
+    const makeTitle = (title) => {
+        return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
+    }
+
+    const makeButton = (title, href, style) => {
+        return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
+    }
+
+    const makeList = (items, listStyle, itemStyle) => {
+        let list = '<ul style="'+listStyle+'">';
+        items.forEach((item) => {
+            list += '<li style="'+itemStyle+'">'+item+'</li>';
+        });
+        list += '</ul>';
+        return list;
     }
 
     const checkInstall = () => {
@@ -309,6 +337,7 @@
 
     const setDefaults = (reset) => {
         const defaults = {
+            command: 'condition',
             sendOnlyToGM: false,
             showDescOnStatusChange: true
         };
@@ -316,6 +345,9 @@
         if(!state.STATUSINFO.config){
             state.STATUSINFO.config = defaults;
         }else{
+            if(!state.STATUSINFO.config.hasOwnProperty('command')){
+                state.STATUSINFO.config.command = defaults.command;
+            }
             if(!state.STATUSINFO.config.hasOwnProperty('sendOnlyToGM')){
                 state.STATUSINFO.config.sendOnlyToGM = defaults.sendOnlyToGM;
             }
