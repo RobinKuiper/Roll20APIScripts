@@ -41,9 +41,9 @@ Your character will be imported now!
 
 ### Commands
 
-* !beyond help - Shows the help menu.
-* !beyond config - Shows the config menu.
-* !beyond import [CHARACTER JSON] - Imports a character from the DNDBeyond json.
+* **!beyond help** - Shows the help menu.
+* **!beyond config** - Shows the config menu.
+* **!beyond import [CHARACTER JSON]** - Imports a character from the DNDBeyond json.
 
 ![Config Menu](https://i.imgur.com/WLb76Uy.png "Config Menu")
 
