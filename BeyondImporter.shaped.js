@@ -20,6 +20,59 @@
     let script_name = 'Beyond Importer';
     let state_name = 'BEYONDIMPORTER';
 
+    const skills = [
+        'acrobatics',
+        'animal_handling',
+        'arcana',
+        'athletics',
+        'deception',
+        'history',
+        'insight',
+        'intimidation',
+        'investigation',
+        'medicine',
+        'nature',
+        'perception',
+        'performance',
+        'persuasion',
+        'religion',
+        'sleight_of_hand',
+        'stealth',
+        'survival'
+    ]
+
+    const conditions = [
+        'blinded',
+        'charmed',
+        'deafened',
+        'fatigued',
+        'frightened',
+        'grappled',
+        'incapacitated',
+        'invisible',
+        'paralyzed',
+        'petrified',
+        'poisoned',
+        'prone',
+        'restrained',
+        'stunned',
+        'unconscious',
+        'exhaustion'
+    ];
+
+    const spell_level_formats = {
+        0: 'CANTRIP',
+        1: '1ST_LEVEL',
+        2: '2ND_LEVEL',
+        3: '3RD_LEVEL',
+        4: '4TH_LEVEL',
+        5: '5TH_LEVEL',
+        6: '6TH_LEVEL',
+        7: '7TH_LEVEL',
+        8: '8TH_LEVEL',
+        9: '9TH_LEVEL'
+    }
+
     on('ready',()=>{ 
         checkInstall();
         log(script_name + ' Ready!');
@@ -90,66 +143,113 @@
         // Create character object
         var object = createObj("character", { name: character.name + state[state_name].config.prefix  });
 
-        /*if(state[state_name].config.imports.inventory){
-            const inventory = character.inventory;
-        }*/
-
         if(state[state_name].config.imports.inventory){
             const weapons = character.inventory.weapons;
             weapons.forEach((weapon) => {
-                var row = getOrMakeRowID(object,"repeating_offense_",weapon.definition.name);
-
                 const ability = (weapon.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'DEX' : (weapon.definition.statModifier.str) ? 'STR' : 'DEX';
 
-                attributes["repeating_offense_"+row+"_name"] = weapon.definition.name;
-                attributes["repeating_offense_"+row+"_attack_toggle"] = '1';
-                attributes["repeating_offense_"+row+"_attack_type"] = (weapon.definition.attackType === 'Melee') ? 'MELEE_WEAPON_ATTACK' : 'RANGED_WEAPON_ATTACK';
-                attributes["repeating_offense_"+row+"_attack_ability"] = ability;
-                attributes["repeating_offense_"+row+"_attack_damage_dice"] = weapon.definition.damage.diceCount;
-                attributes["repeating_offense_"+row+"_attack_damage_die"] = 'd' + weapon.definition.damage.diceValue;
-                attributes["repeating_offense_"+row+"_attack_damage_ability"] = ability;
-                attributes["repeating_offense_"+row+"_attack_damage_type"] = weapon.definition.damageType;
-                attributes["repeating_offense_"+row+"_content"] = replaceChars(weapon.definition.description);
-                attributes["repeating_offense_"+row+"_weight"] = weapon.definition.weight;
-                attributes["repeating_offense_"+row+"_toggle_details"] = '0';
+                let fields = {
+                    name: weapon.definition.name,
+                    attack_toggle: '1',
+                    attack_type: (weapon.definition.attackType === 'Melee') ? 'MELEE_WEAPON_ATTACK' : 'RANGED_WEAPON_ATTACK',
+                    attack_ability: ability,
+                    attack_damage_dice: weapon.definition.damage.diceCount,
+                    attack_damage_die: 'd' + weapon.definition.damage.diceValue,
+                    attack_damage_ability: ability,
+                    attack_damage_type: weapon.definition.damageType,
+                    content: replaceChars(weapon.definition.description),
+                    weight: weapon.definition.weight / weapon.definition.bundleSize,
+                    carried: 'on',
+                    toggle_details: '0'
+                }
+
+                attributes = Object.assign(attributes, createRepeating('offense', weapon.definition.name, fields, object));
             });
 
             const armors = character.inventory.armor;
             armors.forEach((armor) => {
-                var row = getOrMakeRowID(object,"repeating_armor_",armor.definition.name);
+                let fields = {
+                    name: armor.definition.name,
+                    type: armor.definition.type.toUpperCase().replace(' ', '_'),
+                    strength_requirements: (armor.definition.strengthRequirement === 13) ? 'Str 13' : (armor.definition.strengthRequirement === 15) ? 'Str 15' : '0',
+                    ac_base: armor.definition.armorClass,
+                    content: replaceChars(armor.definition.description),
+                    worn: (armor.equipped) ? 'on' : '0',
+                    weight: armor.definition.weight / armor.definition.bundleSize,
+                    toggle_details: '0'
+                }
 
-                attributes["repeating_armor_"+row+"_name"] = armor.definition.name;
-                attributes["repeating_armor_"+row+"_type"] = armor.definition.type.toUpperCase().replace(' ', '_');
-                attributes["repeating_armor_"+row+"_strength_requirements"] = (armor.definition.strengthRequirement === 13) ? 'Str 13' : (armor.definition.strengthRequirement === 15) ? 'Str 15' : '0';
-                attributes["repeating_armor_"+row+"_ac_base"] = armor.definition.armorClass;
-                attributes["repeating_armor_"+row+"_content"] = armor.definition.description;
-                attributes["repeating_armor_"+row+"_weight"] = armor.definition.weight;
-                attributes["repeating_armor_"+row+"_worn"] = armor.equipped;
-                attributes["repeating_armor_"+row+"_toggle_details"] = '0';
+                attributes = Object.assign(attributes, createRepeating('armor', armor.definition.name, fields, object));
             });
 
             const gears = character.inventory.gear;
             gears.forEach((gear) => {
                 if(gear.definition.subType === 'Ammunition'){
-                    var row = getOrMakeRowID(object,"repeating_ammo_",gear.definition.name);
-
-                    attributes["repeating_ammo_"+row+"_name"] = gear.definition.name;
-                    attributes["repeating_ammo_"+row+"_weight"] = gear.definition.weight;
-                    attributes["repeating_ammo_"+row+"_uses"] = gear.quantity;
-                }else{
-                    var row = getOrMakeRowID(object,"repeating_equipment_",gear.definition.name);
-
-                    attributes["repeating_equipment_"+row+"_name"] = gear.definition.name;
-                    attributes["repeating_equipment_"+row+"_content"] = gear.definition.description;
-                    attributes["repeating_equipment_"+row+"_weight"] = gear.definition.weight;
-                    if(gear.quantity > 1){
-                        attributes["repeating_equipment_"+row+"_uses"] = gear.quantity;
-                        attributes["repeating_equipment_"+row+"_per_use"] = '1';
-                        attributes["repeating_equipment_"+row+"_weight_per_use"] = '1';
+                    let fields = {
+                        name: gear.definition.name,
+                        weight: gear.definition.weight / gear.definition.bundleSize,
+                        uses: gear.quantity
                     }
-                    attributes["repeating_equipment_"+row+"_toggle_details"] = '0';
+
+                    attributes = Object.assign(attributes, createRepeating('ammo', gear.definition.name, fields, object));
+                }else{
+                    let fields = {
+                        name: gear.definition.name,
+                        content: gear.definition.description,
+                        weight: gear.definition.weight / gear.definition.bundleSize,
+                        carried: 'on',
+                        toggle_details: '0'
+                    }
+                    if(gear.quantity > 1){
+                        fields['uses'] = gear.quantity;
+                        fields['per_use'] = '1';
+                        fields['weight_per_use'] = '1';
+                    }
+
+                    attributes = Object.assign(attributes, createRepeating('equipment', gear.definition.name, fields, object));
                 }
             });
+        }
+
+        let resistances = getObjects(character, 'type', 'resistance');
+        attributes['damage_resistances'] = '';
+        resistances.forEach((resistance, i, array) => {
+            if(!resistance.id.includes('spell')){
+                attributes['damage_resistances'] += resistance.friendlySubtypeName;
+
+                if(i < array.length-1){ attributes['damage_resistances'] += ', '; }
+            }
+        });
+
+        let vulnerabilities = getObjects(character, 'type', 'vulnerability');
+        attributes['damage_vulnerabilities'] = '';
+        vulnerabilities.forEach((vulnerability, i, array) => {
+            if(!vulnerability.id.includes('spell')){
+                attributes['damage_vulnerabilities'] += vulnerability.friendlySubtypeName;
+
+                if(i < array.length-1){ attributes['damage_vulnerabilities'] += ', '; }
+            }
+        });
+
+        let immunities = getObjects(character, 'type', 'immunity');
+        attributes['damage_immunities'] = '';
+        immunities.forEach((immunity, i, array) => {
+            if(!immunity.id.includes('spell')){
+                let immunity_type;
+                if(conditions.includes(immunity.subType)){
+                    immunity_type = 'condition';
+                }else{
+                    immunity_type = 'damage';
+                }
+
+                attributes[immunity_type+'_immunities'] += immunity.friendlySubtypeName;
+                if(i < array.length-1){ attributes[immunity_type+'_immunities'] += ', '; }
+            }
+        });
+
+        attributes['speed'] = character.weightSpeeds.normal.walk + 'ft.';
+        for(var type in character.weightSpeeds.normal){
+            attributes['speed'] += (type !== 'walk' && character.weightSpeeds.normal[type] !== 0) ? ', ' + type + ' ' + character.weightSpeeds.normal[type] + 'ft.' : '';
         }
 
         if(state[state_name].config.imports.languages){
@@ -158,7 +258,7 @@
             languages.forEach((language, i, array) => {
                 str += language.friendlySubtypeName
 
-                if(i < array.length){ str += ', ' }
+                if(i < array.length-1){ str += ', ' }
             })
             attributes['languages'] = str;
         }
@@ -169,33 +269,93 @@
             proficiencies.forEach((prof, i, array) => {
                 str += prof.friendlySubtypeName;
 
-                if(i < array.length){ str += ', ' }
+                if(i < array.length-1){ str += ', ' }
+
+                if(prof.subType.includes('saving-throws')){
+                    let ability = prof.subType.split('-').shift();
+                    pre_log(ability);
+                    attributes[ability+'_saving_throw_proficient'] = '1';
+                }
+
+                if(skills.includes(prof.subType)){
+                    let fields = {
+                        storage_name: prof.subType.replace('-', '').toUpperCase(),
+                        name: prof.friendlySubtypeName,
+                        proficiency: 'proficient'
+                    }
+
+                    attributes = Object.assign(attributes, createRepeating('skill', prof.subType, fields, object));
+                }
             });
             attributes['proficiencies'] = str;
         }
 
-        if(state[state_name].config.imports.classes){
-            const classes = character.classes;
-            classes.forEach((c) => {
-                var row = getOrMakeRowID(object,"repeating_class_",c.class.name);
+        character.conditions.forEach((condition) => {
+            if(condition.name === 'Exhaustion'){
+                attributes['exhaustion_level'] = '1';
+            }else{
+                attributes[condition.name.toLowerCase()] = '1';
+            }
+        });
 
-                attributes["repeating_class_"+row+"_name"] = c.class.name.toUpperCase();
-                attributes["repeating_class_"+row+"_level"] = c.level;
-            });
+        if(state[state_name].config.imports.classes){
+            attributes = Object.assign(attributes, importClasses(character.classes, object));
         }
 
         if(state[state_name].config.imports.traits){
             let raceFeatures = character.features.racialTraits;
             let feats = character.features.feats;
+
+            feats.forEach((feat) => {
+                let fields = {
+                    name: feat.definition.name,
+                    content: feat.definition.description,
+                }
+
+                feat.limitedUseAbilities.forEach((limited) => {
+                    fields['uses'] = limited.maxUses - limited.numberUsed;
+                    fields['per_use'] = 1;
+                    fields['uses_max'] = limited.maxUses;
+                    fields['recharge'] = limited.resetType.toUpperCase().replace(' ', '_');
+                });
+
+                attributes = Object.assign(attributes, createRepeating('feat', feat.name, fields, object));
+            });
         }
 
         
         if(state[state_name].config.imports.bonusses){
             let bonusses = getObjects(character, 'type', 'bonus');
+            bonusses.forEach((bonus) => {
+                if(!bonus.id.includes('spell') && !bonus.subType.includes('_score')){
+                    /*if(bonus.subType.includes('_score')){
+                        let ability = bonus.subType.split("_").shift();
+
+                        let fields = {
+                            name: bonus.friendlySubtypeName,
+                            ability_score_toggle: '1',
+                        }
+
+                        fields[ability + '_score_modifier'] = bonus.value;
+
+                        attributes = Object.assign(attributes, createRepeating('modifier', bonus.id, fields, object));
+                    }*/
+                }
+            });
         }
 
-        if(state[state_name].config.imports.notes){
+        let senses = getObjects(character, 'type', 'sense');
+        senses.forEach((sense) => {
+            attributes[sense.subType] = sense.value;
+        });
 
+        if(state[state_name].config.imports.notes){
+            attributes['miscellaneous_notes'] = '';
+            for(var key in character.notes){
+                attributes['miscellaneous_notes'] += (key !== 'backstory' && character.notes[key] !== null) ? key.toUpperCase() + ':\n' + character.notes[key] + '\n\n' : '';
+            }
+            attributes['miscellaneous_notes'] += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
+            attributes['miscellaneous_notes'] += (character.lifestyle) ? 'LIFESTYLE: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.\n' : '';
         }
 
         attributes = Object.assign(attributes, { 
@@ -238,6 +398,8 @@
             'intelligence': getTotalAbilityScore(character, 'intelligence', 'int'),
             'wisdom': getTotalAbilityScore(character, 'wisdom', 'wis'),
             'charisma': getTotalAbilityScore(character, 'charisma', 'cha'),
+
+            'backstory': character.notes.backstory,
         });
 
         setAttrs(object.id, Object.assign(attributes)); 
@@ -254,11 +416,100 @@
         sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is ready.</div>');
     }
 
+    const createRepeating = (section, id, fields, object) => {
+        let attributes = {};
+        var row = getOrMakeRowID(object,"repeating_"+section+"_",id);
+
+        for(var field_name in fields){
+            attributes["repeating_"+section+"_"+row+"_"+field_name] = fields[field_name];
+        }
+
+        return attributes;
+    }
+
+    const importClasses = (classes, object) => {
+        let attributes = {};
+
+        classes.forEach((c, i, array) => {
+            var row = getOrMakeRowID(object,"repeating_class_",c.class.name);
+
+            createObj('attribute', {
+                characterid: object.id,
+                name: "repeating_class_"+row+"_level",
+                current: c.level
+            });
+
+            if(i < array.length-1){
+                createObj('attribute', {
+                    characterid: object.id,
+                    name: "repeating_class_"+row+"_name",
+                    current: c.class.name.toUpperCase()
+                });
+            }else{
+                attributes["repeating_class_"+row+"_name"] = c.class.name.toUpperCase();
+            }
+
+            // Import Class Spells
+            c.spells.forEach((spell) => {
+                let descriptions = spell.definition.description.split('At Higher Levels. ');
+
+                let fields = {
+                    name: spell.definition.name,
+                    spell_level: spell_level_formats[spell.definition.level],
+                    school: spell.definition.school.toUpperCase(),
+                    ritual: (spell.definition.ritual) ? 'yes' : 'no',
+                    casting_time: (spell.definition.castingTime.castingTimeInterval + ' ' + spell.definition.castingTime.castingTimeUnit).replace(' ', '_').toUpperCase(),
+                    range: (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue : spell.definition.range.origin,
+                    components: 'COMPONENTS_' + spell.definition.components.replace(', ', '_').toUpperCase(),
+                    materials: spell.definition.componentsDescription,
+                    duration: (spell.definition.duration.durationType === 'Time') ? (spell.definition.duration.durationInterval + ' ' + spell.definition.duration.durationUnit).replace(' ', '_').toUpperCase() : spell.definition.duration.durationType.toUpperCase(),
+                    content: replaceChars(descriptions[0]),
+                    higher_level: descriptions[1] || ''
+                }
+
+                let damages = getObjects(spell, 'type', 'damage');
+                damages.forEach((damage, i, array) => {
+                    let second = '';
+                    if(i === 0){ 
+                        fields['attack_toggle'] = '1'; 
+                        fields['attack_type'] = spell.definition.attackType.toUpperCase() + '_SPELL_ATTACK';
+                    }
+                    if(i === 1){ 
+                        fields['attack_second_damage_condition'] = 'PLUS'; 
+                        second = 'second_';
+                    }
+                        
+                    fields['attack_'+second+'damage_dice'] = damage.die.diceCount;
+                    fields['attack_'+second+'damage_die'] = 'd' + damage.die.diceValue;
+                    fields['attack_'+second+'damage_type'] = damage.friendlySubtypeName;
+                });
+
+                if(spell.definition.healing){
+                    let healing = getObjects(spell, 'subType', 'hit-points').shift();
+
+                    fields['heal_toggle'] = '1';
+                    fields['heal_dice'] = healing.die.diceCount;
+                    fields['heal_die'] = 'd' + healing.die.diceValue;
+                }
+
+                attributes = Object.assign(attributes, createRepeating('spell' + spell.definition.level, spell.definition.name, fields, object));
+            });
+        });
+
+        return attributes;
+    }
+
+    const getRepeatingSectionAttrs = (characterId, sectionName) => {
+      const prefix = `repeating_${sectionName}`;
+      return _.filter(this.findObjs({ type: 'attribute', characterid: characterId }),
+        attr => attr.get('name').indexOf(prefix) === 0);
+    }
+
     const getTotalAbilityScore = (character, score, score_short) => {
         let base = character.stats[score_short],
         bonus = character.bonusStats[score_short],
         override = character.overrideStats[score_short],
-        total = base + bonus + override,
+        total = (override !== null) ? override + bonus : base + bonus,
         modifiers = getObjects(character, '', score + "-score");
 
         if(modifiers.length > 0){
