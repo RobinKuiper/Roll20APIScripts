@@ -54,7 +54,7 @@
             name: 'Grappled',
             descriptions: [
                 'A grappled creature’s speed becomes 0, and it can’t benefit from any bonus to its speed.',
-                'The condition ends if the Grappler is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>.',
+                'The condition ends if the Grappler is <a style="' + conditionButtonStyle + '" href="!{command} incapacitated">incapacitated</a>.',
                 'The condition also ends if an effect removes the grappled creature from the reach of the Grappler or Grappling effect, such as when a creature is hurled away by the Thunderwave spell.'
             ],
             icon: 'grab'
@@ -77,7 +77,7 @@
         paralyzed: {
             name: 'Paralyzed',
             descriptions: [
-                'A paralyzed creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a> and can’t move or speak.',
+                'A paralyzed creature is <a style="' + conditionButtonStyle + '" href="!{command} incapacitated">incapacitated</a> and can’t move or speak.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.',
                 'Any Attack that hits the creature is a critical hit if the attacker is within 5 feet of the creature.'
@@ -88,7 +88,7 @@
             name: 'Petrified',
             descriptions: [
                 'A petrified creature is transformed, along with any nonmagical object it is wearing or carrying, into a solid inanimate substance (usually stone). Its weight increases by a factor of ten, and it ceases aging.',
-                'The creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'The creature is <a style="' + conditionButtonStyle + '" href="!{command} incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
                 'Attack rolls against the creature have advantage.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'The creature has Resistance to all damage.',
@@ -124,7 +124,7 @@
         stunned: {
             name: 'Stunned',
             descriptions: [
-                'A stunned creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
+                'A stunned creature is <a style="' + conditionButtonStyle + '" href="!{command} incapacitated">incapacitated</a>, can’t move, and can speak only falteringly.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.'
             ],
@@ -133,7 +133,7 @@
         unconscious: {
             name: 'Unconscious',
             descriptions: [
-                'An unconscious creature is <a style="' + conditionButtonStyle + '" href="!'+state.STATUSINFO.config.command+' incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
+                'An unconscious creature is <a style="' + conditionButtonStyle + '" href="!{command} incapacitated">incapacitated</a>, can’t move or speak, and is unaware of its surroundings.',
                 'The creature drops whatever it’s holding and falls prone.',
                 'The creature automatically fails Strength and Dexterity saving throws.',
                 'Attack rolls against the creature have advantage.',
@@ -252,7 +252,7 @@
     const sendConditionToChat = (condition) => {
         let description = '';
         condition.descriptions.forEach((desc) => {
-            description += '<p>'+desc+'</p>';
+            description += '<p>'+desc.replace('{command}', state.STATUSINFO.config.command)+'</p>';
         });
         sendChat("", whisper + "<div style='" + conditionStyle + "'><h2>"+condition.name+"</h2>"+ description +"</div>");
     }
