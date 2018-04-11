@@ -1,5 +1,5 @@
 /* WORK IN PROGRESS
- * Version 0.0.7
+ * Version 0.0.13
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -11,10 +11,12 @@
 
 /*
  * TODO
- * Add experience to player by characterid
+ * Add XP by only Characterid
  * Check styling variables
  * Check styling of the different menus
+ * Color to the buttons!
  * Check all commands
+ * Give XP directly?
 */
 
 (function() {
@@ -29,63 +31,7 @@
     let script_name = 'Lazy Experience';
     let state_name = 'LAZYEXPERIENCE';
 
-    let markers = [
-        'red',
-        'blue',
-        'green',
-        'brown',
-        'purple',
-        'pink',
-        'yellow',
-        'dead',
-        'skull',
-        'sleepy',
-        'half-heart',
-        'half-haze',
-        'interdiction',
-        'snail',
-        'lightning-helix',
-        'spanner',
-        'chained-heart',
-        'chemical-bolt',
-        'death-zone',
-        'drink-me',
-        'edge-crack',
-        'ninja-mask',
-        'stopwatch',
-        'fishing-net',
-        'overdrive',
-        'strong',
-        'fist',
-        'padlock',
-        'three-leaves',
-        'fluffy-wing',
-        'pummeled',
-        'tread',
-        'arrowed',
-        'aura',
-        'back-pain',
-        'black-flag',
-        'bleeding-eye',
-        'bolt-shield',
-        'broken-heart',
-        'broken-shield',
-        'cobweb',
-        'flying-flag',
-        'radioactive',
-        'trophy',
-        'broken-skull',
-        'frozen-orb',
-        'rolling-tomb',
-        'white-tower',
-        'grab',
-        'screaming',
-        'grenade',
-        'sentry-gun',
-        'all-for-one',
-        'angel-outfit',
-        'archery-target'
-    ]
+    let markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower']
 
     let playerid;
 
@@ -140,18 +86,45 @@
                     sendConfigMenu();
                 break;
 
-                case 'player':
+                case 'refreshcharacters':
                     playerid = args.shift();
-                    let active = (args.shift() === 'true');
-
-                    state[state_name].players[playerid].active = active;
+                    refreshCharacters();
                     sendPlayerConfigMenu(playerid);
                 break;
 
-                // TODO: To Player command
-                case 'remove':
-                    delete state[state_name].players[args.shift()];
-                    sendConfigMenu();
+                case 'player':
+                    let todo = args.shift();
+
+                    switch(todo){
+                        case 'remove':
+                            playerid = args.shift();
+                            let sure = (args.shift() === 'yes');
+                            if(sure){
+                                delete state[state_name].players[playerid];
+                                sendConfigMenu();
+                            }
+                        break;
+
+                        default:
+                            playerid = args.shift();
+                            state[state_name].players[playerid].active = (todo === 'true');
+                            sendPlayerConfigMenu(playerid);
+                        break;
+                    }
+                break;
+
+                case 'setcharactive':
+                    let characterid = args.shift();
+                    playerid = args.shift();
+                    let active = args.shift();
+
+                    state[state_name].players[playerid].characters.forEach((character, i, array) => {
+                        if((character.id === characterid)){
+                            state[state_name].players[playerid].characters[i].active = (active === 'true');
+                        }
+                    });
+
+                    sendPlayerConfigMenu(playerid)
                 break;
 
                 case 'config':
@@ -165,7 +138,12 @@
                             let key = setting.shift();
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            state[state_name].config[key] = value;
+                            value = (key === 'marker' && value === '-') ? state[state_name].config[key] : value;
+                            if(key == 'extra_players'){
+                                state[state_name][key] = value;
+                            }else{
+                                state[state_name].config[key] = value;
+                            }
 
                             sendConfigMenu();
                         }
@@ -184,50 +162,56 @@
                         sendChat(script_name, '/w gm <div style="'+style+'">' + experience + ' experience added, total experience is now: '+ total_experience +'</div>');
                     }else{
                         if(playerExists(playerid)){
+                            let characterid = args.shift();
                             let player = state[state_name].players[playerid];
-                            let total_experience = experience+getExperienceByPlayerid(playerid);
-                            setExperienceToPlayerid(total_experience, playerid);
-                            sendChat(script_name, '/w gm <div style="'+style+'">' + experience + ' experience added to '+player.name+', total experience for '+player.name+' is now: '+ total_experience +'</div>');
+                            let character = getObjects(player.characters, 'id', characterid).shift();
+                            let total_experience = experience+character.experience;
+                            state[state_name].players[playerid].characters.forEach((character, i) => {
+                                if(characterid === character.id){
+                                    state[state_name].players[playerid].characters[i].experience = total_experience;
+                                }
+                            });
+                            sendChat(script_name, '/w gm <div style="'+style+'">' + experience + ' experience added to '+character.name+', total experience for '+character.name+' is now: '+ total_experience +'</div>');
                         }else{
                             sendChat(script_name, '/w gm <div style="'+style+'">Player does not exists. You can try and refresh the player list.<hr>'+makeButton('Refresh Players', '!'+state[state_name].config.command + ' refresh', buttonStyle2)+'</div>')
                         }                        
                     }
                 break
 
-                case 'mark':
-                    playerid = args.shift();
-
-                    if(playerExists(playerid)){
-                        let player = state[state_name].players[playerid];
-                        markPlayerByName(playerid);
-                        sendChat(script_name, '/w gm <div style="'+style+'">'+player.name + ' marked.</div>');
-                    }else{
-                        sendChat(script_name, '/w gm <div style="'+style+'">Player does not exists. You can try and refresh the player list.<hr>'+makeButton('Refresh Players', '!'+state[state_name].config.command + ' refresh', buttonStyle2)+'</div>')
-                    }  
-                break;
-
                 case 'show':
                     sendChat(script_name, '/w gm <div style="'+style+'">Current Experience: ' + getExperience() + '</div>');
                 break;
 
                 case 'end':
-                    let session_experience = Math.floor(getExperience()/(getActivePlayerCount()+state[state_name].extra_players*1));
+                    let xpSharers = getExperienceSharers();
+                    let session_experience = (xpSharers > 0) ? (Math.floor(getExperience()/xpSharers)) : 0;
 
                     sendChat(script_name, '<div style="'+style+'"><b>Session Ended</b><br>Everyone gets <b>'+session_experience+' experience.</b></div>');
 
-                    let player_experiences = '';
+                    let character_experiences = '';
                     for(playerid in state[state_name].players){
                         let player = state[state_name].players[playerid];
-                        let exp = getExperienceByPlayerid(playerid);
-                        let marks = getMarksByPlayerid(playerid);
-                        if(exp > 0 || marks > 0){
-                            //let mark_experience = calculateExperienceFromMarks(marks);
-                            player_experiences += player.name + ': ' + exp + ' | Total: <b>' + (exp+session_experience) + '</b><br>';
-                            sendChat(script_name, '/w ' + player.name + ' <div style="'+style+'">You get '+exp+' extra experience, bringing your total this session to <b>' + (exp+session_experience) + '</b> experience.</div>');
+                        if(player.active){
+                            player.characters.forEach((character, i) => {
+                                if(character.active){
+                                    let total_experience = character.experience+session_experience
+                                    character_experiences += character.name + ': ' + character.experience + ' | Total: <b>' + total_experience + '</b><br>';
+                                    if(state[state_name].config.updatesheet){
+                                        let full_total_experience = getAttrByName(character.id, state[state_name].config.experience_attribute_name, 'current')*1 + total_experience*1;
+                                        let attributes = {};
+                                        attributes[state[state_name].config.experience_attribute_name] = full_total_experience;
+                                        setAttrs(character.id, attributes);
+
+                                        sendChat(script_name, '/w ' + character.name.split(' ').shift() + ' <div style="'+style+'">You get '+character.experience+' extra experience, bringing your total this session to <b>' + total_experience + '</b> experience. <p>Your sheet has been updated, your total experience is now '+full_total_experience+'</p></div>');
+                                    }else{
+                                        sendChat(script_name, '/w ' + character.name.split(' ').shift() + ' <div style="'+style+'">You get '+character.experience+' extra experience, bringing your total this session to <b>' + total_experience + '</b> experience.</div>');
+                                    }
+                                }
+                            });
                         }
                     }
 
-                    sendChat(script_name, '/w gm <div style="'+style+'">Session Experience: '+session_experience+'<hr>'+player_experiences+'</div>')
+                    sendChat(script_name, '/w gm <div style="'+style+'">Session Experience: '+session_experience+'<hr>'+character_experiences+'</div>')
 
                     resetExperience();
                 break;
@@ -239,8 +223,22 @@
         }
     });
 
-    const calculateExperienceFromMarks = (marks, level) => {
-        return eval(state[state_name].config.mark_formula.replace('{level}', level).replace('{marks}', marks));
+    const getExperienceSharers = () => {
+        let xpSharers = state[state_name].extra_players*1;
+
+        if(state[state_name].players.length === 0){ return xpSharers; }
+        
+        for(let playerid in state[state_name].players){
+            if(state[state_name].players[playerid].active){
+                state[state_name].players[playerid].characters.forEach((character) => {
+                    if(character.active){
+                        xpSharers++;
+                    }
+                });
+            }
+        }
+
+        return xpSharers;
     }
 
     const playerExists = (playerid) => {
@@ -277,6 +275,13 @@
             _type: 'character',
             controlledby: playerid,
             inplayerjournals: playerid
+        }).map(character => {
+            return {
+                name: character.get('name'),
+                id: character.get('id'),
+                active: true,
+                experience: 0
+            }
         });
     }
 
@@ -294,14 +299,6 @@
 
     const getExperienceByPlayerid = (playerid) => {
         return state[state_name].players[playerid].experience;
-    }
-
-    const getMarksByPlayerName = (player_name) => {
-        return getMarksByPlayerid(getPlayerid(player_name));
-    }
-
-    const getMarksByPlayerid = (playerid) => {
-        return state[state_name].players[playerid].marks;
     }
 
     const setExperience = (experience, playerid) => {
@@ -341,15 +338,13 @@
         return objects;
     }
 
-    const markPlayerByName = (player_name) => {
-        state[state_name].players[getPlayerid(player_name)].marks += 1;
-    }
-
     const resetExperience = () => {
         state[state_name].session_experience = 0;
         for(let playerid in state[state_name].players){
-            state[state_name].players[playerid].experience = 0;
-            state[state_name].players[playerid].marks = 0;
+            let player = state[state_name].players[playerid];
+            player.characters.forEach((character, i) => {
+                state[state_name].players[playerid].characters[i].experience = 0;
+            })
         }
     }
 
@@ -376,44 +371,67 @@
     }
 
     const sendMenu = () => {
-        let addXPButton = makeButton('Add Experience', '!' + state[state_name].config.command + ' add ?{Experience}', buttonStyle2);
+        let addXPButton = makeButton('Add Session Experience', '!' + state[state_name].config.command + ' add ?{Experience}', buttonStyle2);
         let endButton = makeButton('End Session', '!' + state[state_name].config.command + ' end', buttonStyle2);
         let resetXPButton = makeButton('Reset Experience', '!' + state[state_name].config.command + ' resetxp', buttonStyle2);
         //let addXPSelectedButton = makeButton('Add XP: Selected', '!' + state[state_name].config.command + ' add ?{selectedExperience}', buttonStyle2);
 
-        let player_experiences = '';
+        let playerListItems = [];
         for(var playerid in state[state_name].players){
             let player = state[state_name].players[playerid];
-            player_experiences += player.name + ': ' + getExperienceByPlayerid(playerid) + '<br>';
+            if(player.active){
+                let characterListItems = [];
+                let characterDropdown = '?{Character';
+                let characterIds = [];
+                player.characters.forEach(character => {
+                    if(character.active){
+                        let name = (character.name.length > 8) ? character.name.slice(0, 8) + '...' : character.name;
+                        characterListItems.push(name + ': ' + character.experience);
+                        characterDropdown += '|'+character.name+','+character.id;
+                        characterIds.push(character.id);
+                    }
+                });
+                characterDropdown += '}';
+                characterDropdown = (characterIds.length === 1) ? characterIds[0] : characterDropdown;
+                let addExperienceButton = (characterIds.length > 0) ? makeButton('Add xp', '!' + state[state_name].config.command + ' add ?{Experience} ' + playerid + ' ' + characterDropdown, buttonStyle + ' float: right; font-size: 10pt;', (player.characters.length > 0)) : '';
+                playerListItems.push('<span style="float: left; font-weight: bold">' + player.name + '<br>' + makeList(characterListItems, listStyle + 'margin-left: 5px;', 'font-size: 10pt;') + '</span> ' + addExperienceButton);
+            }
         }
 
-        sendChat(script_name, '/w gm <div style="'+style+' text-align: center;">'+makeTitle(script_name + ' menu')+'Current Experience: '+getExperience()+'<br><br>'+player_experiences+'<hr>'+addXPButton+'<br>'+endButton+'<hr>'+resetXPButton+'</div>');
+        sendChat(script_name, '/w gm <div style="'+style+'">'+makeTitle(script_name + ' menu')+'Session Experience: '+getExperience()+'<br>Experience Divisors: ' + getExperienceSharers() + '<hr>'+makeList(playerListItems, listStyle + ' overflow: hidden;', 'overflow: hidden;')+'<hr>'+addXPButton+'<br>'+endButton+'<hr>'+resetXPButton+'</div>');
+    }
+
+    const ucFirst = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
     const sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
-        //TODO: Make markerButton a dropdown.
         let markerDropdown = '?{Marker';
         markers.forEach((marker) => {
-            markerDropdown += '|'+marker+', '+marker
+            markerDropdown += '|'+ucFirst(marker).replace('-', ' ')+','+marker
         })
         markerDropdown += '}';
+
         let markerButton = makeButton(state[state_name].config.marker, '!' + state[state_name].config.command + ' config marker|'+markerDropdown, buttonStyle);
         let experienceAttributeButton = makeButton(state[state_name].config.experience_attribute_name, '!' + state[state_name].config.command + ' config experience_attribute_name|?{Attribute}', buttonStyle);
         let extraPlayersButton = makeButton(state[state_name].extra_players, '!' + state[state_name].config.command + ' config extra_players|?{Players}', buttonStyle);
+        let updateSheetButton = makeButton(state[state_name].config.updatesheet, '!' + state[state_name].config.command + ' config updatesheet|'+!state[state_name].config.updatesheet, buttonStyle);
 
         let listItems = [
             '<span style="float: left">Command:</span> ' + commandButton,
             '<span style="float: left">Marker:</span> ' + markerButton,
             '<span style="float: left">XP Attribute:</span> ' + experienceAttributeButton,
             '<span style="float: left">Extra Players:</span> ' + extraPlayersButton,
+            '<span style="float: left">Update Sheets:</span> ' + updateSheetButton,
         ];
 
         let playerListItems = [];
         if(Object.keys(state[state_name].players).length > 0){
             for(var playerid in state[state_name].players){
                 let player = state[state_name].players[playerid];
-                playerListItems.push('<span style="float: left">'+player.name+'</span> ' + makeButton('Config', '!' + state[state_name].config.command + ' config player '+playerid, buttonStyle));
+                let activeStyle = (player.active) ? '' : 'text-decoration: line-through;';
+                playerListItems.push('<span style="float: left; ' + activeStyle + '">'+player.name+'</span> ' + makeButton('Config', '!' + state[state_name].config.command + ' config player '+playerid, buttonStyle));
             }
         }else{
             playerListItems.push('No players found.');
@@ -431,26 +449,30 @@
 
     const sendPlayerConfigMenu = (playerid) => {
         let player = state[state_name].players[playerid];
-        let activeButton = makeButton((player.active) ? 'Active' : 'Not Active', '!' + state[state_name].config.command + ' player '+playerid+' '+!player.active, buttonStyle2);
-        let addExperienceButton = makeButton('Add Experience', '!' + state[state_name].config.command + ' add ?{Experience} ' + playerid, buttonStyle2);
-        let addMarkButton = makeButton('Add Mark', '!' + state[state_name].config.command + ' mark ' + playerid, buttonStyle2);
+        let activeButton = makeButton((player.active) ? 'Active' : 'Not Active', '!' + state[state_name].config.command + ' player '+!player.active+' '+playerid, buttonStyle2);
+
+        let characterListItems = [];
+        let characterDropdown = '?{Character';
+        player.characters.forEach((character) => {
+            let mainButton = makeButton((character.active) ? 'Active' : 'Not Active', '!' + state[state_name].config.command + ' setcharactive ' + character.id + ' ' + playerid + ' ' + !character.active, buttonStyle);
+            let main = (character.main) ? '<b style="float: right">Main</b>' : mainButton;
+            characterListItems.push('<span style="float: left;">'+character.name+'<br><span style="font-size: 8pt">Experience: '+character.experience+'</span></span> ' + main);
+            characterDropdown += '|'+character.name+','+character.id;
+        });
+        characterDropdown += '}';
+
+        let addExperienceButton = makeButton('Add Experience', '!' + state[state_name].config.command + ' add ?{Experience} ' + playerid + ' ' + characterDropdown, buttonStyle2, (player.characters.length > 0));
 
         let listItems = [
             activeButton,
             addExperienceButton,
-            //addMarkButton
         ];
 
-        let characterListItems = [];
-        player.characters.forEach((character) => {
-            let mainButton = makeButton('Set Main', '!fuck', buttonStyle);
-            let main = (character.main) ? '<b>Main</b>' : mainButton;
-            characterListItems.push('<span style="float: left;">'+character.name+'</span> ' + main);
-        })
+        let refreshCharactersButton = makeButton('Refresh Characters', '!' + state[state_name].config.command + ' refreshcharacters '+playerid, buttonStyle + ' width: 100%');
+        let removeButton = makeButton('Remove', '!' + state[state_name].config.command + ' player remove ' + playerid + ' ?{Are you sure?|Yes,yes|No,no}', buttonStyle + ' width: 100%;');
+        let backButton = makeButton('Back', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%');
 
-        let removeButton = makeButton('Remove', '!' + state[state_name].config.command + ' remove ' + playerid, buttonStyle + ' width: 100%;');
-
-        let text = '<div style="'+style+'">'+makeTitle(player.name + ' - Config')+'Experience: '+player.experience+'<br>Marks: '+player.marks+'<hr>'+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Characters</b>'+makeList(characterListItems, listStyle + ' overflow:hidden;', 'overflow: hidden;')+'<hr>'+removeButton+'</div>';
+        let text = '<div style="'+style+'">'+makeTitle(player.name + ' - Config')+'Experience: '+player.experience+'<hr>'+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Characters</b>'+makeList(characterListItems, listStyle + ' overflow:hidden;', 'overflow: hidden;')+refreshCharactersButton+'<hr>'+backButton+'<hr>'+removeButton+'</div>';
 
         sendChat('', '/w gm ' + text);
     }
@@ -472,8 +494,9 @@
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
     }
 
-    const makeButton = (title, href, style) => {
-        return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
+    const makeButton = (title, href, style, disabled) => {
+        let disableStyle = (disabled) ? 'pointer-events: none' : '';
+        return '<a style="'+style+disableStyle+'" href="'+href+'">'+title+'</a>';
     }
 
     const makeList = (items, listStyle, itemStyle) => {
@@ -517,7 +540,6 @@
                 id: playerid,
                 active: true,
                 experience: 0,
-                marks: 0,
                 characters: getPlayerCharacters(playerid)
             };
         });
@@ -526,6 +548,27 @@
         array_diff(getPlayers(), saved_players).forEach((playerid) => {
             delete state[state_name].players[player];
         });
+    }
+
+    const refreshCharacters = () => {
+        for(let playerid in state[state_name].players){
+            let characterids = getPlayerCharacters(playerid).map((character) => { return character.id });
+            let saved_characterids = (state[state_name].players[playerid].characters.length > 0) ? state[state_name].players[playerid].characters.map((character) => { return character.id }) : [];
+
+            // Player added?
+            array_diff(saved_characterids, characterids).forEach((characterid) => {
+                state[state_name].players[playerid].characters.push(getObjects(getPlayerCharacters(playerid), 'id', characterid).shift());
+            });
+
+            // Player removed?
+            array_diff(characterids, saved_characterids).forEach((characterid) => {
+                state[state_name].players[playerid].characters.forEach((character, i) => {
+                    if(character.id === characterid){
+                        delete state[state_name].players[playerid].characters[i];
+                    }
+                })
+            });
+        }
     }
 
     const array_diff = (a, b) => {
@@ -538,7 +581,8 @@
                 command: 'lxp',
                 marker: 'dead',
                 experience_attribute_name: 'xp',
-                mark_formula: '{level}*{marks}*15',
+                directxp: false,
+                updatesheet: false
             },
             players: {},
             extra_players: 0,
@@ -551,7 +595,6 @@
                 id: player.id,
                 active: true,
                 experience: 0,
-                marks: 0,
                 characters: getPlayerCharacters(player.id)
             };
         });
@@ -568,8 +611,11 @@
             if(!state[state_name].config.hasOwnProperty('experience_attribute_name')){
                 state[state_name].config.experience_attribute_name = defaults.config.experience_attribute_name;
             }
-            if(!state[state_name].config.hasOwnProperty('mark_formula')){
-                state[state_name].config.mark_formula = defaults.config.mark_formula;
+            if(!state[state_name].config.hasOwnProperty('directxp')){
+                state[state_name].config.directxp = defaults.config.directxp;
+            }
+            if(!state[state_name].config.hasOwnProperty('updatesheet')){
+                state[state_name].config.updatesheet = defaults.config.updatesheet;
             }
         }
 
