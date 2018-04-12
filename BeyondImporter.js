@@ -1,5 +1,5 @@
 /*
- * Version 0.1.7
+ * Version 0.1.8
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Robin#1095
@@ -104,6 +104,8 @@
                 case 'import':
                     var json = msg.content.substring(14);
                     var character = JSON.parse(json).character;
+
+                    class_spells = [];
 
                     // Remove characters with the same name if overwrite is enabled.
                     if(state.BEYONDIMPORTER.config.overwrite){
@@ -464,6 +466,7 @@
     }
 
     const importSpell = (spell) => {
+        pre_log('Import spell: ' + spell.definition.name);
         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
         var row = generateRowID();
 
