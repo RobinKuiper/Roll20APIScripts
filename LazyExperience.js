@@ -16,7 +16,6 @@
  * Check styling of the different menus
  * Color to the buttons!
  * Check all commands
- * Give XP directly?
 */
 
 (function() {
@@ -153,29 +152,16 @@
                 break;
 
                 case 'add':
+                    let who = args.shift();
                     let experience = args.shift()*1;
-                    playerid = args.shift();
 
-                    if(!playerid){
-                        let total_experience = experience+getExperience();
-                        setExperience(total_experience);
-                        sendChat(script_name, '/w gm <div style="'+style+'">' + experience + ' experience added, total experience is now: '+ total_experience +'</div>');
+                    if(who === 'session'){
+                        setExperience(experience);
                     }else{
-                        if(playerExists(playerid)){
-                            let characterid = args.shift();
-                            let player = state[state_name].players[playerid];
-                            let character = getObjects(player.characters, 'id', characterid).shift();
-                            let total_experience = experience+character.experience;
-                            state[state_name].players[playerid].characters.forEach((character, i) => {
-                                if(characterid === character.id){
-                                    state[state_name].players[playerid].characters[i].experience = total_experience;
-                                }
-                            });
-                            sendChat(script_name, '/w gm <div style="'+style+'">' + experience + ' experience added to '+character.name+', total experience for '+character.name+' is now: '+ total_experience +'</div>');
-                        }else{
-                            sendChat(script_name, '/w gm <div style="'+style+'">Player does not exists. You can try and refresh the player list.<hr>'+makeButton('Refresh Players', '!'+state[state_name].config.command + ' refresh', buttonStyle2)+'</div>')
-                        }                        
+                        setExperience(experience, who);
                     }
+
+                    sendMenu(); 
                 break
 
                 case 'show':
@@ -185,33 +171,39 @@
                 case 'end':
                     let xpSharers = getExperienceSharers();
                     let session_experience = (xpSharers > 0) ? (Math.floor(getExperience()/xpSharers)) : 0;
+                    let send_message_text = '<b>Session Ended</b>';
+                    let send_gm_text = 'Session Experience: '+session_experience
 
-                    sendChat(script_name, '<div style="'+style+'"><b>Session Ended</b><br>Everyone gets <b>'+session_experience+' experience.</b></div>');
+                    if(!state[state_name].config.directxp){
+                        let character_experiences = '';
+                        for(playerid in state[state_name].players){
+                            let player = state[state_name].players[playerid];
+                            if(player.active){
+                                player.characters.forEach((character, i) => {
+                                    if(character.active){
+                                        let total_experience = character.experience+session_experience
+                                        let send_character_text = 'You get '+character.experience+' extra experience, bringing your total this session to <b>' + total_experience + '</b> experience.';
 
-                    let character_experiences = '';
-                    for(playerid in state[state_name].players){
-                        let player = state[state_name].players[playerid];
-                        if(player.active){
-                            player.characters.forEach((character, i) => {
-                                if(character.active){
-                                    let total_experience = character.experience+session_experience
-                                    character_experiences += character.name + ': ' + character.experience + ' | Total: <b>' + total_experience + '</b><br>';
-                                    if(state[state_name].config.updatesheet){
-                                        let full_total_experience = getAttrByName(character.id, state[state_name].config.experience_attribute_name, 'current')*1 + total_experience*1;
-                                        let attributes = {};
-                                        attributes[state[state_name].config.experience_attribute_name] = full_total_experience;
-                                        setAttrs(character.id, attributes);
+                                        character_experiences += character.name + ': ' + character.experience + ' | Total: <b>' + total_experience + '</b><br>';
+                                        if(state[state_name].config.updatesheet){
+                                            let new_experience = updateExperienceOnSheet(total_experience, character.id);
 
-                                        sendChat(script_name, '/w ' + character.name.split(' ').shift() + ' <div style="'+style+'">You get '+character.experience+' extra experience, bringing your total this session to <b>' + total_experience + '</b> experience. <p>Your sheet has been updated, your total experience is now '+full_total_experience+'</p></div>');
-                                    }else{
-                                        sendChat(script_name, '/w ' + character.name.split(' ').shift() + ' <div style="'+style+'">You get '+character.experience+' extra experience, bringing your total this session to <b>' + total_experience + '</b> experience.</div>');
+                                            send_character_text += '<p>Your sheet has been updated, your total experience is now '+new_experience+'</p>';
+                                        }
+
+                                        sendChat(script_name, '/w ' + character.name.split(' ').shift() + ' <div style="'+style+'">'+send_character_text+'</div>');
                                     }
-                                }
-                            });
+                                });
+                            }
                         }
+
+                        send_message_text += '<br>Everyone gets <b>'+session_experience+' experience.</b>';
+                        send_message_text += (state[state_name].config.updatesheet) && '<p>Your character sheets have been updated.</p>';
+                        send_gm_text += '<hr>'+character_experiences;
                     }
 
-                    sendChat(script_name, '/w gm <div style="'+style+'">Session Experience: '+session_experience+'<hr>'+character_experiences+'</div>')
+                    sendChat(script_name, '<div style="'+style+'">'+send_message_text+'</div>'); 
+                    sendChat(script_name, '/w gm <div style="'+style+'">'+send_gm_text+'</div>')
 
                     resetExperience();
                 break;
@@ -222,6 +214,28 @@
             }
         }
     });
+
+    const updateExperienceOnSheet = (experience, characterid) => {
+        if(characterid){
+            let new_experience = getAttrByName(characterid, state[state_name].config.experience_attribute_name, 'current')*1 + experience*1;
+
+            let attributes = {};
+            attributes[state[state_name].config.experience_attribute_name] = new_experience;
+            setAttrs(characterid, attributes);
+
+            return new_experience;
+        }else{
+            for(let playerid in state[state_name].players){
+                state[state_name].players[playerid].characters.forEach((character, i) => {
+                    let new_experience = getAttrByName(character.id, state[state_name].config.experience_attribute_name, 'current')*1 + experience*1;
+
+                    let attributes = {};
+                    attributes[state[state_name].config.experience_attribute_name] = new_experience;
+                    setAttrs(character.id, attributes);
+                })
+            }
+        }
+    }
 
     const getExperienceSharers = () => {
         let xpSharers = state[state_name].extra_players*1;
@@ -301,11 +315,34 @@
         return state[state_name].players[playerid].experience;
     }
 
-    const setExperience = (experience, playerid) => {
-        if(playerid){
-            state[state_name].players[playerid].experience += experience;
+    const setExperience = (experience, characterid) => {
+        let playerid;
+        pre_log(characterid);
+        if(characterid){
+            playerid = findObjs({ _id: characterid, _type: 'character' }).shift().get('controlledby');
+            state[state_name].players[playerid].characters.forEach((character, i) =>{
+                if(character.id === characterid){
+                    state[state_name].players[playerid].characters[i].experience += experience;
+                }
+            })
         }else{
             state[state_name].session_experience += experience;
+        }
+
+        // Give XP Directly?
+        if(state[state_name].config.directxp){
+            pp_experience = (characterid) ? experience : experience/getExperienceSharers();
+            let send_message_text = (characterid) ? 'You have been awarded ' + pp_experience + ' experience' : 'Everyone is awarded '+pp_experience+' experience.';
+
+            // Update Sheet with new experience?
+            if(state[state_name].config.updatesheet){
+                updateExperienceOnSheet(pp_experience, characterid);
+
+                send_message_text += 'Your character sheet has been updated.';
+            }
+
+            let whisper = (characterid) ? '/w ' + getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0] + ' ' : '';
+            sendChat(script_name, whisper + '<div style="'+style+'">'+send_message_text+'</div>');
         }
     }
 
@@ -363,7 +400,7 @@
                 }).shift().get('current');
 
                 if(experience > 0){
-                    let yesButton = makeButton('Yes', '!' + state[state_name].config.command + ' add '+experience, buttonStyle2);
+                    let yesButton = makeButton('Yes', '!' + state[state_name].config.command + ' add session '+experience, buttonStyle2);
                     sendChat('LazyExperience', '/w gm <div style="'+style+'"><b>' + obj.get('name') + '</b> just died, do you want to add <b>'+experience+'</b> xp to the threshold?<br>'+yesButton+'</div>');
                 }                
             }
@@ -371,10 +408,10 @@
     }
 
     const sendMenu = () => {
-        let addXPButton = makeButton('Add Session Experience', '!' + state[state_name].config.command + ' add ?{Experience}', buttonStyle2);
+        let addXPButton = makeButton(getTexts().add_session_xp, '!' + state[state_name].config.command + ' add session ?{Experience}', buttonStyle2);
         let endButton = makeButton('End Session', '!' + state[state_name].config.command + ' end', buttonStyle2);
         let resetXPButton = makeButton('Reset Experience', '!' + state[state_name].config.command + ' resetxp', buttonStyle2);
-        //let addXPSelectedButton = makeButton('Add XP: Selected', '!' + state[state_name].config.command + ' add ?{selectedExperience}', buttonStyle2);
+        //let addXPSelectedButton = makeButton('Add XP: Selected', '!' + state[state_name].config.command + ' add session ?{selectedExperience}', buttonStyle2);
 
         let playerListItems = [];
         for(var playerid in state[state_name].players){
@@ -393,7 +430,7 @@
                 });
                 characterDropdown += '}';
                 characterDropdown = (characterIds.length === 1) ? characterIds[0] : characterDropdown;
-                let addExperienceButton = (characterIds.length > 0) ? makeButton('Add xp', '!' + state[state_name].config.command + ' add ?{Experience} ' + playerid + ' ' + characterDropdown, buttonStyle + ' float: right; font-size: 10pt;', (player.characters.length > 0)) : '';
+                let addExperienceButton = (characterIds.length > 0) ? makeButton(getTexts().add_xp, '!' + state[state_name].config.command + ' add '+characterDropdown+' ?{Experience}', buttonStyle + ' float: right; font-size: 10pt;', (player.characters.length > 0)) : '';
                 playerListItems.push('<span style="float: left; font-weight: bold">' + player.name + '<br>' + makeList(characterListItems, listStyle + 'margin-left: 5px;', 'font-size: 10pt;') + '</span> ' + addExperienceButton);
             }
         }
@@ -403,6 +440,16 @@
 
     const ucFirst = (string) => {
         return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    const getTexts = () => {
+        return (state[state_name].config.directxp) ? {
+            add_xp: 'Give xp',
+            add_session_xp: 'Give Session Experience'
+        } : {
+            add_xp: 'Add xp',
+            add_session_xp: 'Add Session Experience'
+        }
     }
 
     const sendConfigMenu = (first) => {
@@ -417,12 +464,14 @@
         let experienceAttributeButton = makeButton(state[state_name].config.experience_attribute_name, '!' + state[state_name].config.command + ' config experience_attribute_name|?{Attribute}', buttonStyle);
         let extraPlayersButton = makeButton(state[state_name].extra_players, '!' + state[state_name].config.command + ' config extra_players|?{Players}', buttonStyle);
         let updateSheetButton = makeButton(state[state_name].config.updatesheet, '!' + state[state_name].config.command + ' config updatesheet|'+!state[state_name].config.updatesheet, buttonStyle);
-
+        let directXPButton = makeButton(state[state_name].config.directxp, '!' + state[state_name].config.command + ' config directxp|'+!state[state_name].config.directxp, buttonStyle);
+        
         let listItems = [
             '<span style="float: left">Command:</span> ' + commandButton,
             '<span style="float: left">Marker:</span> ' + markerButton,
             '<span style="float: left">XP Attribute:</span> ' + experienceAttributeButton,
             '<span style="float: left">Extra Players:</span> ' + extraPlayersButton,
+            '<span style="float: left">Give Xp Instant:</span> ' + directXPButton,
             '<span style="float: left">Update Sheets:</span> ' + updateSheetButton,
         ];
 
@@ -461,7 +510,7 @@
         });
         characterDropdown += '}';
 
-        let addExperienceButton = makeButton('Add Experience', '!' + state[state_name].config.command + ' add ?{Experience} ' + playerid + ' ' + characterDropdown, buttonStyle2, (player.characters.length > 0));
+        let addExperienceButton = makeButton('Add Experience', '!' + state[state_name].config.command + ' add '+characterDropdown+' ?{Experience}', buttonStyle2, (player.characters.length > 0));
 
         let listItems = [
             activeButton,
