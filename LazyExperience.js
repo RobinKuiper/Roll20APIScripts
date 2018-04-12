@@ -1,5 +1,5 @@
-/* WORK IN PROGRESS
- * Version 0.0.13
+/* 
+ * Version 0.1.3
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -601,7 +601,7 @@
     const setDefaults = (reset) => {
         const defaults = {
             config: {
-                command: 'lxp',
+                command: 'xp',
                 marker: 'dead',
                 experience_attribute_name: 'experience',
                 npc_experience_attribute_name: 'npc_xp',
@@ -661,4 +661,6 @@
             state[state_name].config.firsttime = false;
         }
     }
+
+    pre_log(this)
 })();
