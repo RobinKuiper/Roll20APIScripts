@@ -661,6 +661,4 @@
             state[state_name].config.firsttime = false;
         }
     }
-
-    pre_log(this)
 })();
