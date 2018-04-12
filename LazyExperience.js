@@ -11,7 +11,6 @@
 
 /*
  * TODO
- * Add XP by only Characterid
  * Check styling variables
  * Check styling of the different menus
  * Color to the buttons!
@@ -255,18 +254,6 @@
         return xpSharers;
     }
 
-    const playerExists = (playerid) => {
-        return (state[state_name].players[playerid]);
-    }
-
-    const getActivePlayerCount = () => {
-        let counter = 0;
-        for(var name in state[state_name].players){
-            if(state[state_name].players[name].active){ counter++; }
-        }
-        return counter;
-    }
-
     const getPlayers = (object) => {
         let players = []
         findObjs({ _type: 'player' }).forEach((player) => {
@@ -299,20 +286,8 @@
         });
     }
 
-    const getPlayerid = (player_name) => {
-        return getObjects(getPlayers(true), 'name', player_name).shift().id
-    }
-
     const getExperience = () => {
         return state[state_name].session_experience;
-    }
-
-    const getExperienceByPlayerName = (player_name) => {
-        return getExperienceByPlayerid(getPlayerid(player_name));
-    }
-
-    const getExperienceByPlayerid = (playerid) => {
-        return state[state_name].players[playerid].experience;
     }
 
     const setExperience = (experience, characterid) => {
@@ -344,14 +319,6 @@
             let whisper = (characterid) ? '/w ' + getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0] + ' ' : '';
             sendChat(script_name, whisper + '<div style="'+style+'">'+send_message_text+'</div>');
         }
-    }
-
-    const setExperienceToPlayerName = (experience, player_name) => {
-        setExperienceToPlayerid(experience, getPlayerid(player_name));
-    }
-
-    const setExperienceToPlayerid = (experience, playerid) => {
-        setExperience(experience, playerid);
     }
 
     //return an array of objects according to key, value, or key and value matching
