@@ -63,6 +63,7 @@ Biggest difference is that it has an option to reward experience directly, and k
 ### Config
 
 The first time you add this script you get a first time config menu in chat.
+
 ![Config Menu](https://i.imgur.com/sx8JMgU.png "Config Menu")
 
 * **Command** - The command you want to use with this script, eg. !xp.
