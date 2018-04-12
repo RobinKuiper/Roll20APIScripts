@@ -234,6 +234,15 @@
                                 multiclass_level += current_class.level;
                             }
 
+                            // Set Pact Magic as class resource
+                            if(current_class.class.name.toLowerCase() === 'warlock'){
+                                let attributes = {}
+                                attributes['other_resource_name'] = 'Pact Magic';
+                                attributes['other_resource_max'] = getPactMagicSlots(current_class.level);
+                                attributes['other_resource'] = getPactMagicSlots(current_class.level);
+                                setAttrs(object.id, attributes);
+                            }
+
                             if(state.BEYONDIMPORTER.config.imports.class_traits){
                                 current_class.features.forEach(function(trait)
                                 {
@@ -446,6 +455,27 @@
             }
         }
     });
+
+    const getPactMagicSlots = (level) => {
+        switch(level){
+            case 1:
+                return 1;
+            break;
+
+            case 2: case 3: case 4: case 5: case 6: case 7: case 8: case 9: case 10:
+                return 2;
+            break;
+
+            case 11: case 12: case 13: case 14: case 15: case 16:
+                return 3;
+            break;
+
+            default:
+                return 4
+            break;
+        }
+        return 0;
+    }
 
     function importSpells(array) {
         // set this to whatever number of items you can process at once
