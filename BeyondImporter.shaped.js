@@ -2,7 +2,7 @@
  * Version 0.0.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
- * Discord: Atheos#1014
+ * Discord: Robin#1095
  * Roll20: https://app.roll20.net/users/1226016/robin-k
  * Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
