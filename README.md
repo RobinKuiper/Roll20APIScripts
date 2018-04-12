@@ -105,6 +105,8 @@ A list of active players with there active characters is also shown here, and ex
 
 When a token is given the statusmarker you have set up in the config ("dead" by default), you will get the question if you want to add the experience to the session experience threshold.
 
+Roll20 Thread: https://app.roll20.net/forum/post/6275681/script-lazyexperience/?pageforid=6275681#post-6275681
+
 ---
 
 ## StatusInfo
