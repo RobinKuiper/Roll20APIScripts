@@ -164,7 +164,7 @@
                 break
 
                 case 'show':
-                    sendChat(script_name, '/w gm <div style="'+style+'">Current Experience: ' + getExperience() + '</div>');
+                    makeAndSendMenu('Current Experience: ' + getExperience(), script_name + ' Help', 'gm')
                 break;
 
                 case 'end':
@@ -190,7 +190,7 @@
                                             send_character_text += '<p>Your sheet has been updated, your total experience is now '+new_experience+'</p>';
                                         }
 
-                                        sendChat(script_name, '/w ' + character.name.split(' ').shift() + ' <div style="'+style+'">'+send_character_text+'</div>');
+                                        makeAndSendMenu(send_character_text, '', character.name.split(' ').shift());
                                     }
                                 });
                             }
@@ -201,8 +201,8 @@
                         send_gm_text += '<hr>'+character_experiences;
                     }
 
-                    sendChat(script_name, '<div style="'+style+'">'+send_message_text+'</div>'); 
-                    sendChat(script_name, '/w gm <div style="'+style+'">'+send_gm_text+'</div>')
+                    makeAndSendMenu(send_message_text);
+                    makeAndSendMenu(send_gm_text, '', 'gm');
 
                     resetExperience();
                 break;
@@ -316,8 +316,8 @@
                 send_message_text += 'Your character sheet has been updated.';
             }
 
-            let whisper = (characterid) ? '/w ' + getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0] + ' ' : '';
-            sendChat(script_name, whisper + '<div style="'+style+'">'+send_message_text+'</div>');
+            let whisper = (characterid) && getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0];
+            makeAndSendMenu(send_message_text, '', whisper);
         }
     }
 
@@ -360,15 +360,16 @@
             var statusmarkers = obj.get('statusmarkers').split(",");
 
             if(!prevstatusmarkers.includes(state[state_name].config.marker) && statusmarkers.includes(state[state_name].config.marker)){
-                var experience = findObjs({                                                          
+                /*var experience = findObjs({                                                          
                     _type: "attribute",
                     name: state[state_name].config.experience_attribute_name,
                     characterid: obj.get('represents')                    
-                }).shift().get('current');
+                }).shift().get('current');*/
+                let experience = getAttrByName(obj.get('represents'), state[state_name].config.npc_experience_attribute_name, 'current')
 
                 if(experience > 0){
                     let yesButton = makeButton('Yes', '!' + state[state_name].config.command + ' add session '+experience, buttonStyle2);
-                    sendChat('LazyExperience', '/w gm <div style="'+style+'"><b>' + obj.get('name') + '</b> just died, do you want to add <b>'+experience+'</b> xp to the threshold?<br>'+yesButton+'</div>');
+                    makeAndSendMenu('<b>' + obj.get('name') + '</b> just died, do you want to add <b>'+experience+'</b> xp to the threshold?<br>'+yesButton, '', 'gm');
                 }                
             }
         }
@@ -402,7 +403,8 @@
             }
         }
 
-        sendChat(script_name, '/w gm <div style="'+style+'">'+makeTitle(script_name + ' menu')+'Session Experience: '+getExperience()+'<br>Experience Divisors: ' + getExperienceSharers() + '<hr>'+makeList(playerListItems, listStyle + ' overflow: hidden;', 'overflow: hidden;')+'<hr>'+addXPButton+'<br>'+endButton+'<hr>'+resetXPButton+'</div>');
+        let contents = 'Session Experience: '+getExperience()+'<br>Experience Divisors: ' + getExperienceSharers() + '<hr>'+makeList(playerListItems, listStyle + ' overflow: hidden;', 'overflow: hidden;')+'<hr>'+addXPButton+'<br>'+endButton+'<hr>'+resetXPButton
+        makeAndSendMenu(contents, script_name + ' menu', 'gm');
     }
 
     const ucFirst = (string) => {
@@ -429,6 +431,7 @@
 
         let markerButton = makeButton(state[state_name].config.marker, '!' + state[state_name].config.command + ' config marker|'+markerDropdown, buttonStyle);
         let experienceAttributeButton = makeButton(state[state_name].config.experience_attribute_name, '!' + state[state_name].config.command + ' config experience_attribute_name|?{Attribute}', buttonStyle);
+        let npcExperienceAttributeButton = makeButton(state[state_name].config.npc_experience_attribute_name, '!' + state[state_name].config.command + ' config npc_experience_attribute_name|?{Attribute}', buttonStyle);
         let extraPlayersButton = makeButton(state[state_name].extra_players, '!' + state[state_name].config.command + ' config extra_players|?{Players}', buttonStyle);
         let updateSheetButton = makeButton(state[state_name].config.updatesheet, '!' + state[state_name].config.command + ' config updatesheet|'+!state[state_name].config.updatesheet, buttonStyle);
         let directXPButton = makeButton(state[state_name].config.directxp, '!' + state[state_name].config.command + ' config directxp|'+!state[state_name].config.directxp, buttonStyle);
@@ -436,7 +439,8 @@
         let listItems = [
             '<span style="float: left">Command:</span> ' + commandButton,
             '<span style="float: left">Marker:</span> ' + markerButton,
-            '<span style="float: left">XP Attribute:</span> ' + experienceAttributeButton,
+            '<span style="float: left">Player XP Attribute:</span> ' + experienceAttributeButton,
+            '<span style="float: left">NPC XP Attribute:</span> ' + npcExperienceAttributeButton,
             '<span style="float: left">Extra Players:</span> ' + extraPlayersButton,
             '<span style="float: left">Give Xp Instant:</span> ' + directXPButton,
             '<span style="float: left">Update Sheets:</span> ' + updateSheetButton,
@@ -458,9 +462,8 @@
         let resetButton = makeButton('Reset Config', '!' + state[state_name].config.command + ' reset', buttonStyle + ' width: 100%');
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
-        let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Players</b><br><br>'+makeList(playerListItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr>'+refreshPlayersButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetXPButton+'<br>'+resetButton+'</div>';
-
-        sendChat('', '/w gm ' + text);
+        let contents = makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Players</b><br><br>'+makeList(playerListItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr>'+refreshPlayersButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetXPButton+'<br>'+resetButton;
+        makeAndSendMenu(contents, title_text, 'gm');
     }
 
     const sendPlayerConfigMenu = (playerid) => {
@@ -488,9 +491,8 @@
         let removeButton = makeButton('Remove', '!' + state[state_name].config.command + ' player remove ' + playerid + ' ?{Are you sure?|Yes,yes|No,no}', buttonStyle + ' width: 100%;');
         let backButton = makeButton('Back', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%');
 
-        let text = '<div style="'+style+'">'+makeTitle(player.name + ' - Config')+'Experience: '+player.experience+'<hr>'+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Characters</b>'+makeList(characterListItems, listStyle + ' overflow:hidden;', 'overflow: hidden;')+refreshCharactersButton+'<hr>'+backButton+'<hr>'+removeButton+'</div>';
-
-        sendChat('', '/w gm ' + text);
+        let contents = 'Experience: '+player.experience+'<hr>'+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Characters</b>'+makeList(characterListItems, listStyle + ' overflow:hidden;', 'overflow: hidden;')+refreshCharactersButton+'<hr>'+backButton+'<hr>'+removeButton;
+        makeAndSendMenu(contents, player.name + ' - Config', 'gm');
     }
 
     const sendHelpMenu = (first) => {
@@ -501,9 +503,14 @@
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
         ]
 
-        let text = '<div style="'+style+'">'+makeTitle(script_name + ' Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
+        let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton;
+        makeAndSendMenu(contents, script_name + ' Help', 'gm')
+    }
 
-        sendChat('', '/w gm ' + text);
+    const makeAndSendMenu = (contents, title, whisper) => {
+        title = (title && title != '') && makeTitle(title)
+        whisper = (whisper && whisper !== '') && '/w ' + whisper + ' ';
+        sendChat(script_name, whisper + '<div style="'+style+'">'+title+contents+'</div>');
     }
 
     const makeTitle = (title) => {
@@ -596,7 +603,8 @@
             config: {
                 command: 'lxp',
                 marker: 'dead',
-                experience_attribute_name: 'xp',
+                experience_attribute_name: 'experience',
+                npc_experience_attribute_name: 'npc_xp',
                 directxp: false,
                 updatesheet: false
             },
@@ -626,6 +634,9 @@
             }
             if(!state[state_name].config.hasOwnProperty('experience_attribute_name')){
                 state[state_name].config.experience_attribute_name = defaults.config.experience_attribute_name;
+            }
+            if(!state[state_name].config.hasOwnProperty('npc_experience_attribute_name')){
+                state[state_name].config.npc_experience_attribute_name = defaults.config.npc_experience_attribute_name;
             }
             if(!state[state_name].config.hasOwnProperty('directxp')){
                 state[state_name].config.directxp = defaults.config.directxp;
