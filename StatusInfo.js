@@ -1,5 +1,5 @@
 /*
- * Version: 0.1.3
+ * Version: 0.1.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -16,6 +16,8 @@
     const conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
     const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
     const listStyle = 'list-style: none; padding: 0; margin: 0;';
+
+    const statusmarkers = {red:"#C91010",blue:"#1076C9",green:"#2FC910",brown:"#C97310",purple:"#9510C9",pink:"#EB75E1",yellow:"#E5EB75",dead:"X",skull:0,sleepy:34,"half-heart":68,"half-haze":102,interdiction:136,snail:170,"lightning-helix":204,spanner:238,"chained-heart":272,"chemical-bolt":306,"death-zone":340,"drink-me":374,"edge-crack":408,"ninja-mask":442,stopwatch:476,"fishing-net":510,overdrive:544,strong:578,fist:612,padlock:646,"three-leaves":680,"fluffy-wing":714,pummeled:748,tread:782,arrowed:816,aura:850,"back-pain":884,"black-flag":918,"bleeding-eye":952,"bolt-shield":986,"broken-heart":1020,cobweb:1054,"broken-shield":1088,"flying-flag":1122,radioactive:1156,trophy:1190,"broken-skull":1224,"frozen-orb":1258,"rolling-bomb":1292,"white-tower":1326,grab:1360,screaming:1394,grenade:1428,"sentry-gun":1462,"all-for-one":1496,"angel-outfit":1530,"archery-target":1564}
 
     // All the conditions with descriptions/icons.
     const conditions = {
@@ -254,7 +256,24 @@
         condition.descriptions.forEach((desc) => {
             description += '<p>'+desc.replace('{command}', state.STATUSINFO.config.command)+'</p>';
         });
-        sendChat("", whisper + "<div style='" + conditionStyle + "'><h2>"+condition.name+"</h2>"+ description +"</div>");
+
+        let X = '';
+        let iconStyle = 'width: 24px; height: 24px; margin-right: 5px; margin-top: 5px;'
+
+        if(Number.isInteger(statusmarkers[condition.icon])){
+            iconStyle += 'background-image: url(https://roll20.net/images/statussheet.png);'
+            iconStyle += 'background-position: -'+statusmarkers[condition.icon]+'px 0;'
+        }else if(statusmarkers[condition.icon] === 'X'){
+            iconStyle += 'color: red; margin-right: 0px;';
+            X = 'X';
+        }else{
+            iconStyle += 'background-color: ' + statusmarkers[condition.icon] + ';';
+            iconStyle += 'border: 1px solid white; border-radius: 50%;'
+        }
+        
+        let icon = '<div style="'+iconStyle+' display: inline-block;">'+X+'</div>';
+
+        sendChat("", whisper + "<div style='" + conditionStyle + "'><h2>"+icon+condition.name+"</h2>"+ description +"</div>");
     }
 
     //return an array of objects according to key, value, or key and value matching
