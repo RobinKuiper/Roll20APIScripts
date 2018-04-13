@@ -33,7 +33,7 @@
 
     on('ready',()=>{ 
         checkInstall();
-        log(script_name + ' Ready!');
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
         if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
 
         // Handle condition descriptions when tokenmod changes the statusmarkers on a token.

@@ -157,7 +157,7 @@
 
     on('ready', () => {
         checkInstall();
-        log(script_name+' Ready!');
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
 
         // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
         if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
@@ -288,7 +288,9 @@
             icon = '<div style="'+iconStyle+' display: inline-block;">'+X+'</div>';
         }
 
-        sendChat((whisper) ? script_name : '', whisper + "<div style='" + conditionStyle + "'><h2>"+icon+condition.name+"</h2>"+ description +"</div>");
+        makeAndSendMenu(description, icon+condition.name, {
+            title_tag: 'h2'
+        });
     }
 
     //return an array of objects according to key, value, or key and value matching
@@ -328,9 +330,8 @@
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', buttonStyle + ' width: 100%');
 
         let title_text = (first) ? script_name+' First Time Setup' : script_name+' Config';
-        let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton+'</div>';
-
-        sendChat(script_name, '/w gm ' + text);
+        let contents = makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        makeAndSendMenu(contents, title_text)
     }
 
     const sendHelpMenu = (first) => {
@@ -339,16 +340,22 @@
         let listItems = [
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' help</span> - Shows this menu.',
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
-            '<span style="text-decoration: underline">!'+state[state_name].config.command+' [CONDITION NAME]</span> - Shows the description of the condition entered.'
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' [CONDITION]</span> - Shows the description of the condition entered.'
         ]
 
-        let text = '<div style="'+style+'">'+makeTitle(script_name+' Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
-
-        sendChat(script_name, '/w gm ' + text);
+        let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton;
+        makeAndSendMenu(contents, script_name+' Help')
     }
 
-    const makeTitle = (title) => {
-        return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
+    const makeAndSendMenu = (contents, title, settings) => {
+        settings = (settings) ? settings : {};
+        title = (title && title != '') && makeTitle(title, (settings.title_tag) && settings.title_tag)
+        sendChat((whisper) ? script_name : '', whisper + '<div style="'+style+'">'+title+contents+'</div>');
+    }
+
+    const makeTitle = (title, title_tag) => {
+        title_tag = (title_tag && title_tag !== '') ? title_tag : 'h3';
+        return '<'+title_tag+' style="margin-bottom: 10px;">'+title+'</'+title_tag+'>';
     }
 
     const makeButton = (title, href, style) => {
