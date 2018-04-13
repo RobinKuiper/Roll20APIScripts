@@ -1,5 +1,5 @@
 /*
- * Version: 0.1.4
+ * Version: 0.1.5
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -7,6 +7,11 @@
  * Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
+ * 
+ * COMMANDS (with default command):
+ * !condition [CONDITION] - Shows condition.
+ * !condtion help - Shows help menu.
+ * !condition config - Shows config menu.
 */
 
 (function() {
@@ -17,8 +22,11 @@
     const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
     const listStyle = 'list-style: none; padding: 0; margin: 0;';
 
-    const image_positions = {red:"#C91010",blue:"#1076C9",green:"#2FC910",brown:"#C97310",purple:"#9510C9",pink:"#EB75E1",yellow:"#E5EB75",dead:"X",skull:0,sleepy:34,"half-heart":68,"half-haze":102,interdiction:136,snail:170,"lightning-helix":204,spanner:238,"chained-heart":272,"chemical-bolt":306,"death-zone":340,"drink-me":374,"edge-crack":408,"ninja-mask":442,stopwatch:476,"fishing-net":510,overdrive:544,strong:578,fist:612,padlock:646,"three-leaves":680,"fluffy-wing":714,pummeled:748,tread:782,arrowed:816,aura:850,"back-pain":884,"black-flag":918,"bleeding-eye":952,"bolt-shield":986,"broken-heart":1020,cobweb:1054,"broken-shield":1088,"flying-flag":1122,radioactive:1156,trophy:1190,"broken-skull":1224,"frozen-orb":1258,"rolling-bomb":1292,"white-tower":1326,grab:1360,screaming:1394,grenade:1428,"sentry-gun":1462,"all-for-one":1496,"angel-outfit":1530,"archery-target":1564}
+    const icon_image_positions = {red:"#C91010",blue:"#1076C9",green:"#2FC910",brown:"#C97310",purple:"#9510C9",pink:"#EB75E1",yellow:"#E5EB75",dead:"X",skull:0,sleepy:34,"half-heart":68,"half-haze":102,interdiction:136,snail:170,"lightning-helix":204,spanner:238,"chained-heart":272,"chemical-bolt":306,"death-zone":340,"drink-me":374,"edge-crack":408,"ninja-mask":442,stopwatch:476,"fishing-net":510,overdrive:544,strong:578,fist:612,padlock:646,"three-leaves":680,"fluffy-wing":714,pummeled:748,tread:782,arrowed:816,aura:850,"back-pain":884,"black-flag":918,"bleeding-eye":952,"bolt-shield":986,"broken-heart":1020,cobweb:1054,"broken-shield":1088,"flying-flag":1122,radioactive:1156,trophy:1190,"broken-skull":1224,"frozen-orb":1258,"rolling-bomb":1292,"white-tower":1326,grab:1360,screaming:1394,grenade:1428,"sentry-gun":1462,"all-for-one":1496,"angel-outfit":1530,"archery-target":1564}
 
+    let script_name = 'StatusInfo';
+    let state_name = 'STATUSINFO';
+    
     // All the conditions with descriptions/icons.
     const conditions = {
         blinded: {
@@ -149,7 +157,7 @@
 
     on('ready', () => {
         checkInstall();
-        log('StatusInfo Ready!');
+        log(script_name+' Ready!');
 
         // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
         if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
@@ -168,12 +176,11 @@
         let args = msg.content.split(' ');
         let command = args.shift().substring(1);
         let extracommand = args.shift();
-        //let conditionName = args[0];
 
-        if(command === state.STATUSINFO.config.command){
+        if(command === state[state_name].config.command){
             switch(extracommand){
                 case 'reset':
-                    state.STATUSINFO = {};
+                    state[state_name] = {};
                     setDefaults(true);
                     sendConfigMenu();
                 break;
@@ -190,9 +197,9 @@
 
                         if(key === 'prefix' && value.charAt(0) !== '_'){ value = '_' + value}
 
-                        state.STATUSINFO.config[key] = value;
+                        state[state_name].config[key] = value;
 
-                        whisper = (state.STATUSINFO.config.sendOnlyToGM) ? '/w gm ' : '';
+                        whisper = (state[state_name].config.sendOnlyToGM) ? '/w gm ' : '';
                    }
 
                    sendConfigMenu();
@@ -206,7 +213,7 @@
                             // Send it to chat.
                             sendConditionToChat(condition);
                         }else{
-                            sendChat('Error', whisper + 'Condition ' + conditionName + ' does not exist.');
+                            sendChat((whisper) ? script_name : '', whisper + 'Condition ' + conditionName + ' does not exist.');
                         }
                     }else{
                         sendHelpMenu();
@@ -222,7 +229,7 @@
     });
 
     const handleStatusmarkerChange = (obj, prev) => {
-        if(state.STATUSINFO.config.showDescOnStatusChange){
+        if(state[state_name].config.showDescOnStatusChange){
             // Check if the statusmarkers string is different from the previous statusmarkers string.
             if(obj.get('statusmarkers') !== prev.statusmarkers){
                 // Create arrays from the statusmarkers strings.
@@ -251,33 +258,37 @@
         return conditions[name.toLowerCase()] || false;
     }
 
-    const sendConditionToChat = (condition) => {
+    const sendConditionToChat = (condition, w) => {
         let description = '';
         condition.descriptions.forEach((desc) => {
-            description += '<p>'+desc.replace('{command}', state.STATUSINFO.config.command)+'</p>';
+            description += '<p>'+desc.replace('{command}', state[state_name].config.command)+'</p>';
         });
 
-        let X = '';
-        let iconStyle = ''
+        let icon = '';
 
-        if(image_positions[condition.icon]){
-            iconStyle += 'width: 24px; height: 24px; margin-right: 5px; margin-top: 5px;';
-            
-            if(Number.isInteger(image_positions[condition.icon])){
-                iconStyle += 'background-image: url(https://roll20.net/images/statussheet.png);'
-                iconStyle += 'background-position: -'+image_positions[condition.icon]+'px 0;'
-            }else if(image_positions[condition.icon] === 'X'){
-                iconStyle += 'color: red; margin-right: 0px;';
-                X = 'X';
-            }else{
-                iconStyle += 'background-color: ' + image_positions[condition.icon] + ';';
-                iconStyle += 'border: 1px solid white; border-radius: 50%;'
+        if(state[state_name].config.showIconInDescription){
+            let X = '';
+            let iconStyle = ''
+
+            if(icon_image_positions[condition.icon]){
+                iconStyle += 'width: 24px; height: 24px; margin-right: 5px; margin-top: 5px;';
+                
+                if(Number.isInteger(icon_image_positions[condition.icon])){
+                    iconStyle += 'background-image: url(https://roll20.net/images/statussheet.png);'
+                    iconStyle += 'background-position: -'+icon_image_positions[condition.icon]+'px 0;'
+                }else if(icon_image_positions[condition.icon] === 'X'){
+                    iconStyle += 'color: red; margin-right: 0px;';
+                    X = 'X';
+                }else{
+                    iconStyle += 'background-color: ' + icon_image_positions[condition.icon] + ';';
+                    iconStyle += 'border: 1px solid white; border-radius: 50%;'
+                }
             }
+            
+            icon = '<div style="'+iconStyle+' display: inline-block;">'+X+'</div>';
         }
-        
-        let icon = '<div style="'+iconStyle+' display: inline-block;">'+X+'</div>';
 
-        sendChat("", whisper + "<div style='" + conditionStyle + "'><h2>"+icon+condition.name+"</h2>"+ description +"</div>");
+        sendChat((whisper) ? script_name : '', whisper + "<div style='" + conditionStyle + "'><h2>"+icon+condition.name+"</h2>"+ description +"</div>");
     }
 
     //return an array of objects according to key, value, or key and value matching
@@ -302,36 +313,38 @@
     }
 
     const sendConfigMenu = (first) => {
-        let commandButton = makeButton('!'+state.STATUSINFO.config.command, '!' + state.STATUSINFO.config.command + ' config command|?{Command (without !)}', buttonStyle)
-        let toGMButton = makeButton(state.STATUSINFO.config.sendOnlyToGM, '!' + state.STATUSINFO.config.command + ' config sendOnlyToGM|'+!state.STATUSINFO.config.sendOnlyToGM, buttonStyle)
-        let statusChangeButton = makeButton(state.STATUSINFO.config.showDescOnStatusChange, '!' + state.STATUSINFO.config.command + ' config showDescOnStatusChange|'+!state.STATUSINFO.config.showDescOnStatusChange, buttonStyle)
+        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
+        let toGMButton = makeButton(state[state_name].config.sendOnlyToGM, '!' + state[state_name].config.command + ' config sendOnlyToGM|'+!state[state_name].config.sendOnlyToGM, buttonStyle);
+        let statusChangeButton = makeButton(state[state_name].config.showDescOnStatusChange, '!' + state[state_name].config.command + ' config showDescOnStatusChange|'+!state[state_name].config.showDescOnStatusChange, buttonStyle);
+        let showIconButton = makeButton(state[state_name].config.showIconInDescription, '!' + state[state_name].config.command + ' config showIconInDescription|'+!state[state_name].config.showIconInDescription, buttonStyle);
 
         let listItems = [
             '<span style="float: left">Command:</span> ' + commandButton,
             '<span style="float: left">Only to GM:</span> '+toGMButton,
-            '<span style="float: left">Show on Status Change:</span> '+statusChangeButton
+            '<span style="float: left">Show on Status Change:</span> '+statusChangeButton,
+            '<span style="float: left">Display icon in chat:</span> '+showIconButton
         ];
 
-        let resetButton = makeButton('Reset', '!' + state.STATUSINFO.config.command + ' reset', buttonStyle + ' width: 100%');
+        let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', buttonStyle + ' width: 100%');
 
-        let title_text = (first) ? 'StatusInfo First Time Setup' : 'StatusInfo Config';
-        let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state.STATUSINFO.config.command+' config`.</p><hr>'+resetButton+'</div>';
+        let title_text = (first) ? script_name+' First Time Setup' : script_name+' Config';
+        let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton+'</div>';
 
-        sendChat('', '/w gm ' + text);
+        sendChat(script_name, '/w gm ' + text);
     }
 
     const sendHelpMenu = (first) => {
-        let configButton = makeButton('Config', '!' + state.STATUSINFO.config.command + ' config', buttonStyle + ' width: 100%;')
+        let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%;')
 
         let listItems = [
-            '<span style="text-decoration: underline">!'+state.STATUSINFO.config.command+' help</span> - Shows this menu.',
-            '<span style="text-decoration: underline">!'+state.STATUSINFO.config.command+' config</span> - Shows the configuration menu.',
-            '<span style="text-decoration: underline">!'+state.STATUSINFO.config.command+' [CONDITION NAME]</span> - Shows the description of the condition entered.'
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' help</span> - Shows this menu.',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' [CONDITION NAME]</span> - Shows the description of the condition entered.'
         ]
 
-        let text = '<div style="'+style+'">'+makeTitle('StatusInfo Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
+        let text = '<div style="'+style+'">'+makeTitle(script_name+' Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
 
-        sendChat('', '/w gm ' + text);
+        sendChat(script_name, '/w gm ' + text);
     }
 
     const makeTitle = (title) => {
@@ -352,39 +365,44 @@
     }
 
     const checkInstall = () => {
-        if(!_.has(state, 'STATUSINFO')){
-            state.STATUSINFO = state.STATUSINFO || {};
+        if(!_.has(state, state_name)){
+            state[state_name] = state[state_name] || {};
         }
         setDefaults();
     }
 
     const setDefaults = (reset) => {
         const defaults = {
-            command: 'condition',
-            sendOnlyToGM: false,
-            showDescOnStatusChange: true
+            config: {
+                command: 'condition',
+                sendOnlyToGM: false,
+                showDescOnStatusChange: true,
+                showIconInDescription: true
+            }
         };
 
-        if(!state.STATUSINFO.config){
-            state.STATUSINFO.config = defaults;
+        if(!state[state_name].config){
+            state[state_name].config = defaults.config;
         }else{
-            if(!state.STATUSINFO.config.hasOwnProperty('command')){
-                state.STATUSINFO.config.command = defaults.command;
+            if(!state[state_name].config.hasOwnProperty('command')){
+                state[state_name].config.command = defaults.config.command;
             }
-            if(!state.STATUSINFO.config.hasOwnProperty('sendOnlyToGM')){
-                state.STATUSINFO.config.sendOnlyToGM = defaults.sendOnlyToGM;
+            if(!state[state_name].config.hasOwnProperty('sendOnlyToGM')){
+                state[state_name].config.sendOnlyToGM = defaults.config.sendOnlyToGM;
             }
-            if(!state.STATUSINFO.config.hasOwnProperty('showDescOnStatusChange')){
-                state.STATUSINFO.config.debug = defaults.showDescOnStatusChange;
+            if(!state[state_name].config.hasOwnProperty('showDescOnStatusChange')){
+                state[state_name].config.showDescOnStatusChange = defaults.config.showDescOnStatusChange;
             }
-            if(!state.STATUSINFO.config.hasOwnProperty('firsttime')){
-                if(!reset){
-                    sendConfigMenu(true);
-                }
-                state.STATUSINFO.config.firsttime = false;
+            if(!state[state_name].config.hasOwnProperty('showIconInDescription')){
+                state[state_name].config.showIconInDescription = defaults.config.showIconInDescription;
             }
         }
 
-        whisper = (state.STATUSINFO.config.sendOnlyToGM) ? '/w gm ' : '';
+        whisper = (state[state_name].config.sendOnlyToGM) ? '/w gm ' : '';
+
+        if(!state[state_name].config.hasOwnProperty('firsttime') && !reset){
+            sendConfigMenu(true);
+            state[state_name].config.firsttime = false;
+        }
     }
 })();
