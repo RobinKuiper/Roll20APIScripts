@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.3
+ * Version 0.1.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -181,7 +181,7 @@
                                         let total_experience = character.experience+session_experience
                                         let send_character_text = 'You get '+character.experience+' extra experience, bringing your total this session to <b>' + total_experience + '</b> experience.';
 
-                                        character_experiences += character.name + ': ' + character.experience + ' | Total: <b>' + total_experience + '</b><br>';
+                                        character_experiences += handleLongString(character.name) + ': ' + character.experience + ' | Total: <b>' + total_experience + '</b><br>';
                                         if(state[state_name].config.updatesheet){
                                             let new_experience = updateExperienceOnSheet(total_experience, character.id);
 
@@ -194,9 +194,9 @@
                             }
                         }
 
-                        send_message_text += '<br>Everyone gets <b>'+session_experience+' experience.</b>';
-                        send_message_text += (state[state_name].config.updatesheet) && '<p>Your character sheets have been updated.</p>';
-                        send_gm_text += '<hr>'+character_experiences;
+                        send_message_text += (session_experience > 0) ? '<br>Everyone gets <b>'+session_experience+'</b> experience.' : '<br>There is no session experience.';
+                        send_message_text += (state[state_name].config.updatesheet) ? '<p>Your character sheets have been updated.</p>' : '';
+                        send_gm_text += '<br><br>'+character_experiences;
                     }
 
                     makeAndSendMenu(send_message_text);
@@ -314,7 +314,7 @@
                 send_message_text += 'Your character sheet has been updated.';
             }
 
-            let whisper = (characterid) && getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0];
+            let whisper = (characterid) ? getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0] : '';
             makeAndSendMenu(send_message_text, '', whisper);
         }
     }
@@ -388,7 +388,7 @@
                 let characterIds = [];
                 player.characters.forEach(character => {
                     if(character.active){
-                        let name = (character.name.length > 8) ? character.name.slice(0, 8) + '...' : character.name;
+                        let name = handleLongString(character.name);
                         characterListItems.push(name + ': ' + character.experience);
                         characterDropdown += '|'+character.name+','+character.id;
                         characterIds.push(character.id);
@@ -403,6 +403,10 @@
 
         let contents = 'Session Experience: '+getExperience()+'<br>Experience Divisors: ' + getExperienceSharers() + '<hr>'+makeList(playerListItems, listStyle + ' overflow: hidden;', 'overflow: hidden;')+'<hr>'+addXPButton+'<br>'+endButton+'<hr>'+resetXPButton
         makeAndSendMenu(contents, script_name + ' menu', 'gm');
+    }
+
+    const handleLongString = (str, max=8) => {
+        return (str.length > max) ? str.slice(0, 8) + '...' : str;
     }
 
     const ucFirst = (string) => {
@@ -473,7 +477,7 @@
         player.characters.forEach((character) => {
             let mainButton = makeButton((character.active) ? 'Active' : 'Not Active', '!' + state[state_name].config.command + ' setcharactive ' + character.id + ' ' + playerid + ' ' + !character.active, buttonStyle);
             let main = (character.main) ? '<b style="float: right">Main</b>' : mainButton;
-            characterListItems.push('<span style="float: left;">'+character.name+'<br><span style="font-size: 8pt">Experience: '+character.experience+'</span></span> ' + main);
+            characterListItems.push('<span style="float: left;">'+handleLongString(character.name)+'<br><span style="font-size: 8pt">Experience: '+character.experience+'</span></span> ' + main);
             characterDropdown += '|'+character.name+','+character.id;
         });
         characterDropdown += '}';
@@ -506,8 +510,8 @@
     }
 
     const makeAndSendMenu = (contents, title, whisper) => {
-        title = (title && title != '') && makeTitle(title)
-        whisper = (whisper && whisper !== '') && '/w ' + whisper + ' ';
+        title = (title && title != '') ? makeTitle(title) : '';
+        whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
         sendChat(script_name, whisper + '<div style="'+style+'">'+title+contents+'</div>');
     }
 
