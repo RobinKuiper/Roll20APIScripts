@@ -4,12 +4,13 @@
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
  * Roll20: https://app.roll20.net/users/1226016/robin-k
- * Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
 */
 
-(function() {
+var Drunk = Drunk || (function() {
+    'use strict';
+
     // Styling for the chat responses.
     const styles = {
         reset: 'padding: 0; margin: 0;',
@@ -25,20 +26,12 @@
         fullWidth: 'width: 100%;',
         underline: 'text-decoration: underline;',
         strikethrough: 'text-decoration: strikethrough'
-    }
-
-    const script_name = 'Drunk';
-    const state_name = 'DRUNK';
-
-    let markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower']
-
-    on('ready',()=>{ 
-        checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
-    });
-
-    on('chat:message', function(msg) {
+        },
+    script_name = 'Drunk',
+    state_name = 'DRUNK',
+    markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
+    
+    handleInput = (msg) => {
         if (msg.type != 'api') return;
 
         // Split the message into command and argument(s)
@@ -46,7 +39,7 @@
         let command = args.shift().substring(1);
         let extracommand = args.shift();
 
-        let playerid;
+        let playerid, characterid, character;
 
         if (command == state[state_name].config.command) {
             switch(extracommand){
@@ -91,8 +84,6 @@
                 case 'show':
                     characterid = args.shift();
 
-                    pre_log(characterid)
-
                     if(character = findObjs({ _id: characterid, _type: 'character'}).shift()){
                         let attribute_name = state[state_name].config.inebriation_level_attribute_name;
                         let level = getAttrByName(characterid, attribute_name) || 0;
@@ -112,9 +103,10 @@
                 break;
             }
         }
-    });
+    },
 
-    const updateStatusmarker = (characterid, new_level) => {
+
+    updateStatusmarker = (characterid, new_level) => {
         let tokens = findObjs({ represents: characterid, _type: 'graphic' });
 
         tokens.forEach(token => {
@@ -132,13 +124,13 @@
 
             token.set({ statusmarkers: objectToStatusmarkers(statusmarkers_object) });
         });
-    }
+    },
 
-    const ucFirst = (string) => {
+    ucFirst = (string) => {
         return string.charAt(0).toUpperCase() + string.slice(1);
-    }
+    },
 
-    function statusmarkersToObject(stats) {
+    statusmarkersToObject = (stats) => {
         return _.reduce(stats.split(/,/), function(memo, value) {
             var parts = value.split(/@/),
                 num = parseInt(parts[1] || '0', 10);
@@ -149,17 +141,17 @@
 
             return memo;
         }, {});
-    }
+    },
 
-    function objectToStatusmarkers(obj) {
+    objectToStatusmarkers = (obj) => {
         return _.map(obj, function(value, key) {
                     return key === 'dead' || value < 1 || value > 9 ? key : key + '@' + parseInt(value);
                 })
                 .join(',');
-    }
+    },
 
-    const updateInebrationLevel = (characterid, level, callback) => {
-        let new_level, old_level;
+    updateInebrationLevel = (characterid, level, callback) => {
+        let new_level, old_level, character;
 
         let gm_chat_contents = '';
         if(character = findObjs({ _id: characterid, _type: 'character'}).shift()){
@@ -193,22 +185,22 @@
         if(typeof callback === 'function'){
             callback(new_level, old_level);
         }
-    }
+    },
 
-    const createWhisperName = (name) => {
+    createWhisperName = (name) => {
         return name.split(' ').shift();
-    }
+    },
 
-    const sendInebrationDescription = (level) => {
+    sendInebrationDescription = (level) => {
         let contents = '';
         state[state_name].config.inbebration_levels[level].forEach(thing => {
             contents += '<p>'+thing+'</p>';
         });
 
         makeAndSendMenu(contents, 'Inebration Level ' + level);
-    }
+    },
 
-    const sendConfigMenu = (first) => {
+    sendConfigMenu = (first) => {
         let setStatusmarkerButton = makeButton(state[state_name].config.set_statusmarker, '!' + state[state_name].config.command + ' config set_statusmarker|'+!state[state_name].config.set_statusmarker, styles.button + styles.float.right)
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
 
@@ -246,9 +238,9 @@
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
         let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+levelDescriptions+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+advancedButton+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
-    }
+    },
 
-    const sendHelpMenu = (first) => {
+    sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth);
 
         let listItems = [
@@ -283,9 +275,9 @@
         //'<hr><b>Command Examples</b><br>'+makeList(commandExampleListItems, styles.reset + styles.list)+
         let contents = homebrewDescription+'<hr><b>Commands:</b>'+makeList(listItems, styles.reset + styles.list)+'<hr>'+levelDescriptions+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name + ' Help', 'gm')
-    }
+    },
 
-    const sendMenu = () => {
+    sendMenu = () => {
         let addButton = makeButton('Add', '!' + state[state_name].config.command + ' add &#64;{selected|character_id}', styles.button);
         let removeButton = makeButton('Remove', '!' + state[state_name].config.command + ' remove &#64;{selected|character_id}', styles.button);
         let showButton = makeButton('Show Level', '!' + state[state_name].config.command + ' show &#64;{selected|character_id}', styles.button);
@@ -294,46 +286,49 @@
 
         let contents = withSelected;
         makeAndSendMenu(contents, script_name + ' Menu', 'gm')
-    }
+    },
 
-    const makeAndSendMenu = (contents, title, whisper) => {
+    makeAndSendMenu = (contents, title, whisper) => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
         sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+'">'+title+contents+'</div>');
-    }
+    },
 
-    const makeTitle = (title) => {
+    makeTitle = (title) => {
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    }
+    },
 
-    const makeButton = (title, href, style) => {
+    makeButton = (title, href, style) => {
         return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    }
+    },
 
-    const makeList = (items, listStyle, itemStyle) => {
+    makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    }
+    },
 
-    const pre_log = (message) => {
+    pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
         if(message === 'line'){ return; }
         log(message);
         log('---------------------------------------------------------------------------------------------');
-    }
+    },
 
-    const checkInstall = () => {
+    checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
-    }
 
-    const setDefaults = (reset) => {
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        if(state[state_name].config.debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
+    },
+
+    setDefaults = (reset) => {
         const defaults = {
             config: {
                 command: 'drunk',
@@ -403,5 +398,21 @@
             sendConfigMenu(true);
             state[state_name].config.firsttime = false;
         }
-    }
+    },
+
+    registerEventHandlers = () => {
+        on('chat:message', handleInput);
+    };
+    
+    return {
+        CheckInstall: checkInstall,
+        RegisterEventHandlers: registerEventHandlers
+    };
 })();
+
+on('ready', () => { 
+    'use strict';
+
+    Drunk.CheckInstall();
+    Drunk.RegisterEventHandlers();
+});
