@@ -129,7 +129,24 @@ var Resizer = Resizer || (function() {
                 break;
 
                 default:
-                    sendHelpMenu();
+                    width = extracommand;
+                    height = args.shift();
+
+                    if(msg.selected && width && height){
+                        msg.selected.forEach(token => {
+                            obj = getObj(token._type, token._id);
+
+                            old_width = obj.get('width');
+                            old_height = obj.get('height');
+
+                            resize(obj, width, height);
+                        })
+
+                        let multiple = (msg.selected.length > 1) ? 's are' : ' is';
+                        chat_text = 'The graphic'+multiple+' resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.';
+                    }
+
+                    sendMenu(chat_text);
                 break;
             }
         }
@@ -160,6 +177,7 @@ var Resizer = Resizer || (function() {
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' menu</span> - Shows the resizer menu.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' [width] [height]</span> - Resizes the selected graphic(s).',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' get page</span> - Shows the page size.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' get graphic [graphic id]</span> - Shows the graphic size. Works with @{selected|token_id}.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' resize page [unit type] [width] [height]</span> - Resizes the page (unit types: pixels/units).',

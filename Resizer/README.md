@@ -14,6 +14,7 @@ Resizer lets you easily resize graphics and pages with a simple menu.
 * **!resizer help** - Shows the help menu.
 * **!resizer config** - Shows the config menu.
 * **!resizer menu** - Shows a menu to easily resize graphics/pages.
+* **!resizer [width] [height]** - Resizes the selected graphic(s).
 * **!resizer get page** - Shows the page size.
 * **!resizer get graphic [graphic id]** - Shows the graphic size, eg. !resizer get graphic @{selected|token_id}.
 * **!resizer resize page [unit type] [width] [height]** - Resizes the page, eg. !resizer resize page pixels 700 700.
