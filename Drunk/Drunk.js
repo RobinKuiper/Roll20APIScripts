@@ -100,7 +100,7 @@
                         if(level > 0){
                             sendInebrationDescription(level);
                         }else{
-                            makeAndSendMenu(character.get('name') + ' has no inebration levels.', '', createWhisperName(msg.who));
+                            makeAndSendMenu('<b>'+character.get('name')+'</b> has no inebration levels.', '', createWhisperName(msg.who));
                         }
                     }else{
                         makeAndSendMenu('Character does not exist.', '', createWhisperName(msg.who));
