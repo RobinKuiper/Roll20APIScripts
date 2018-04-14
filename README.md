@@ -71,9 +71,9 @@ Drunk keeps track of the level of inebration a character has and also adds a sta
 * **!drunk remove [character id]** - Removes a level of inebration from the character.
 * **!drunk remove [character id] [amount]** - Removes the amount of levels of inebration from the character.
 
-![Drunk Menu](https://i.imgur.com/Kge9P8J.png "Drunk Menu")
-![Level](https://i.imgur.com/CnHHqAo.png "Level")
 ![Config Menu](https://i.imgur.com/cbU9NbG.png "Config Menu")
+![Level](https://i.imgur.com/CnHHqAo.png "Level")
+![Drunk Menu](https://i.imgur.com/Kge9P8J.png "Drunk Menu")
 
 ---
 
