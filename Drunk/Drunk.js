@@ -209,13 +209,6 @@
     }
 
     const sendConfigMenu = (first) => {
-        let markerDropdown = '?{Marker';
-        markers.forEach((marker) => {
-            markerDropdown += '|'+ucFirst(marker).replace('-', ' ')+','+marker
-        })
-        markerDropdown += '}';
-
-        let markerButton = makeButton(state[state_name].config.statusmarker, '!' + state[state_name].config.command + ' config statusmarker|'+markerDropdown, styles.button + styles.float.right);
         let setStatusmarkerButton = makeButton(state[state_name].config.set_statusmarker, '!' + state[state_name].config.command + ' config set_statusmarker|'+!state[state_name].config.set_statusmarker, styles.button + styles.float.right)
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
 
@@ -225,13 +218,33 @@
         ];
 
         if(state[state_name].config.set_statusmarker){
+            let markerDropdown = '?{Marker';
+            markers.forEach((marker) => {
+                markerDropdown += '|'+ucFirst(marker).replace('-', ' ')+','+marker
+            })
+            markerDropdown += '}';
+
+            let markerButton = makeButton(state[state_name].config.statusmarker, '!' + state[state_name].config.command + ' config statusmarker|'+markerDropdown, styles.button + styles.float.right);
             listItems.push('<span style="'+styles.float.left+'">Statusmarker:</span> ' + markerButton);
         }
 
+        let levelDescriptions = '';
+        if(state[state_name].config.advanced){
+            levelDescriptions = '<hr>';
+            for(let level in state[state_name].config.inbebration_levels){
+                levelDescriptions += '<b>Level ' + level + '</b><br>';
+                state[state_name].config.inbebration_levels[level].forEach((desc, i) => {
+                    let removeButton = makeButton('X', '#', styles.button + styles.float.right);
+                    levelDescriptions += '<p style="'+styles.overflow+'"><span style="'+styles.float.left+'">'+desc+'</span> '+removeButton+'</p>';
+                });
+            }
+        }
+
+        let advancedButton = ''//makeButton('Advanced: ' + state[state_name].config.advanced, '!' + state[state_name].config.command + ' config advanced|'+!state[state_name].config.advanced, styles.button + styles.fullWidth);
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+levelDescriptions+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+advancedButton+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
     }
 
@@ -324,6 +337,7 @@
         const defaults = {
             config: {
                 command: 'drunk',
+                advanced: false,
                 inebriation_level_attribute_name: 'inebration_level',
                 inbebration_dc: 10,
                 inbebration_levels: {
@@ -364,6 +378,9 @@
         }else{
             if(!state[state_name].config.hasOwnProperty('command')){
                 state[state_name].config.command = defaults.config.command;
+            }
+            if(!state[state_name].config.hasOwnProperty('advanced')){
+                state[state_name].config.advanced = defaults.config.advanced;
             }
             if(!state[state_name].config.hasOwnProperty('inebriation_level_attribute_name')){
                 state[state_name].config.inebriation_level_attribute_name = defaults.config.inebriation_level_attribute_name;
