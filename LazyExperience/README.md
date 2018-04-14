@@ -1,13 +1,13 @@
-* Skype: RobinKuiper.eu
-* Discord: Atheos#1095
-* Roll20: https://app.roll20.net/users/1226016/robin-k
-* Reddit: https://www.reddit.com/user/robinkuiper/
-
 ---
 
 ## LazyExperience
 
 ---
+
+* Skype: RobinKuiper.eu
+* Discord: Atheos#1095
+* Roll20: https://app.roll20.net/users/1226016/robin-k
+* Reddit: https://www.reddit.com/user/robinkuiper/
 
 LazyExperience is a script to record experience during a game (the idea comes from [EasyExperience](https://app.roll20.net/forum/post/3309609/script-easy-experience/?pageforid=3506293#post-3506293)).
 Biggest difference is that it has an option to reward experience directly, and keeps track on statusmarker changes on tokens.

@@ -1,13 +1,13 @@
-* Skype: RobinKuiper.eu
-* Discord: Atheos#1095
-* Roll20: https://app.roll20.net/users/1226016/robin-k
-* Reddit: https://www.reddit.com/user/robinkuiper/
-
 ---
 
 ## Drunk
 
 ---
+
+* Skype: RobinKuiper.eu
+* Discord: Atheos#1095
+* Roll20: https://app.roll20.net/users/1226016/robin-k
+* Reddit: https://www.reddit.com/user/robinkuiper/
 
 Drunk keeps track of the level of inebration a character has and also adds a statusmarker to the character. It uses the homebrew rules from [CritGames](http://critgames.com/rpg/dnd-5e-homebrew-drinking-rules/).
 
