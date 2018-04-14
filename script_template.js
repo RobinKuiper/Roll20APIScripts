@@ -144,7 +144,7 @@
         };
 
         if(!state[state_name].config){
-            state[state_name].config = defaults;
+            state[state_name].config = defaults.config;
         }else{
             if(!state[state_name].config.hasOwnProperty('command')){
                 state[state_name].config.command = defaults.config.command;
