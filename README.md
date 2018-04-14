@@ -12,4 +12,5 @@
 * [Drunk](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/Drunk)
 * [LazyExperience](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/LazyExperience)
 * [MOTD](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/MOTD)
+* [Resizer](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/Resizer)
 * [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo)
