@@ -11,4 +11,5 @@
 * [BeyondImporter](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/BeyondImporter)
 * [Drunk](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/Drunk)
 * [LazyExperience](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/LazyExperience)
+* [MOTD](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/MOTD)
 * [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo)
