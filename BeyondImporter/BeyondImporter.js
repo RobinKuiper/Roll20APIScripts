@@ -9,7 +9,13 @@
  * Reddit: https://www.reddit.com/user/robinkuiper/
 */
 
-(function() {
+var BeyondImport = BeyondImport || (function() {
+    'use strict';
+
+    let class_spells = [],
+        object,
+        jack = '0';
+
     const _ABILITY = {
         'STR': 'strength',
         'DEX': 'dexterity',
@@ -17,9 +23,9 @@
         'INT': 'intelligence',
         'WIS': 'wisdom',
         'CHA': 'charisma'
-    }
+    },
 
-    const skills = [
+    skills = [
         'acrobatics',
         'animal_handling',
         'arcana',
@@ -38,27 +44,16 @@
         'sleight_of_hand',
         'stealth',
         'survival'
-    ]
-
-    let class_spells = [];
-    let object;
+    ],   
 
     // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
+    style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;",
 
-    let jack = '0';
+    script_name = 'BeyondImporter',
+    state_name = 'BeyondImporter',
 
-    const script_name = 'BeyondImporter';
-    const state_name = 'BeyondImporter';
-
-    on('ready',()=>{ 
-        checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
-    });
-
-    on('chat:message', function(msg) {
+    handleInput = (msg) => {
         if (msg.type != 'api') return;
 
         // Split the message into command and argument(s)
@@ -457,9 +452,9 @@
                 break;
             }
         }
-    });
+    },
 
-    const getPactMagicSlots = (level) => {
+    getPactMagicSlots = (level) => {
         switch(level){
             case 1:
                 return 1;
@@ -478,9 +473,9 @@
             break;
         }
         return 0;
-    }
+    },
 
-    function importSpells(array) {
+    importSpells = (array) => {
         // set this to whatever number of items you can process at once
         var chunk = 10;
         var index = 0;
@@ -496,9 +491,9 @@
             }
         }    
         doChunk();    
-    }
+    },
 
-    const importSpell = (spell) => {
+    importSpell = (spell) => {
         pre_log('Import spell: ' + spell.definition.name);
         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
         var row = generateRowID();
@@ -565,9 +560,9 @@
         }
 
         setAttrs(object.id, attributes);
-    }
+    },
 
-    const sendConfigMenu = (first) => {
+    sendConfigMenu = (first) => {
         let prefix = (state[state_name].config.prefix !== '') ? state[state_name].config.prefix : '[NONE]';
         let prefixButton = makeButton(prefix, '!beyond config prefix|?{Prefix}', buttonStyle);
         let overwriteButton = makeButton(state[state_name].config.overwrite, '!beyond config overwrite|'+!state[state_name].config.overwrite, buttonStyle);
@@ -598,9 +593,9 @@
         let text = '<div style="'+style+'">'+makeTitle(title_text)+list+debug+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!beyond config`.</p><hr>'+resetButton+'</div>';
 
         sendChat('', '/w gm ' + text);
-    }
+    },
 
-    const sendHelpMenu = (first) => {
+    sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!beyond config', buttonStyle+' width: 100%;');
 
         let listItems = [
@@ -614,30 +609,30 @@
         let text = '<div style="'+style+'">'+makeTitle(script_name + ' Help')+'<p>Go to a character on <a href="http://www.dndbeyond.com" target="_blank">DNDBeyond</a>, and put `/json` behind the link. Copy the full contents of this page and paste it behind the command `!beyond import`.</p><p>For more information take a look at my <a style="text-decoration: underline" href="https://github.com/RobinKuiper/Roll20APIScripts" target="_blank">Github</a> repository.</p><hr><b>Commands:</b>'+command_list+'<hr>'+configButton+'</div>';
 
         sendChat('', '/w gm ' + text);
-    }
+    },
 
-    const makeTitle = (title) => {
+    makeTitle = (title) => {
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    }
+    },
 
-    const makeButton = (title, href, style) => {
+    makeButton = (title, href, style) => {
         return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    }
+    },
 
-    const makeList = (items, listStyle, itemStyle) => {
+    makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    }
+    },
 
-    const replaceChars = (text) => {
+    replaceChars = (text) => {
         return text.replace('&rsquo;', '\'').replace('&nbsp;', ' ')
-    }
+    },
 
-    const createRepeatingTrait = (object, trait) => {
+    createRepeatingTrait = (object, trait) => {
         var row = generateRowID();
 
         let attributes = {}
@@ -648,9 +643,9 @@
         attributes["repeating_traits_"+row+"_options-flag"] = '0';
         //attributes["repeating_traits_"+row+"_display_flag"] = false;
         setAttrs(object.id, attributes);
-    }
+    },
 
-    const createRepeatingAttack = (object, attack) => {
+    createRepeatingAttack = (object, attack) => {
         let attackrow = generateRowID();
         let attackattributes = {};
         attackattributes["repeating_attack_"+attackrow+"_options-flag"] = '0';
@@ -669,9 +664,9 @@
         setAttrs(object.id, attackattributes);
 
         return attackrow;
-    }
+    },
 
-    const getTotalAbilityScore = (character, score, score_short) => {
+    getTotalAbilityScore = (character, score, score_short) => {
         let base = character.stats[score_short],
         bonus = character.bonusStats[score_short],
         override = character.overrideStats[score_short],
@@ -685,10 +680,10 @@
         }
 
         return total;
-    }
+    },
 
     //return an array of objects according to key, value, or key and value matching
-    const getObjects = (obj, key, val) => {
+    getObjects = (obj, key, val) => {
         var objects = [];
         for (var i in obj) {
             if (!obj.hasOwnProperty(i)) continue;
@@ -706,10 +701,10 @@
             }
         }
         return objects;
-    }
+    },
 
     // Find an existing repeatable item with the same name, or generate new row ID
-    const getOrMakeRowID = function(character,repeatPrefix,name){
+    getOrMakeRowID = function(character,repeatPrefix,name){
         // Get list of all of the character's attributes
         var attrObjs = findObjs({ _type: "attribute", _characterid: character.get("_id") });
         
@@ -728,9 +723,9 @@
             i++;
         }
         return generateRowID();
-    }
+    },
 
-    const generateUUID = (function() {
+    generateUUID = (function() {
         var a = 0, b = [];
         return function() {
             var c = (new Date()).getTime() + 0, d = c === a;
@@ -755,32 +750,35 @@
             }
             return c;
         };
-    }())
+    }()),
 
-    const generateRowID = () => {
+    generateRowID = () => {
         "use strict";
         return generateUUID().replace(/_/g, "Z");
-    }
+    },
 
-    const regexIndexOf = function(str, regex, startpos) {
+    regexIndexOf = function(str, regex, startpos) {
         var indexOf = str.substring(startpos || 0).search(regex);
         return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
-    }
+    },
 
-    const pre_log = (message) => {
+    pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
         log(message);
         log('---------------------------------------------------------------------------------------------');
-    }
+    },
 
-    const checkInstall = () => {
+    checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
-    }
 
-    const setDefaults = (reset) => {
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+    },
+
+    setDefaults = (reset) => {
         const defaults = {
             overwrite: false,
             debug: false,
@@ -848,5 +846,21 @@
                 state[state_name].config.firsttime = false;
             }
         }
-    }
+    },
+
+    registerEventHandlers = () => {
+        on('chat:message', handleInput);
+    };
+    
+    return {
+        CheckInstall: checkInstall,
+        RegisterEventHandlers: registerEventHandlers
+    };
 })();
+
+on('ready', () => { 
+    'use strict';
+
+    BeyondImport.CheckInstall();
+    BeyondImport.RegisterEventHandlers();
+});

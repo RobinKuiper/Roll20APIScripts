@@ -84,7 +84,7 @@ var Drunk = Drunk || (function() {
                 case 'show':
                     characterid = args.shift();
 
-                    if(character = findObjs({ _id: characterid, _type: 'character'}).shift()){
+                    if(character = getObj('character', characterid)){
                         let attribute_name = state[state_name].config.inebriation_level_attribute_name;
                         let level = getAttrByName(characterid, attribute_name) || 0;
 
@@ -154,7 +154,7 @@ var Drunk = Drunk || (function() {
         let new_level, old_level, character;
 
         let gm_chat_contents = '';
-        if(character = findObjs({ _id: characterid, _type: 'character'}).shift()){
+        if(character = getObj('character', characterid)){
             let attribute_name = state[state_name].config.inebriation_level_attribute_name;
             old_level = getAttrByName(characterid, attribute_name) || 0;
             new_level = (old_level+level < 0) ? 0 : (old_level+level > 5) ? 5 : old_level+level;

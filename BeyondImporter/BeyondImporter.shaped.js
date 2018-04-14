@@ -9,18 +9,20 @@
  * Reddit: https://www.reddit.com/user/robinkuiper/
 */
 
-(function() {
+var BeyondImport = BeyondImport || (function() {
+    'use strict';
+
     // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
-    const conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
-    const listStyle = 'list-style: none; padding: 0; margin: 0;';
+    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;",
+    conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0",
+    listStyle = 'list-style: none; padding: 0; margin: 0;',
 
-    let script_name = 'Beyond Importer';
-    let state_name = 'BEYONDIMPORTER';
+    script_name = 'Beyond Importer',
+    state_name = 'BEYONDIMPORTER',
 
-    const skills = [
+    skills = [
         'acrobatics',
         'animal_handling',
         'arcana',
@@ -39,9 +41,9 @@
         'sleight_of_hand',
         'stealth',
         'survival'
-    ]
+    ],
 
-    const conditions = [
+    conditions = [
         'blinded',
         'charmed',
         'deafened',
@@ -58,9 +60,9 @@
         'stunned',
         'unconscious',
         'exhaustion'
-    ];
+    ],
 
-    const spell_level_formats = {
+    spell_level_formats = {
         0: 'CANTRIP',
         1: '1ST_LEVEL',
         2: '2ND_LEVEL',
@@ -71,15 +73,9 @@
         7: '7TH_LEVEL',
         8: '8TH_LEVEL',
         9: '9TH_LEVEL'
-    }
+    },
 
-    on('ready',()=>{ 
-        checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
-    });
-
-    on('chat:message', function(msg) {
+    handleInput = (msg) => {
         if (msg.type != 'api') return;
 
         // Split the message into command and argument(s)
@@ -123,9 +119,9 @@
                 break;
             }
         }
-    });
+    },
 
-    const runImport = (character) => {
+    runImport = (character) => {
         let attributes = {};
 
         // Remove characters with the same name if overwrite is enabled.
@@ -414,9 +410,9 @@
         });
 
         sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is ready.</div>');
-    }
+    },
 
-    const createRepeating = (section, id, fields, object) => {
+    createRepeating = (section, id, fields, object) => {
         let attributes = {};
         var row = getOrMakeRowID(object,"repeating_"+section+"_",id);
 
@@ -425,9 +421,9 @@
         }
 
         return attributes;
-    }
+    },
 
-    const importClasses = (classes, object) => {
+    importClasses = (classes, object) => {
         let attributes = {};
 
         classes.forEach((c, i, array) => {
@@ -497,15 +493,15 @@
         });
 
         return attributes;
-    }
+    },
 
-    const getRepeatingSectionAttrs = (characterId, sectionName) => {
-      const prefix = `repeating_${sectionName}`;
+    getRepeatingSectionAttrs = (characterId, sectionName) => {
+      prefix = `repeating_${sectionName}`;
       return _.filter(this.findObjs({ type: 'attribute', characterid: characterId }),
         attr => attr.get('name').indexOf(prefix) === 0);
-    }
+    },
 
-    const getTotalAbilityScore = (character, score, score_short) => {
+    getTotalAbilityScore = (character, score, score_short) => {
         let base = character.stats[score_short],
         bonus = character.bonusStats[score_short],
         override = character.overrideStats[score_short],
@@ -519,9 +515,9 @@
         }
 
         return total;
-    }
+    },
 
-    const sendConfigMenu = (first) => {
+    sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
         let prefix = (state[state_name].config.prefix !== '') ? state[state_name].config.prefix : '[NONE]';
         let prefixButton = makeButton(prefix, '!' + state[state_name].config.command + ' config prefix|?{Prefix}', buttonStyle);
@@ -539,9 +535,9 @@
         let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton+'</div>';
 
         sendChat('', '/w gm ' + text);
-    }
+    },
 
-    const sendHelpMenu = (first) => {
+    sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%;')
 
         let listItems = [
@@ -553,31 +549,31 @@
         let text = '<div style="'+style+'">'+makeTitle(script_name + ' Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
 
         sendChat('', '/w gm ' + text);
-    }
+    },
 
-    const makeTitle = (title) => {
+    makeTitle = (title) => {
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    }
+    },
 
-    const makeButton = (title, href, style) => {
+    makeButton = (title, href, style) => {
         return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    }
+    },
 
-    const makeList = (items, listStyle, itemStyle) => {
+    makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    }
+    },
 
-    const replaceChars = (text) => {
+    replaceChars = (text) => {
         return text.replace('&rsquo;', '\'').replace('&nbsp;', ' ')
-    }
+    },
 
     //return an array of objects according to key, value, or key and value matching
-    const getObjects = (obj, key, val) => {
+    getObjects = (obj, key, val) => {
         var objects = [];
         for (var i in obj) {
             if (!obj.hasOwnProperty(i)) continue;
@@ -595,10 +591,10 @@
             }
         }
         return objects;
-    }
+    },
 
     // Find an existing repeatable item with the same name, or generate new row ID
-    const getOrMakeRowID = function(character,repeatPrefix,name){
+    getOrMakeRowID = function(character,repeatPrefix,name){
         // Get list of all of the character's attributes
         var attrObjs = findObjs({ _type: "attribute", _characterid: character.get("_id") });
 
@@ -615,9 +611,9 @@
             i++;
         }
         return generateRowID();
-    }
+    },
 
-    const generateUUID = (function() {
+    generateUUID = (function() {
         var a = 0, b = [];
         return function() {
             var c = (new Date()).getTime() + 0, d = c === a;
@@ -642,32 +638,35 @@
             }
             return c;
         };
-    }())
+    }()),
 
-    const generateRowID = () => {
+    generateRowID = () => {
         "use strict";
         return generateUUID().replace(/_/g, "Z");
-    }
+    },
 
-    const regexIndexOf = function(str, regex, startpos) {
+    regexIndexOf = function(str, regex, startpos) {
         var indexOf = str.substring(startpos || 0).search(regex);
         return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
-    }
+    },
 
-    const pre_log = (message) => {
+    pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
         log(message);
         log('---------------------------------------------------------------------------------------------');
-    }
+    },
 
-    const checkInstall = () => {
+    checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
-    }
 
-    const setDefaults = (reset) => {
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+    },
+
+    setDefaults = (reset) => {
         const defaults = {
             command: 'beyond',
             overwrite: false,
@@ -741,5 +740,21 @@
                 state[state_name].config.firsttime = false;
             }
         }
-    }
+    },
+
+    registerEventHandlers = () => {
+        on('chat:message', handleInput);
+    };
+    
+    return {
+        CheckInstall: checkInstall,
+        RegisterEventHandlers: registerEventHandlers
+    };
 })();
+
+on('ready', () => { 
+    'use strict';
+
+    BeyondImport.CheckInstall();
+    BeyondImport.RegisterEventHandlers();
+});
