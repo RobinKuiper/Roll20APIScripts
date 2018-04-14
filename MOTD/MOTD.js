@@ -4,41 +4,25 @@
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
  * Roll20: https://app.roll20.net/users/1226016/robin-k
- * Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
 */
 
-(function() {
+var MOTD = MOTD || (function() {
+    'use strict';
+
     // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center;";
-    const float_right = 'float: right;';
-    const listStyle = 'list-style: none; padding: 0; margin: 0;';
+    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center;",
+    float_right = 'float: right;',
+    listStyle = 'list-style: none; padding: 0; margin: 0;',
 
-    let script_name = 'MOTD';
-    let state_name = 'MOTD';
+    script_name = 'MOTD',
+    state_name = 'MOTD',
 
-    let allowed_tags = ['<b>','<i>','<u>','<p>','<br>'];
+    allowed_tags = ['<b>','<i>','<u>','<p>','<br>'],
 
-    on('ready',()=>{ 
-        checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
-    });
-
-    on('change:player:_online', (obj) => {
-        let message = state[state_name].message;
-        let show = (!state[state_name].config.onlyOnce || !state[state_name].showedTo.includes(obj.get('d20userid')))
-        if(show && obj.get('online') && message && message !== ''){
-            setTimeout(() => {
-                makeAndSendMenu(message, 'Message of the Day', obj.get('displayname'));
-                state[state_name].showedTo.push(obj.get('d20userid'));
-            }, 6000)
-        }
-    });
-
-    on('chat:message', (msg) => {
+    handleInput = (msg) => {
         if (msg.type != 'api') return;
 
         // Split the message into command and argument(s)
@@ -71,11 +55,11 @@
                 break;
 
                 case 'show':
-                    makeAndSendMenu(state[state_name].message, 'Message of the Day', args.shift());
+                    makeAndSendMenu(readyMessage(state[state_name].message), 'Message of the Day', args.shift());
                 break;
 
                 case 'message':
-                    state[state_name].message = strip_tags(args.join(' '), allowed_tags.join('')) + allowed_tags.join('').replace(/\</g, '</'); // End the message with the closing tags of the allowed tags, Roll20 automaticly deletes not used tags.
+                    state[state_name].message = strip_tags(args.join(' '), allowed_tags.join(''));
                     state[state_name].showedTo = [];
                     sendConfigMenu();
                 break;
@@ -85,9 +69,20 @@
                 break;
             }
         }
-    });
+    },
 
-    const sendConfigMenu = (first) => {
+    handlePlayerOnline = (obj) => {
+        let message = readyMessage(state[state_name].message);
+        let show = (!state[state_name].config.onlyOnce || !state[state_name].showedTo.includes(obj.get('d20userid')))
+        if(show && obj.get('online') && message && message !== ''){
+            setTimeout(() => {
+                makeAndSendMenu(message, 'Message of the Day', obj.get('displayname'));
+                state[state_name].showedTo.push(obj.get('d20userid'));
+            }, 6000)
+        }
+    },
+
+    sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle + float_right);
         let onlyOnceButton = makeButton(state[state_name].config.onlyOnce, '!' + state[state_name].config.command + ' config onlyOnce|'+!state[state_name].config.onlyOnce, buttonStyle + float_right)
 
@@ -100,16 +95,20 @@
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', buttonStyle + ' width: 100%');
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
-        let current_message = (state[state_name].message !== '') ? '<b>Current Message:</b> <p>'+state[state_name].message+'</p>' : '';
+        let current_message = (state[state_name].message !== '') ? '<b>Current Message:</b> <p>'+readyMessage(state[state_name].message)+'</p>' : '';
         let contents = current_message+setMessageButton+'<hr><b>Settings</b> '+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
-    }
+    },
 
-    const removeHTMLTags = (string) => {
+    removeHTMLTags = (string) => {
        return string.replace(/(<([^>]+)>)/ig,'');
-    }
+    },
 
-    const strip_tags = (input, allowed) => {
+    readyMessage = (message) => {
+        return message+allowed_tags.join('').replace(/\</g, '</'); // End the message with the closing tags of the allowed tags, Roll20 automaticly deletes not used tags.
+    },
+
+    strip_tags = (input, allowed) => {
         allowed = (((allowed || '') + '')
             .toLowerCase()
             .match(/<[a-z][a-z0-9]*>/g) || [])
@@ -121,9 +120,9 @@
             .replace(tags, function($0, $1) {
                 return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
             });
-    }
+    },
 
-    const sendHelpMenu = (first) => {
+    sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%;')
 
         let listItems = [
@@ -167,45 +166,53 @@
 
         let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+htmlDescription+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name + ' Help', 'gm')
-    }
+    },
 
-    const makeAndSendMenu = (contents, title, whisper) => {
+    makeAndSendMenu = (contents, title, whisper) => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
         sendChat(script_name, whisper + '<div style="'+style+'">'+title+contents+'</div>');
-    }
+    },
 
-    const makeTitle = (title) => {
+    makeTitle = (title) => {
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    }
+    },
 
-    const makeButton = (title, href, style) => {
+    makeButton = (title, href, style) => {
         return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    }
+    },
 
-    const makeList = (items, listStyle, itemStyle) => {
+    makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    }
+    },
 
-    const pre_log = (message) => {
+    pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
         log(message);
         log('---------------------------------------------------------------------------------------------');
-    }
+    },
 
-    const checkInstall = () => {
+    checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
-    }
 
-    const setDefaults = (reset) => {
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+    },
+
+    registerEventHandlers = () => {
+        on('chat:message', handleInput);
+        on('change:player:_online', handlePlayerOnline);
+    },
+
+    setDefaults = (reset) => {
         const defaults = {
             config: {
                 command: 'motd',
@@ -236,5 +243,17 @@
             sendConfigMenu(true);
             state[state_name].config.firsttime = false;
         }
-    }
+    };
+
+    return {
+        CheckInstall: checkInstall,
+        RegisterEventHandlers: registerEventHandlers
+    };
 })();
+
+on('ready', () => { 
+    'use strict';
+
+    MOTD.CheckInstall();
+    MOTD.RegisterEventHandlers();
+});

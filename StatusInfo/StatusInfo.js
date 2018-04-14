@@ -14,21 +14,25 @@
  * !condition config - Shows config menu.
 */
 
-(function() {
+var StatusInfo = StatusInfo || (function() {
+    'use strict';
+    
+    let whisper;
+
     // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
-    const conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
-    const listStyle = 'list-style: none; padding: 0; margin: 0;';
+    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;",
+    conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0",
+    listStyle = 'list-style: none; padding: 0; margin: 0;',
 
-    const icon_image_positions = {red:"#C91010",blue:"#1076C9",green:"#2FC910",brown:"#C97310",purple:"#9510C9",pink:"#EB75E1",yellow:"#E5EB75",dead:"X",skull:0,sleepy:34,"half-heart":68,"half-haze":102,interdiction:136,snail:170,"lightning-helix":204,spanner:238,"chained-heart":272,"chemical-bolt":306,"death-zone":340,"drink-me":374,"edge-crack":408,"ninja-mask":442,stopwatch:476,"fishing-net":510,overdrive:544,strong:578,fist:612,padlock:646,"three-leaves":680,"fluffy-wing":714,pummeled:748,tread:782,arrowed:816,aura:850,"back-pain":884,"black-flag":918,"bleeding-eye":952,"bolt-shield":986,"broken-heart":1020,cobweb:1054,"broken-shield":1088,"flying-flag":1122,radioactive:1156,trophy:1190,"broken-skull":1224,"frozen-orb":1258,"rolling-bomb":1292,"white-tower":1326,grab:1360,screaming:1394,grenade:1428,"sentry-gun":1462,"all-for-one":1496,"angel-outfit":1530,"archery-target":1564}
+    icon_image_positions = {red:"#C91010",blue:"#1076C9",green:"#2FC910",brown:"#C97310",purple:"#9510C9",pink:"#EB75E1",yellow:"#E5EB75",dead:"X",skull:0,sleepy:34,"half-heart":68,"half-haze":102,interdiction:136,snail:170,"lightning-helix":204,spanner:238,"chained-heart":272,"chemical-bolt":306,"death-zone":340,"drink-me":374,"edge-crack":408,"ninja-mask":442,stopwatch:476,"fishing-net":510,overdrive:544,strong:578,fist:612,padlock:646,"three-leaves":680,"fluffy-wing":714,pummeled:748,tread:782,arrowed:816,aura:850,"back-pain":884,"black-flag":918,"bleeding-eye":952,"bolt-shield":986,"broken-heart":1020,cobweb:1054,"broken-shield":1088,"flying-flag":1122,radioactive:1156,trophy:1190,"broken-skull":1224,"frozen-orb":1258,"rolling-bomb":1292,"white-tower":1326,grab:1360,screaming:1394,grenade:1428,"sentry-gun":1462,"all-for-one":1496,"angel-outfit":1530,"archery-target":1564},
 
-    let script_name = 'StatusInfo';
-    let state_name = 'STATUSINFO';
+    script_name = 'StatusInfo',
+    state_name = 'STATUSINFO',
     
     // All the conditions with descriptions/icons.
-    const conditions = {
+    conditions = {
         blinded: {
             name: 'Blinded',
             descriptions: [
@@ -151,23 +155,9 @@
             ],
             icon: 'sleepy'
         },
-    }
+    },
 
-    let whisper;
-
-    on('ready', () => {
-        checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-
-        // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
-        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
-            TokenMod.ObserveTokenChange(function(obj,prev){
-                handleStatusmarkerChange(obj,prev);
-            });
-        }
-    });
-
-    on('chat:message', function(msg) {
+    handleInput = (msg) => {
         if (msg.type != 'api') return;
 
         // !condition Blinded
@@ -206,14 +196,15 @@
                 break;
 
                 default:
-                    if(conditionName = extracommand){
+                    let condition_name;
+                    if(condition_name = extracommand){
                         let condition;
                         // Check if hte condition exists in the condition object.
-                        if(condition = getConditionByName(conditionName)){
+                        if(condition = getConditionByName(condition_name)){
                             // Send it to chat.
                             sendConditionToChat(condition);
                         }else{
-                            sendChat((whisper) ? script_name : '', whisper + 'Condition ' + conditionName + ' does not exist.');
+                            sendChat((whisper) ? script_name : '', whisper + 'Condition ' + condition_name + ' does not exist.');
                         }
                     }else{
                         sendHelpMenu();
@@ -221,14 +212,9 @@
                 break;
             }
         }
-    });
-    
-    // Handle condition descriptions when the statusmarkers are changed manually on a token.
-    on('change:graphic:statusmarkers', (obj, prev) => {
-        handleStatusmarkerChange(obj,prev);
-    });
+    },
 
-    const handleStatusmarkerChange = (obj, prev) => {
+    handleStatusmarkerChange = (obj, prev) => {
         if(state[state_name].config.showDescOnStatusChange){
             // Check if the statusmarkers string is different from the previous statusmarkers string.
             if(obj.get('statusmarkers') !== prev.statusmarkers){
@@ -248,17 +234,17 @@
                 });
             }
         }
-    }
+    },
 
-    const getConditionByMarker = (marker) => {
+    getConditionByMarker = (marker) => {
         return getObjects(conditions, 'icon', marker).shift() || false;
-    }
+    },
 
-    const getConditionByName = (name) => {
+    getConditionByName = (name) => {
         return conditions[name.toLowerCase()] || false;
-    }
+    },
 
-    const sendConditionToChat = (condition, w) => {
+    sendConditionToChat = (condition, w) => {
         let description = '';
         condition.descriptions.forEach((desc) => {
             description += '<p>'+desc.replace('{command}', state[state_name].config.command)+'</p>';
@@ -291,10 +277,10 @@
         makeAndSendMenu(description, icon+condition.name, {
             title_tag: 'h2'
         });
-    }
+    },
 
     //return an array of objects according to key, value, or key and value matching
-    const getObjects = (obj, key, val) => {
+    getObjects = (obj, key, val) => {
         var objects = [];
         for (var i in obj) {
             if (!obj.hasOwnProperty(i)) continue;
@@ -312,9 +298,9 @@
             }
         }
         return objects;
-    }
+    },
 
-    const sendConfigMenu = (first) => {
+    sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
         let toGMButton = makeButton(state[state_name].config.sendOnlyToGM, '!' + state[state_name].config.command + ' config sendOnlyToGM|'+!state[state_name].config.sendOnlyToGM, buttonStyle);
         let statusChangeButton = makeButton(state[state_name].config.showDescOnStatusChange, '!' + state[state_name].config.command + ' config showDescOnStatusChange|'+!state[state_name].config.showDescOnStatusChange, buttonStyle);
@@ -332,9 +318,9 @@
         let title_text = (first) ? script_name+' First Time Setup' : script_name+' Config';
         let contents = makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text)
-    }
+    },
 
-    const sendHelpMenu = (first) => {
+    sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%;')
 
         let listItems = [
@@ -345,40 +331,54 @@
 
         let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name+' Help')
-    }
+    },
 
-    const makeAndSendMenu = (contents, title, settings) => {
+    makeAndSendMenu = (contents, title, settings) => {
         settings = (settings) ? settings : {};
         title = (title && title != '') && makeTitle(title, (settings.title_tag) && settings.title_tag)
         sendChat((whisper) ? script_name : '', whisper + '<div style="'+style+'">'+title+contents+'</div>');
-    }
+    },
 
-    const makeTitle = (title, title_tag) => {
+    makeTitle = (title, title_tag) => {
         title_tag = (title_tag && title_tag !== '') ? title_tag : 'h3';
         return '<'+title_tag+' style="margin-bottom: 10px;">'+title+'</'+title_tag+'>';
-    }
+    },
 
-    const makeButton = (title, href, style) => {
+    makeButton = (title, href, style) => {
         return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    }
+    },
 
-    const makeList = (items, listStyle, itemStyle) => {
+    makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    }
+    },
 
-    const checkInstall = () => {
+    checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
-    }
 
-    const setDefaults = (reset) => {
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+    },
+
+    registerEventHandlers = () => {
+        on('chat:message', handleInput);
+        on('change:graphic:statusmarkers', handleStatusmarkerChange);
+
+        // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
+        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
+            TokenMod.ObserveTokenChange(function(obj,prev){
+                handleStatusmarkerChange(obj,prev);
+            });
+        }
+    },
+
+    setDefaults = (reset) => {
         const defaults = {
             config: {
                 command: 'condition',
@@ -411,5 +411,17 @@
             sendConfigMenu(true);
             state[state_name].config.firsttime = false;
         }
-    }
+    };
+
+    return {
+        CheckInstall: checkInstall,
+        RegisterEventHandlers: registerEventHandlers
+    };
 })();
+
+on('ready', () => { 
+    'use strict';
+
+    StatusInfo.CheckInstall();
+    StatusInfo.RegisterEventHandlers();
+});

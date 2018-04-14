@@ -4,7 +4,7 @@
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
  * Roll20: https://app.roll20.net/users/1226016/robin-k
- * Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
+ * Roll20 Thread: 
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
 */
@@ -17,38 +17,23 @@
  * Check all commands
 */
 
-(function() {
-    // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
-    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
-    const buttonStyle2 = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center;";
-    const listStyle = 'list-style: none; padding: 0; margin: 0;';
-
-    let script_name = 'Lazy Experience';
-    let state_name = 'LAZYEXPERIENCE';
-
-    let markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower']
+var LazyExperience = LazyExperience || (function() {
+    'use strict';
 
     let playerid;
 
-    on('ready',()=>{ 
-        checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+    // Styling for the chat responses.
+    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;",
+    buttonStyle2 = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center;",
+    listStyle = 'list-style: none; padding: 0; margin: 0;',
 
-        // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
-        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
-            TokenMod.ObserveTokenChange(function(obj,prev){
-                handleStatusmarkerChange(obj,prev);
-            });
-        }
-    });
+    script_name = 'Lazy Experience',
+    state_name = 'LAZYEXPERIENCE',
 
-    on('change:graphic:statusmarkers', (obj, prev) => {
-        handleStatusmarkerChange(obj,prev);
-    });
+    markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
 
-    on('chat:message', function(msg) {
+    handleInput = (msg) => {
         if (msg.type != 'api') return;
 
         // Split the message into command and argument(s)
@@ -210,9 +195,9 @@
                 break;
             }
         }
-    });
+    },
 
-    const updateExperienceOnSheet = (experience, characterid) => {
+    updateExperienceOnSheet = (experience, characterid) => {
         if(characterid){
             let new_experience = getAttrByName(characterid, state[state_name].config.experience_attribute_name, 'current')*1 + experience*1;
 
@@ -232,9 +217,9 @@
                 })
             }
         }
-    }
+    },
 
-    const getExperienceSharers = () => {
+    getExperienceSharers = () => {
         let xpSharers = state[state_name].extra_players*1;
 
         if(state[state_name].players.length === 0){ return xpSharers; }
@@ -250,9 +235,9 @@
         }
 
         return xpSharers;
-    }
+    },
 
-    const getPlayers = (object) => {
+    getPlayers = (object) => {
         let players = []
         findObjs({ _type: 'player' }).forEach((player) => {
             if(!playerIsGM(player.get('id'))){
@@ -267,9 +252,9 @@
             }
         });
         return players;
-    }
+    },
 
-    const getPlayerCharacters = (playerid) => {
+    getPlayerCharacters = (playerid) => {
         return findObjs({
             _type: 'character',
             controlledby: playerid,
@@ -282,15 +267,14 @@
                 experience: 0
             }
         });
-    }
+    },
 
-    const getExperience = () => {
+    getExperience = () => {
         return state[state_name].session_experience;
-    }
+    },
 
-    const setExperience = (experience, characterid) => {
+    setExperience = (experience, characterid) => {
         let playerid;
-        pre_log(characterid);
         if(characterid){
             playerid = findObjs({ _id: characterid, _type: 'character' }).shift().get('controlledby');
             state[state_name].players[playerid].characters.forEach((character, i) =>{
@@ -317,10 +301,10 @@
             let whisper = (characterid) ? getObjects(state[state_name].players[playerid].characters, 'id', characterid).shift().name.split(' ')[0] : '';
             makeAndSendMenu(send_message_text, '', whisper);
         }
-    }
+    },
 
     //return an array of objects according to key, value, or key and value matching
-    const getObjects = (obj, key, val) => {
+    getObjects = (obj, key, val) => {
         var objects = [];
         for (var i in obj) {
             if (!obj.hasOwnProperty(i)) continue;
@@ -338,9 +322,9 @@
             }
         }
         return objects;
-    }
+    },
 
-    const resetExperience = () => {
+    resetExperience = () => {
         state[state_name].session_experience = 0;
         for(let playerid in state[state_name].players){
             let player = state[state_name].players[playerid];
@@ -348,9 +332,9 @@
                 state[state_name].players[playerid].characters[i].experience = 0;
             })
         }
-    }
+    },
 
-    const handleStatusmarkerChange = (obj, prev) => {
+    handleStatusmarkerChange = (obj, prev) => {
         // Check if the statusmarkers string is different from the previous statusmarkers string.
         if(obj.get('statusmarkers') !== prev.statusmarkers){
             // Create arrays from the statusmarkers strings.
@@ -371,9 +355,9 @@
                 }                
             }
         }
-    }
+    },
 
-    const sendMenu = () => {
+    sendMenu = () => {
         let addXPButton = makeButton(getTexts().add_session_xp, '!' + state[state_name].config.command + ' add session ?{Experience}', buttonStyle2);
         let endButton = makeButton('End Session', '!' + state[state_name].config.command + ' end', buttonStyle2);
         let resetXPButton = makeButton('Reset Experience', '!' + state[state_name].config.command + ' resetxp', buttonStyle2);
@@ -403,17 +387,17 @@
 
         let contents = 'Session Experience: '+getExperience()+'<br>Experience Divisors: ' + getExperienceSharers() + '<hr>'+makeList(playerListItems, listStyle + ' overflow: hidden;', 'overflow: hidden;')+'<hr>'+addXPButton+'<br>'+endButton+'<hr>'+resetXPButton
         makeAndSendMenu(contents, script_name + ' menu', 'gm');
-    }
+    },
 
-    const handleLongString = (str, max=8) => {
+    handleLongString = (str, max=8) => {
         return (str.length > max) ? str.slice(0, 8) + '...' : str;
-    }
+    },
 
-    const ucFirst = (string) => {
+    ucFirst = (string) => {
         return string.charAt(0).toUpperCase() + string.slice(1);
-    }
+    },
 
-    const getTexts = () => {
+    getTexts = () => {
         return (state[state_name].config.directxp) ? {
             add_xp: 'Give xp',
             add_session_xp: 'Give Session Experience'
@@ -421,9 +405,9 @@
             add_xp: 'Add xp',
             add_session_xp: 'Add Session Experience'
         }
-    }
+    },
 
-    const sendConfigMenu = (first) => {
+    sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
         let markerDropdown = '?{Marker';
         markers.forEach((marker) => {
@@ -466,9 +450,9 @@
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
         let contents = makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Players</b><br><br>'+makeList(playerListItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr>'+refreshPlayersButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetXPButton+'<br>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
-    }
+    },
 
-    const sendPlayerConfigMenu = (playerid) => {
+    sendPlayerConfigMenu = (playerid) => {
         let player = state[state_name].players[playerid];
         let activeButton = makeButton((player.active) ? 'Active' : 'Not Active', '!' + state[state_name].config.command + ' player '+!player.active+' '+playerid, buttonStyle2);
 
@@ -495,9 +479,9 @@
 
         let contents = 'Experience: '+player.experience+'<hr>'+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Characters</b>'+makeList(characterListItems, listStyle + ' overflow:hidden;', 'overflow: hidden;')+refreshCharactersButton+'<hr>'+backButton+'<hr>'+removeButton;
         makeAndSendMenu(contents, player.name + ' - Config', 'gm');
-    }
+    },
 
-    const sendHelpMenu = (first) => {
+    sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%;')
 
         let listItems = [
@@ -507,59 +491,62 @@
 
         let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name + ' Help', 'gm')
-    }
+    },
 
-    const makeAndSendMenu = (contents, title, whisper) => {
+    makeAndSendMenu = (contents, title, whisper) => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
         sendChat(script_name, whisper + '<div style="'+style+'">'+title+contents+'</div>');
-    }
+    },
 
-    const makeTitle = (title) => {
+    makeTitle = (title) => {
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    }
+    },
 
-    const makeButton = (title, href, style, disabled) => {
+    makeButton = (title, href, style, disabled) => {
         let disableStyle = (disabled) ? 'pointer-events: none' : '';
         return '<a style="'+style+disableStyle+'" href="'+href+'">'+title+'</a>';
-    }
+    },
 
-    const makeList = (items, listStyle, itemStyle) => {
+    makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    }
+    },
 
-    const pre_log = (message) => {
+    pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
         log(message);
         log('---------------------------------------------------------------------------------------------');
-    }
+    },
 
-    const checkInstall = () => {
+    checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
         refreshPlayers();
-    }
 
-    const getPlayerById = (playerid) => {
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+    },
+
+    getPlayerById = (playerid) => {
         return findObjs({
             _type: 'player',
             _id: playerid
         }).shift()
-    }
+    },
 
-    const refreshPlayers = () => {
+    refreshPlayers = () => {
         let saved_players = Object.keys(state[state_name].players).map((playerid, i) => { return playerid });
 
         // Player added?
         array_diff(saved_players, getPlayers()).forEach((playerid) => {
-            player = getPlayerById(playerid);
+            let player = getPlayerById(playerid);
             state[state_name].players[playerid] = {
                 name: player.get('_displayname'),
                 id: playerid,
@@ -573,9 +560,9 @@
         array_diff(getPlayers(), saved_players).forEach((playerid) => {
             delete state[state_name].players[player];
         });
-    }
+    },
 
-    const refreshCharacters = () => {
+    refreshCharacters = () => {
         for(let playerid in state[state_name].players){
             let characterids = getPlayerCharacters(playerid).map((character) => { return character.id });
             let saved_characterids = (state[state_name].players[playerid].characters.length > 0) ? state[state_name].players[playerid].characters.map((character) => { return character.id }) : [];
@@ -594,13 +581,13 @@
                 })
             });
         }
-    }
+    },
 
-    const array_diff = (a, b) => {
+    array_diff = (a, b) => {
         return b.filter(function(i) {return a.indexOf(i) < 0;});
-    }
+    },
 
-    const setDefaults = (reset) => {
+    setDefaults = (reset) => {
         const defaults = {
             config: {
                 command: 'xp',
@@ -662,5 +649,29 @@
             sendConfigMenu(true);
             state[state_name].config.firsttime = false;
         }
-    }
+    },
+
+    registerEventHandlers = () => {
+        on('chat:message', handleInput);
+        on('change:graphic:statusmarkers', handleStatusmarkerChange);
+
+        // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
+        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
+            TokenMod.ObserveTokenChange(function(obj,prev){
+                handleStatusmarkerChange(obj,prev);
+            });
+        }
+    };
+    
+    return {
+        CheckInstall: checkInstall,
+        RegisterEventHandlers: registerEventHandlers
+    };
 })();
+
+on('ready', () => { 
+    'use strict';
+
+    LazyExperience.CheckInstall();
+    LazyExperience.RegisterEventHandlers();
+});
