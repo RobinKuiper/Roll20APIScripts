@@ -29,7 +29,7 @@ Initiative [[1d20 + @{selected|dexterity_mod}&{tracker}]]
 !xp add @{selected|character_id} ?{Experience} 
 ```
 
-### TurnMarker & GroupInitiative
+### [TurnMarker1](https://app.roll20.net/forum/post/931415/script-turnmarker1-turn-token-highlight-round-counter-player-advance-command-turn-announce-plus-spiny-graphics-if-you-want-them/?pageforid=931415#post-931415) & [GroupInitiative](https://wiki.roll20.net/Script:Group_Initiative)
 **Start Combat**
 ```
 !group-init
@@ -42,7 +42,7 @@ Initiative [[1d20 + @{selected|dexterity_mod}&{tracker}]]
 !tm reset
 ```
 
-### TokenMod
+### [TokenMod](https://app.roll20.net/forum/post/4225825/script-update-tokenmod-an-interface-to-adjusting-properties-of-a-token-from-a-macro-or-the-chat-area/?pageforid=4225825#post-4225825)
 **Light**
 ``` 
 !token-mod --set ?{Vision|Torch, light_radius#40 light_dimradius#20 light_hassight#yes light_angle#360 light_otherplayers#yes|Hooded Lantern, light_radius#60 light_dimradius#30 light_hassight#yes light_angle#360 light_otherplayers#yes|Bullseye Lantern, light_radius#120 light_dimradius#60 light_angle#60 light_hassight#yes light_otherplayers#yes|Lamp, light_radius#30 light_dimradius#15 light_hassight#yes light_angle#360 light_otherplayers#yes|Candle, light_radius#5 light_dimradius#=0 light_hassight#yes light_angle#360 light_otherplayers#yes|Darkvision, light_radius#60 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Darkvision (90'), light_radius#90 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Warlock Devil's Sight, light_radius#120 light_dimradius#=120 light_hassight#yes light_angle#360 light_otherplayers#no|No light source(Dusk), light_radius#120 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Fog, light_radius#200 light_dimradius#=5 light_hassight#yes light_angle#360 light_otherplayers#no|No light source, light_radius#5 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Blinded, light_hassight#no light_angle#360 light_otherplayers#no} 
