@@ -168,6 +168,28 @@ var Resizer = Resizer || (function() {
                     sendMenu('The entire page is scaled <b>'+upOrDown+'</b> by <b>'+amount+'</b>.<br><br>'+undoButton);
                 break;
 
+                case 'fit':
+                    if(msg.selected){
+                        let page = getObj('page', getObj('player', msg.playerid).get('lastpage'));
+                        let options = {
+                            width: page.get('width')*70,
+                            height: page.get('height')*70,
+                            top: (page.get('height')*70)/2,
+                            left: (page.get('width')*70)/2
+                        }
+                        
+                        msg.selected.forEach(graphic => {
+                            getObj(graphic._type, graphic._id).set(options);
+                        });
+
+                        chat_text = (msg.selected.length > 1) ? 'Selected graphics where fitted to the page.' : 'Selected graphic is fitted to the page.';
+                    }else{
+                        chat_text = 'No graphics where selected.';
+                    }
+
+                    sendMenu(chat_text);
+                break;
+
                 // !resizer
                 // !resizer (with selected graphics)
                 // !resizer 50 50
@@ -241,10 +263,11 @@ var Resizer = Resizer || (function() {
         let resizeGraphicButton = makeButton('Resize Selected Graphics', '!' + state[state_name].config.command + ' ?{Width} ?{Height}', styles.button + styles.fullWidth);
         let resizePageButton = makeButton('Resize Page', '!' + state[state_name].config.command + ' page ?{Width} ?{Height} ?{Units or Pixels?|Pixels,pixels|Units,units}', styles.button + styles.fullWidth);
         let scaleButton = makeButton('Scale Entire Page', '!' + state[state_name].config.command + ' scale ?{Amount} ?{Choose|Up, up|Down, down}', styles.button + styles.fullWidth);
+        let fitButton = makeButton('Make selected fit to page', '!' + state[state_name].config.command + ' fit', styles.button + styles.fullWidth);
 
         message = (message) ? '<hr><p>'+message+'</p>' : '';
 
-        let buttons = getGraphicSizeButton+resizeGraphicButton+'<hr>'+getPageSizeButton+resizePageButton+'<hr>'+scaleButton;
+        let buttons = getGraphicSizeButton+resizeGraphicButton+fitButton+'<hr>'+getPageSizeButton+resizePageButton+'<hr>'+scaleButton;
 
         makeAndSendMenu(buttons+message, script_name + ' Menu', 'gm');
     },
