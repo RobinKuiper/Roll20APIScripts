@@ -1,5 +1,3 @@
-# WORK IN PROGRESS
-
 ## Concentration
 
 * Skype: RobinKuiper.eu
@@ -11,7 +9,11 @@
 
 Concentration keeps track of characters concentration, and reminds to do a concentration check. 
 
+![Concentration Reminder](https://i.imgur.com/zEVJpOH.png "Concentration Reminder")
+
 ### Commands
 
 * **!concentration help** - Shows the help menu.
 * **!concentration config** - Shows the config menu.
+
+![Config Menu](https://i.imgur.com/1rB3ezY.png "Config Menu")
