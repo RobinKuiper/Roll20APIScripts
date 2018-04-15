@@ -31,6 +31,10 @@ var Resizer = Resizer || (function() {
     script_name = 'Resizer',
     state_name = 'RESIZER',
 
+    // TODO
+    // Make tokens larger/smaller by size (tiny, small, medium ...)
+    // Make map same size as page
+
     handleInput = (msg) => {
         if (msg.type != 'api') return;
 
@@ -114,7 +118,10 @@ var Resizer = Resizer || (function() {
                 break;
 
                 case 'scale':
-                    let amount = args.shift() || 2;
+                    let amount = args.shift()*1 || 2;
+
+                    if(amount === 1){ return; }
+
                     let up = (!args.shift() || args.shift() === 'up') ? true : false;
                     
                     let page = getObj('page', getObj('player', msg.playerid).get('lastpage'));
