@@ -160,7 +160,7 @@ var Resizer = Resizer || (function() {
                     });  
                     
                     upOrDown = (up) ? 'up' : 'down';
-                    sendMenu('The entire page is scaled <b>'+upOrDown+'</b> to <b>'+amount+'</b>.<br><br>'+undoButton);
+                    sendMenu('The entire page is scaled <b>'+upOrDown+'</b> by <b>'+amount+'</b>.<br><br>'+undoButton);
                 break;
 
                 // !resizer
