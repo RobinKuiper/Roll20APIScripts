@@ -104,7 +104,6 @@ var Resizer = Resizer || (function() {
                 case 'undo':
                     if(obj.length > 1){
                         obj.forEach((o, i) => {
-                            pre_log(o)
                             resize(o, old_width[i], old_height[i]);
                         });
                     }else{
@@ -112,6 +111,56 @@ var Resizer = Resizer || (function() {
                     }
 
                     sendMenu('I have undone your wrongings!');
+                break;
+
+                case 'scale':
+                    let amount = args.shift() || 2;
+                    let up = (!args.shift() || args.shift() === 'up') ? true : false;
+                    
+                    let page = getObj('page', getObj('player', msg.playerid).get('lastpage'));
+                    let objectsOnPage = findObjs({ _pageid: page.get('id') });
+
+                    let upOrDown = (up) ? 'down' : 'up';
+                    let undoButton = makeButton('Undo', '!'+state[state_name].config.command + ' scale ' + amount + ' ' + upOrDown, styles.button);
+
+                    // Do scaling
+                    page.set({
+                        width: (up) ? page.get('width')*amount : page.get('width')/amount,
+                        height: (up) ? page.get('height')*amount : page.get('height')/amount,
+                        scale_number: (up) ? page.get('scale_number')*amount : page.get('scale_number')/amount,
+                        snapping_increment: (up) ? page.get('snapping_increment')*amount : page.get('snapping_increment')/amount //Check this
+                    });
+
+                    objectsOnPage.forEach((o, i) => {
+                        if(o.get('type') === 'graphic' || o.get('type') === 'path' || o.get('type') === 'text'){
+                            //obj.push(o); old_width.push(o.get('width')); old_height.push(o.get('height'));
+
+                            let attributes = {
+                                width: (up) ? o.get('width')*amount : o.get('width')/amount,
+                                height: (up) ? o.get('height')*amount : o.get('height')/amount,
+                                top: (up) ? o.get('top')*amount : o.get('top')/amount,
+                                left: (up) ? o.get('left')*amount : o.get('left')/amount,
+                            }
+
+                            if(o.get('type') === 'text'){
+                                attributes['font_size'] = (up) ? o.get('font_size')*amount : o.get('font_size')/amount;
+                            }
+
+                            if(o.get('type') === 'path'){
+                                attributes = {
+                                    scaleY: (up) ? o.get('scaleY')*amount : o.get('scaleY')/amount,
+                                    scaleX: (up) ? o.get('scaleX')*amount : o.get('scaleX')/amount,
+                                    top: (up) ? o.get('top')*amount : o.get('top')/amount,
+                                    left: (up) ? o.get('left')*amount : o.get('left')/amount,
+                                };
+                            }
+
+                            o.set(attributes);                            
+                        }
+                    });  
+                    
+                    upOrDown = (up) ? 'up' : 'down';
+                    sendMenu('The entire page is scaled <b>'+upOrDown+'</b> to <b>'+amount+'</b>.<br><br>'+undoButton);
                 break;
 
                 // !resizer
@@ -151,7 +200,6 @@ var Resizer = Resizer || (function() {
                         msg.selected.forEach(token => {
                             token = getObj(token._type, token._id);
                             chat_text += '<b>'+token.get('name') + ':</b> ' + token.get('width') + 'px by ' + token.get('height') + 'px.<br>';
-                            pre_log(token)
                         });
                     }
 
@@ -200,10 +248,11 @@ var Resizer = Resizer || (function() {
         let getPageSizeButton = makeButton('Get Page Size', '!' + state[state_name].config.command + ' page', styles.button + styles.fullWidth);
         let resizeGraphicButton = makeButton('Resize Selected Graphic', '!' + state[state_name].config.command + ' ?{Width} ?{Height}', styles.button + styles.fullWidth);
         let resizePageButton = makeButton('Resize Page', '!' + state[state_name].config.command + ' page ?{Width} ?{Height} ?{Units or Pixels?|Pixels,pixels|Units,units}', styles.button + styles.fullWidth);
+        let scaleButton = makeButton('Scale Page', '!' + state[state_name].config.command + ' scale ?{Amount} ?{Choose|Up, up|Down, down}', styles.button + styles.fullWidth);
 
         message = (message) ? '<hr><p>'+message+'</p>' : '';
 
-        let buttons = getGraphicSizeButton+resizeGraphicButton+'<hr>'+getPageSizeButton+resizePageButton;
+        let buttons = getGraphicSizeButton+resizeGraphicButton+'<hr>'+getPageSizeButton+resizePageButton+scaleButton;
 
         makeAndSendMenu(buttons+message, script_name + ' Menu', 'gm');
     },

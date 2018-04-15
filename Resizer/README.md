@@ -17,6 +17,8 @@ Resizer lets you easily resize graphics and pages with a simple menu.
 * **!resizer** - Shows the Resizer menu (if there are graphics selected it also shows there current sizes).
 * **!resizer page** - Shows the pages current size.
 
+* **!resizer scale [amount] [up/down]** - Scale the entire page by amount and up or down, eg. !resizer scale 2 up.
+
 * **!resizer help** - Shows the help menu.
 * **!resizer config** - Shows the config menu.
 * **!resizer menu** - Shows a menu to easily resize graphics/pages.
