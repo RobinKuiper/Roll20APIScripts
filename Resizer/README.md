@@ -25,3 +25,5 @@ Resizer lets you easily resize graphics and pages with a simple menu.
 * **!resizer menu** - Shows a menu to easily resize graphics/pages.
 
 ![Resizer Menu](https://i.imgur.com/pRAuPPm.png "Resizer Menu")
+
+Roll20 Thread: https://app.roll20.net/forum/post/6285519/script-resizer/
