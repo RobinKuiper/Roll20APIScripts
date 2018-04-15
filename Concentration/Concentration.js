@@ -1,5 +1,5 @@
 /*
- * Version 0.1.0
+ * Version 0.1.1
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -22,9 +22,7 @@ var Concentration = Concentration || (function() {
             left: 'float: left;'
         },
         overflow: 'overflow: hidden;',
-        fullWidth: 'width: 100%;',
-        underline: 'text-decoration: underline;',
-        strikethrough: 'text-decoration: strikethrough'
+        fullWidth: 'width: 100%;'
     },
     script_name = 'Concentration',
     state_name = 'CONCENTRATION',
@@ -41,10 +39,6 @@ var Concentration = Concentration || (function() {
 
         if (command == state[state_name].config.command) {
             switch(extracommand){
-                case 'help':
-                    sendHelpMenu();
-                break;
-
                 case 'reset':
                     state[state_name] = {};
                     setDefaults(true);
@@ -69,7 +63,7 @@ var Concentration = Concentration || (function() {
                 break;
 
                 default:
-                    sendHelpMenu();
+                    sendConfigMenu();
                 break;
             }
         }
@@ -129,18 +123,6 @@ var Concentration = Concentration || (function() {
         message = (message) ? '<p>'+message+'</p>' : '';
         let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
-    },
-
-    sendHelpMenu = (first) => {
-        let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
-
-        let listItems = [
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
-        ]
-
-        let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list)+'<hr>'+configButton;
-        makeAndSendMenu(contents, script_name + ' Help', 'gm')
     },
 
     makeAndSendMenu = (contents, title, whisper) => {

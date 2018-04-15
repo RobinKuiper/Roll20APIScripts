@@ -135,7 +135,7 @@ var Template = Template || (function() {
 
     registerEventHandlers = () => {
         on('chat:message', handleInput);
-    }
+    },
 
     setDefaults = (reset) => {
         const defaults = {
