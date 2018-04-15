@@ -18,6 +18,7 @@ var Resizer = Resizer || (function() {
         reset: 'padding: 0; margin: 0;',
         menu:  'background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;',
         button: 'background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center;',
+        textButton: "text-decoration: underline; background-color: #fff; color: #000; padding: 0",
         list: 'list-style: none;',
         float: {
             right: 'float: right;',
@@ -90,7 +91,7 @@ var Resizer = Resizer || (function() {
                                 height = height/70;
                             }
 
-                            resize(obj, width, height);
+                            obj.set({ width, height })
 
                             chat_text = 'The page is resized to <b>' + width + 'un.</b> by <b>' + height + 'un.</b>.<br><br>'+undoButton;
                         }else{
@@ -100,7 +101,6 @@ var Resizer = Resizer || (function() {
                         chat_text = 'Something went wrong, try again, or contact the developer.';
                     }
                     
-
                     sendMenu(chat_text);
                 break;
 
@@ -108,10 +108,10 @@ var Resizer = Resizer || (function() {
                 case 'undo':
                     if(obj.length > 1){
                         obj.forEach((o, i) => {
-                            resize(o, old_width[i], old_height[i]);
+                            o.set({ width: old_width[i], height: old_height[i] })
                         });
                     }else{
-                        resize(obj, old_width, old_height);
+                        obj.set({ width: old_width, height: old_height })
                     }
 
                     sendMenu('I have undone your wrongings!');
@@ -186,7 +186,7 @@ var Resizer = Resizer || (function() {
                                 old_width.push(obj[i].get('width'));
                                 old_height.push(obj[i].get('height'));
 
-                                resize(obj[i], width, height);
+                                obj[i].set({ width, height })
                             })
 
                             chat_text = 'The graphics are resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.<br><br>'+undoButton;
@@ -196,7 +196,7 @@ var Resizer = Resizer || (function() {
                             old_width = obj.get('width');
                             old_height = obj.get('height');
 
-                            resize(obj, width, height);
+                            obj.set({ width, height })
 
                             chat_text = 'The graphic is resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.<br><br>'+undoButton;
                         }                        
@@ -212,10 +212,6 @@ var Resizer = Resizer || (function() {
                 break;
             }
         }
-    },
-
-    resize = (obj, width, height) => {
-        obj.set({ width: width*1, height: height*1 });
     },
 
     sendConfigMenu = (first) => {
@@ -235,7 +231,7 @@ var Resizer = Resizer || (function() {
     sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
 
-        let listItems = [
+        /*let listItems = [
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+'</span>- Shows the Resizer menu (if there are graphics selected it also shows there current sizes).',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' [width] [height]</span> - Resizes the selected graphic(s).',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page [width] [height] ?pixels</span> - Resizes the page (add pixels to the end if you want to use pixels instead of units.).',
@@ -243,9 +239,9 @@ var Resizer = Resizer || (function() {
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' scale [amount] [up/down]</span> - Scale the entire page (with everything on it) by amount and up or down, eg. !resizer scale 2 up.',            
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',  
-        ]
+        ]*/
 
-        let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list, 'margin-bottom: 5px;')+'<hr>'+configButton;
+        let contents = 'You can find the help '+makeButton('here', 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/Resizer#resizer', styles.textButton)+'!'+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name + ' Help', 'gm')
     },
 
