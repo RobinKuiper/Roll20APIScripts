@@ -7,7 +7,7 @@
 
 ---
 
-DeathTracker sets the statusmarker when a character is death or (optional) almost death, works great together with my LazyExperience script.
+DeathTracker sets the statusmarker when a character is death or (optional) almost death, works great together with my [LazyExperience](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/LazyExperience) script.
 
 ![Config Menu](https://i.imgur.com/hoYGckL.png "Config Menu")
 
