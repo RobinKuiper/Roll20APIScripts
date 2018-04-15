@@ -1,5 +1,3 @@
-# WORK IN PROGRESS
-
 ## DeathTracker
 
 * Skype: RobinKuiper.eu
