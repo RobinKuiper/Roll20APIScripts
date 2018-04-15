@@ -99,7 +99,7 @@ var Drunk = Drunk || (function() {
                 break;
 
                 default:
-                    sendHelpMenu();
+                    sendMenu();
                 break;
             }
         }

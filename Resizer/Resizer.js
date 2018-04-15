@@ -67,42 +67,17 @@ var Resizer = Resizer || (function() {
                     sendConfigMenu();
                 break;
 
-                case 'get':
-                    type = args.shift();
-                    if(type === 'graphic'){ token_id = args.shift(); }
-                    if(type === 'page'){ token_id = getObj('player', msg.playerid).get('lastpage'); }
-
-                    obj = getObj(type, token_id);
-
-                    let utype = (type === 'graphic') ? 'px.' : 'un.';
-
-                    chat_text = (obj) ? 'The size of this '+type+' is <b>' + obj.get('width') + utype + '</b> by <b>' + obj.get('height') + utype + '</b>' : 'There is not '+type+' found with this id.';
-
-                    sendMenu(chat_text);
-                break;
-
-                case 'resize':
-                    type = args.shift();
-                    if(type === 'graphic'){ token_id = args.shift(); }
-                    if(type === 'page'){ unit_type = args.shift(); }
-                    width = args.shift(),
+                // !resizer page
+                // !resizer page 50 50
+                case 'page':
+                    width = args.shift();
                     height = args.shift();
+                    unit_type = args.shift();
 
-                    let undoButton = makeButton('Undo', '!'+state[state_name].config.command + ' undo', styles.button);
+                    if(obj = getObj('page', getObj('player', msg.playerid).get('lastpage'))){
+                        if(width && height){
+                            let undoButton = makeButton('Undo', '!'+state[state_name].config.command + ' undo', styles.button);
 
-                    if(type === 'graphic'){
-                        if(obj = getObj('graphic', token_id)){
-                            old_width = obj.get('width')*1;
-                            old_height = obj.get('height')*1;
-
-                            resize(obj, width, height);
-
-                            chat_text = 'The graphic is resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.<br><br>'+undoButton;
-                        }else{
-                            chat_text = 'There is not graphic found with this id.';
-                        }
-                    }else{
-                        if(obj = getObj('page', getObj('player', msg.playerid).get('lastpage'))){
                             old_width = obj.get('width')*1;
                             old_height = obj.get('height')*1;
 
@@ -115,35 +90,69 @@ var Resizer = Resizer || (function() {
 
                             chat_text = 'The page is resized to <b>' + width + 'un.</b> by <b>' + height + 'un.</b>.<br><br>'+undoButton;
                         }else{
-                            chat_text = 'Something went wrong, try again, or contact the developer.';
+                            chat_text = 'The size of this page is <b>' + obj.get('width') + 'un.</b> by <b>' + obj.get('height') + 'un.</b>';
                         }
+                    }else{
+                        chat_text = 'Something went wrong, try again, or contact the developer.';
                     }
+                    
 
                     sendMenu(chat_text);
                 break;
 
+                // !resizer undo
                 case 'undo':
-                    resize(obj, old_width, old_height);
+                    if(obj.length > 1){
+                        obj.forEach((o, i) => {
+                            pre_log(o)
+                            resize(o, old_width[i], old_height[i]);
+                        });
+                    }else{
+                        resize(obj, old_width, old_height);
+                    }
 
                     sendMenu('I have undone your wrongings!');
                 break;
 
+                // !resizer
+                // !resizer (with selected graphics)
+                // !resizer 50 50
                 default:
                     width = extracommand;
                     height = args.shift();
 
                     if(msg.selected && width && height){
-                        msg.selected.forEach(token => {
-                            obj = getObj(token._type, token._id);
+                        let undoButton = makeButton('Undo', '!'+state[state_name].config.command + ' undo', styles.button);
+                        if(msg.selected.length > 1){
+                            old_width = []; old_height = []; obj = []
+
+                            msg.selected.forEach((token, i) => {
+                                obj.push(getObj(token._type, token._id));
+
+                                old_width.push(obj[i].get('width'));
+                                old_height.push(obj[i].get('height'));
+
+                                resize(obj[i], width, height);
+                            })
+
+                            chat_text = 'The graphics are resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.<br><br>'+undoButton;
+                        }else{
+                            obj = getObj(msg.selected[0]._type, msg.selected[0]._id)
 
                             old_width = obj.get('width');
                             old_height = obj.get('height');
 
                             resize(obj, width, height);
-                        })
 
-                        let multiple = (msg.selected.length > 1) ? 's are' : ' is';
-                        chat_text = 'The graphic'+multiple+' resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.';
+                            chat_text = 'The graphic is resized to <b>' + width + 'px</b> by <b>' + height + 'px</b>.<br><br>'+undoButton;
+                        }                        
+                    }else if(msg.selected){
+                        chat_text = '<b>Sizes</b><br>';
+                        msg.selected.forEach(token => {
+                            token = getObj(token._type, token._id);
+                            chat_text += '<b>'+token.get('name') + ':</b> ' + token.get('width') + 'px by ' + token.get('height') + 'px.<br>';
+                            pre_log(token)
+                        });
                     }
 
                     sendMenu(chat_text);
@@ -153,7 +162,7 @@ var Resizer = Resizer || (function() {
     },
 
     resize = (obj, width, height) => {
-        obj.set({ width, height });
+        obj.set({ width: width*1, height: height*1 });
     },
 
     sendConfigMenu = (first) => {
@@ -174,14 +183,12 @@ var Resizer = Resizer || (function() {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
 
         let listItems = [
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' menu</span> - Shows the resizer menu.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+'</span> - Shows the resizer menu and size of selected graphics.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' [width] [height]</span> - Resizes the selected graphic(s).',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' get page</span> - Shows the page size.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' get graphic [graphic id]</span> - Shows the graphic size. Works with @{selected|token_id}.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' resize page [unit type] [width] [height]</span> - Resizes the page (unit types: pixels/units).',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' resize graphic [graphic id] [width] [height]</span> - Resizes the graphic.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page</span> - Shows the page size.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page [width] [height] ?pixels</span> - Resizes the page (add pixels to the end if you want to use pixels instead of units.).',
         ]
 
         let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list, 'margin-bottom: 5px;')+'<hr>'+configButton;
@@ -189,10 +196,10 @@ var Resizer = Resizer || (function() {
     },
 
     sendMenu = (message) => {
-        let getGraphicSizeButton = makeButton('Get Selected Graphic Size', '!' + state[state_name].config.command + ' get graphic &#64;{selected|token_id}', styles.button + styles.fullWidth);
-        let getPageSizeButton = makeButton('Get Page Size', '!' + state[state_name].config.command + ' get page', styles.button + styles.fullWidth);
-        let resizeGraphicButton = makeButton('Resize Selected Graphic', '!' + state[state_name].config.command + ' resize graphic &#64;{selected|token_id} ?{Width} ?{Height}', styles.button + styles.fullWidth);
-        let resizePageButton = makeButton('Resize Page', '!' + state[state_name].config.command + ' resize page ?{Units|Pixels,pixels|Units,units} ?{Width} ?{Height}', styles.button + styles.fullWidth);
+        let getGraphicSizeButton = makeButton('Get Selected Graphic Size', '!' + state[state_name].config.command, styles.button + styles.fullWidth);
+        let getPageSizeButton = makeButton('Get Page Size', '!' + state[state_name].config.command + ' page', styles.button + styles.fullWidth);
+        let resizeGraphicButton = makeButton('Resize Selected Graphic', '!' + state[state_name].config.command + ' ?{Width} ?{Height}', styles.button + styles.fullWidth);
+        let resizePageButton = makeButton('Resize Page', '!' + state[state_name].config.command + ' page ?{Width} ?{Height} ?{Units or Pixels?|Pixels,pixels|Units,units}', styles.button + styles.fullWidth);
 
         message = (message) ? '<hr><p>'+message+'</p>' : '';
 
