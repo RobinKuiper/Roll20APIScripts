@@ -13,7 +13,6 @@ Concentration keeps track of characters concentration, and reminds to do a conce
 
 ### Commands
 
-* **!concentration help** - Shows the help menu.
-* **!concentration config** - Shows the config menu.
+* **!concentration** - Shows the config menu.
 
 ![Config Menu](https://i.imgur.com/1rB3ezY.png "Config Menu")
