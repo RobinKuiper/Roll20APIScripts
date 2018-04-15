@@ -9,20 +9,18 @@
  * Reddit: https://www.reddit.com/user/robinkuiper/
 */
 
-var BeyondImport = BeyondImport || (function() {
-    'use strict';
-
+(function() {
     // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
-    buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;",
-    conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
-    conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0",
-    listStyle = 'list-style: none; padding: 0; margin: 0;',
+    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
+    const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
+    const conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
+    const conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0";
+    const listStyle = 'list-style: none; padding: 0; margin: 0;';
 
-    script_name = 'Beyond Importer',
-    state_name = 'BEYONDIMPORTER',
+    let script_name = 'Beyond Importer';
+    let state_name = 'BEYONDIMPORTER';
 
-    skills = [
+    const skills = [
         'acrobatics',
         'animal_handling',
         'arcana',
@@ -41,9 +39,9 @@ var BeyondImport = BeyondImport || (function() {
         'sleight_of_hand',
         'stealth',
         'survival'
-    ],
+    ]
 
-    conditions = [
+    const conditions = [
         'blinded',
         'charmed',
         'deafened',
@@ -60,9 +58,9 @@ var BeyondImport = BeyondImport || (function() {
         'stunned',
         'unconscious',
         'exhaustion'
-    ],
+    ];
 
-    spell_level_formats = {
+    const spell_level_formats = {
         0: 'CANTRIP',
         1: '1ST_LEVEL',
         2: '2ND_LEVEL',
@@ -73,9 +71,15 @@ var BeyondImport = BeyondImport || (function() {
         7: '7TH_LEVEL',
         8: '8TH_LEVEL',
         9: '9TH_LEVEL'
-    },
+    }
 
-    handleInput = (msg) => {
+    on('ready',()=>{ 
+        checkInstall();
+        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+    });
+
+    on('chat:message', function(msg) {
         if (msg.type != 'api') return;
 
         // Split the message into command and argument(s)
@@ -119,9 +123,9 @@ var BeyondImport = BeyondImport || (function() {
                 break;
             }
         }
-    },
+    });
 
-    runImport = (character) => {
+    const runImport = (character) => {
         let attributes = {};
 
         // Remove characters with the same name if overwrite is enabled.
@@ -410,9 +414,9 @@ var BeyondImport = BeyondImport || (function() {
         });
 
         sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is ready.</div>');
-    },
+    }
 
-    createRepeating = (section, id, fields, object) => {
+    const createRepeating = (section, id, fields, object) => {
         let attributes = {};
         var row = getOrMakeRowID(object,"repeating_"+section+"_",id);
 
@@ -421,9 +425,9 @@ var BeyondImport = BeyondImport || (function() {
         }
 
         return attributes;
-    },
+    }
 
-    importClasses = (classes, object) => {
+    const importClasses = (classes, object) => {
         let attributes = {};
 
         classes.forEach((c, i, array) => {
@@ -493,15 +497,15 @@ var BeyondImport = BeyondImport || (function() {
         });
 
         return attributes;
-    },
+    }
 
-    getRepeatingSectionAttrs = (characterId, sectionName) => {
-      prefix = `repeating_${sectionName}`;
+    const getRepeatingSectionAttrs = (characterId, sectionName) => {
+      const prefix = `repeating_${sectionName}`;
       return _.filter(this.findObjs({ type: 'attribute', characterid: characterId }),
         attr => attr.get('name').indexOf(prefix) === 0);
-    },
+    }
 
-    getTotalAbilityScore = (character, score, score_short) => {
+    const getTotalAbilityScore = (character, score, score_short) => {
         let base = character.stats[score_short],
         bonus = character.bonusStats[score_short],
         override = character.overrideStats[score_short],
@@ -515,9 +519,9 @@ var BeyondImport = BeyondImport || (function() {
         }
 
         return total;
-    },
+    }
 
-    sendConfigMenu = (first) => {
+    const sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
         let prefix = (state[state_name].config.prefix !== '') ? state[state_name].config.prefix : '[NONE]';
         let prefixButton = makeButton(prefix, '!' + state[state_name].config.command + ' config prefix|?{Prefix}', buttonStyle);
@@ -535,9 +539,9 @@ var BeyondImport = BeyondImport || (function() {
         let text = '<div style="'+style+'">'+makeTitle(title_text)+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton+'</div>';
 
         sendChat('', '/w gm ' + text);
-    },
+    }
 
-    sendHelpMenu = (first) => {
+    const sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', buttonStyle + ' width: 100%;')
 
         let listItems = [
@@ -549,31 +553,31 @@ var BeyondImport = BeyondImport || (function() {
         let text = '<div style="'+style+'">'+makeTitle(script_name + ' Help')+'<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton+'</div>';
 
         sendChat('', '/w gm ' + text);
-    },
+    }
 
-    makeTitle = (title) => {
+    const makeTitle = (title) => {
         return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    },
+    }
 
-    makeButton = (title, href, style) => {
+    const makeButton = (title, href, style) => {
         return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    },
+    }
 
-    makeList = (items, listStyle, itemStyle) => {
+    const makeList = (items, listStyle, itemStyle) => {
         let list = '<ul style="'+listStyle+'">';
         items.forEach((item) => {
             list += '<li style="'+itemStyle+'">'+item+'</li>';
         });
         list += '</ul>';
         return list;
-    },
+    }
 
-    replaceChars = (text) => {
+    const replaceChars = (text) => {
         return text.replace('&rsquo;', '\'').replace('&nbsp;', ' ')
-    },
+    }
 
     //return an array of objects according to key, value, or key and value matching
-    getObjects = (obj, key, val) => {
+    const getObjects = (obj, key, val) => {
         var objects = [];
         for (var i in obj) {
             if (!obj.hasOwnProperty(i)) continue;
@@ -591,10 +595,10 @@ var BeyondImport = BeyondImport || (function() {
             }
         }
         return objects;
-    },
+    }
 
     // Find an existing repeatable item with the same name, or generate new row ID
-    getOrMakeRowID = function(character,repeatPrefix,name){
+    const getOrMakeRowID = function(character,repeatPrefix,name){
         // Get list of all of the character's attributes
         var attrObjs = findObjs({ _type: "attribute", _characterid: character.get("_id") });
 
@@ -611,9 +615,9 @@ var BeyondImport = BeyondImport || (function() {
             i++;
         }
         return generateRowID();
-    },
+    }
 
-    generateUUID = (function() {
+    const generateUUID = (function() {
         var a = 0, b = [];
         return function() {
             var c = (new Date()).getTime() + 0, d = c === a;
@@ -638,35 +642,32 @@ var BeyondImport = BeyondImport || (function() {
             }
             return c;
         };
-    }()),
+    }())
 
-    generateRowID = () => {
+    const generateRowID = () => {
         "use strict";
         return generateUUID().replace(/_/g, "Z");
-    },
+    }
 
-    regexIndexOf = function(str, regex, startpos) {
+    const regexIndexOf = function(str, regex, startpos) {
         var indexOf = str.substring(startpos || 0).search(regex);
         return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
-    },
+    }
 
-    pre_log = (message) => {
+    const pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
         log(message);
         log('---------------------------------------------------------------------------------------------');
-    },
+    }
 
-    checkInstall = () => {
+    const checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
+    }
 
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
-    },
-
-    setDefaults = (reset) => {
+    const setDefaults = (reset) => {
         const defaults = {
             command: 'beyond',
             overwrite: false,
@@ -740,21 +741,5 @@ var BeyondImport = BeyondImport || (function() {
                 state[state_name].config.firsttime = false;
             }
         }
-    },
-
-    registerEventHandlers = () => {
-        on('chat:message', handleInput);
-    };
-    
-    return {
-        CheckInstall: checkInstall,
-        RegisterEventHandlers: registerEventHandlers
-    };
+    }
 })();
-
-on('ready', () => { 
-    'use strict';
-
-    BeyondImport.CheckInstall();
-    BeyondImport.RegisterEventHandlers();
-});
