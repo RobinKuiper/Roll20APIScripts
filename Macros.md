@@ -8,30 +8,35 @@ This are some of the macros I use in my games. I use some more, but they are usi
 Initiative [[1d20 + @{selected|dexterity_mod}&{tracker}]] 
 ```
 
-**TravelTime**
+**Travel Time**
 ``` 
 **It will take [[ ?{How far in miles?|24} / (?{Travel Pace?|Fast, 30|Normal, 24|Slow, 18|Normal Jungle, 20} * ?{Travel Mode?|On Foot, 1|Horseback, 1.25|Wyvern - 9 hours, 3|Broom - 13 hours, 3|Flying Speed 30 - 4 MPH, 4} * ?{Terrain?|Road/Trails, 1|Off Road, 0.5|Air, 1|Jungle, 0.5})  ]] day(s) to travel [[ ?{How far in miles?} ]] miles.** 
 ```
 
 ### [LazyExperience](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/LazyExperience)
-**AddXP**
+**Add Session XP**
 ``` 
-!xp add @{selected|npc_xp} ?{num} 
+!xp add session ?{Experience} 
 ```
 
-**GiveXP**
+**Add monster XP to Session XP**
+``` 
+!xp add session @{selected|npc_xp}
+```
+
+**Give experience to selected character**
 ``` 
 !xp add @{selected|character_id} ?{Experience} 
 ```
 
 ### TurnMarker & GroupInitiative
-**StartCombat**
+**Start Combat**
 ```
 !group-init
 !group-init --sort
 ```
 
-**EndCombat**
+**End Combat**
 ```
 !group-init --clear
 !tm reset
@@ -43,7 +48,7 @@ Initiative [[1d20 + @{selected|dexterity_mod}&{tracker}]]
 !token-mod --set ?{Vision|Torch, light_radius#40 light_dimradius#20 light_hassight#yes light_angle#360 light_otherplayers#yes|Hooded Lantern, light_radius#60 light_dimradius#30 light_hassight#yes light_angle#360 light_otherplayers#yes|Bullseye Lantern, light_radius#120 light_dimradius#60 light_angle#60 light_hassight#yes light_otherplayers#yes|Lamp, light_radius#30 light_dimradius#15 light_hassight#yes light_angle#360 light_otherplayers#yes|Candle, light_radius#5 light_dimradius#=0 light_hassight#yes light_angle#360 light_otherplayers#yes|Darkvision, light_radius#60 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Darkvision (90'), light_radius#90 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Warlock Devil's Sight, light_radius#120 light_dimradius#=120 light_hassight#yes light_angle#360 light_otherplayers#no|No light source(Dusk), light_radius#120 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Fog, light_radius#200 light_dimradius#=5 light_hassight#yes light_angle#360 light_otherplayers#no|No light source, light_radius#5 light_dimradius#=-5 light_hassight#yes light_angle#360 light_otherplayers#no|Blinded, light_hassight#no light_angle#360 light_otherplayers#no} 
 ```
 
-**RandomHP**
+**Random HP**
 ``` 
 !token-mod --set bar1|[[@{selected|npc_hpformula}]] 
 ```
