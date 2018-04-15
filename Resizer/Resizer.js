@@ -231,16 +231,6 @@ var Resizer = Resizer || (function() {
     sendHelpMenu = (first) => {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
 
-        /*let listItems = [
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+'</span>- Shows the Resizer menu (if there are graphics selected it also shows there current sizes).',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' [width] [height]</span> - Resizes the selected graphic(s).',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page [width] [height] ?pixels</span> - Resizes the page (add pixels to the end if you want to use pixels instead of units.).',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page</span> - Shows the page size.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' scale [amount] [up/down]</span> - Scale the entire page (with everything on it) by amount and up or down, eg. !resizer scale 2 up.',            
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',  
-        ]*/
-
         let contents = 'You can find the help '+makeButton('here', 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/Resizer#resizer', styles.textButton)+'!'+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name + ' Help', 'gm')
     },
