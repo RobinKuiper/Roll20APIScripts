@@ -133,8 +133,6 @@ var Resizer = Resizer || (function() {
 
                     objectsOnPage.forEach((o, i) => {
                         if(o.get('type') === 'graphic' || o.get('type') === 'path' || o.get('type') === 'text'){
-                            //obj.push(o); old_width.push(o.get('width')); old_height.push(o.get('height'));
-
                             let attributes = {
                                 width: (up) ? o.get('width')*amount : o.get('width')/amount,
                                 height: (up) ? o.get('height')*amount : o.get('height')/amount,
