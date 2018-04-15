@@ -1,5 +1,5 @@
 /*
- * Version 0.0.2
+ * Version 0.0.6
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -229,12 +229,13 @@ var Resizer = Resizer || (function() {
         let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
 
         let listItems = [
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+'</span> - Shows the resizer menu and size of selected graphics.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+'</span>- Shows the Resizer menu (if there are graphics selected it also shows there current sizes).',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' [width] [height]</span> - Resizes the selected graphic(s).',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page</span> - Shows the page size.',
             '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page [width] [height] ?pixels</span> - Resizes the page (add pixels to the end if you want to use pixels instead of units.).',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' page</span> - Shows the page size.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' scale [amount] [up/down]</span> - Scale the entire page (with everything on it) by amount and up or down, eg. !resizer scale 2 up.',            
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
+            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',  
         ]
 
         let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list, 'margin-bottom: 5px;')+'<hr>'+configButton;
@@ -242,15 +243,15 @@ var Resizer = Resizer || (function() {
     },
 
     sendMenu = (message) => {
-        let getGraphicSizeButton = makeButton('Get Selected Graphic Size', '!' + state[state_name].config.command, styles.button + styles.fullWidth);
+        let getGraphicSizeButton = makeButton('Get Selected Graphics Size', '!' + state[state_name].config.command, styles.button + styles.fullWidth);
         let getPageSizeButton = makeButton('Get Page Size', '!' + state[state_name].config.command + ' page', styles.button + styles.fullWidth);
-        let resizeGraphicButton = makeButton('Resize Selected Graphic', '!' + state[state_name].config.command + ' ?{Width} ?{Height}', styles.button + styles.fullWidth);
+        let resizeGraphicButton = makeButton('Resize Selected Graphics', '!' + state[state_name].config.command + ' ?{Width} ?{Height}', styles.button + styles.fullWidth);
         let resizePageButton = makeButton('Resize Page', '!' + state[state_name].config.command + ' page ?{Width} ?{Height} ?{Units or Pixels?|Pixels,pixels|Units,units}', styles.button + styles.fullWidth);
-        let scaleButton = makeButton('Scale Page', '!' + state[state_name].config.command + ' scale ?{Amount} ?{Choose|Up, up|Down, down}', styles.button + styles.fullWidth);
+        let scaleButton = makeButton('Scale Entire Page', '!' + state[state_name].config.command + ' scale ?{Amount} ?{Choose|Up, up|Down, down}', styles.button + styles.fullWidth);
 
         message = (message) ? '<hr><p>'+message+'</p>' : '';
 
-        let buttons = getGraphicSizeButton+resizeGraphicButton+'<hr>'+getPageSizeButton+resizePageButton+scaleButton;
+        let buttons = getGraphicSizeButton+resizeGraphicButton+'<hr>'+getPageSizeButton+resizePageButton+'<hr>'+scaleButton;
 
         makeAndSendMenu(buttons+message, script_name + ' Menu', 'gm');
     },
