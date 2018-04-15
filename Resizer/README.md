@@ -24,4 +24,4 @@ Resizer lets you easily resize graphics and pages with a simple menu.
 * **!resizer config** - Shows the config menu.
 * **!resizer menu** - Shows a menu to easily resize graphics/pages.
 
-![Resizer Menu](https://i.imgur.com/IZob2BY.png "Resizer Menu")
+![Resizer Menu](https://i.imgur.com/pRAuPPm.png "Resizer Menu")
