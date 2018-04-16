@@ -1,5 +1,5 @@
 /*
- * Version 0.0.4
+ * Version 0.0.5
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -26,8 +26,8 @@ var Template = Template || (function() {
         underline: 'text-decoration: underline;',
         strikethrough: 'text-decoration: strikethrough'
     },
-    script_name = 'TestScript',
-    state_name = 'TESTSCRIPT',
+    script_name = 'Template',
+    state_name = 'TEMPLATE',
 
     handleInput = (msg) => {
         if (msg.type != 'api') return;
@@ -68,7 +68,7 @@ var Template = Template || (function() {
         }
     },
 
-    sendConfigMenu = (first) => {
+    sendConfigMenu = (first, message) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
 
         let listItems = [
@@ -78,7 +78,8 @@ var Template = Template || (function() {
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        message = (message) ? '<p>'+message+'</p>' : '';
+        let contents = makeList(message+listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
@@ -119,6 +120,7 @@ var Template = Template || (function() {
 
     pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
+        if(message === 'line'){ return; }
         log(message);
         log('---------------------------------------------------------------------------------------------');
     },
@@ -140,7 +142,7 @@ var Template = Template || (function() {
     setDefaults = (reset) => {
         const defaults = {
             config: {
-                command: 'test'
+                command: 'template'
             }
         };
 
