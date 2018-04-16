@@ -102,9 +102,6 @@ var DeathTracker = DeathTracker || (function() {
         
         let playerid = (obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : getObj('character', obj.get('represents')).get('controlledby');
 
-        log(playerid)
-        log(getObj('player', playerid))
-
         if(set_death_statusmarker && obj.get(bar+'_value') <= 0){
             let marker = (pc_unconscious && !playerIsGM(playerid)) ? unconsciousMarker : deathMarker;
             attributes['status_'+marker] = true;
