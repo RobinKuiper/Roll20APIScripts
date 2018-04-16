@@ -100,7 +100,7 @@ var DeathTracker = DeathTracker || (function() {
         let halfMarker = state[state_name].config.half_statusmarker;
         let unconsciousMarker = state[state_name].config.pc_unconscious_statusmarker;
         
-        let playerid = (obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : getObj('character', obj.get('represents')).get('controlledby');
+        let playerid = (obj && obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : getObj('character', obj.get('represents')).get('controlledby');
 
         if(set_death_statusmarker && obj.get(bar+'_value') <= 0){
             let marker = (pc_unconscious && !playerIsGM(playerid)) ? unconsciousMarker : deathMarker;
