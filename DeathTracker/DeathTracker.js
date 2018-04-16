@@ -1,5 +1,5 @@
 /*
- * Version 0.1.1
+ * Version 0.1.2
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -90,6 +90,8 @@ var DeathTracker = DeathTracker || (function() {
     },
 
     handleBarValueChange = (obj, prev) => {
+        if(!obj || !obj.get('represents')){ return; }
+
         let attributes = {};
         let bar = 'bar'+state[state_name].config.bar;
         let set_death_statusmarker = state[state_name].config.set_death_statusmarker;
@@ -100,10 +102,11 @@ var DeathTracker = DeathTracker || (function() {
         let halfMarker = state[state_name].config.half_statusmarker;
         let unconsciousMarker = state[state_name].config.pc_unconscious_statusmarker;
         
-        let playerid = (obj && obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : getObj('character', obj.get('represents')).get('controlledby');
+        let playerid = (obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : (getObj('character', obj.get('represents'))) ? getObj('character', obj.get('represents')).get('controlledby') : false;
+        let isPlayer = (playerid && !playerIsGM(playerid));
 
         if(set_death_statusmarker && obj.get(bar+'_value') <= 0){
-            let marker = (pc_unconscious && !playerIsGM(playerid)) ? unconsciousMarker : deathMarker;
+            let marker = (pc_unconscious && isPlayer) ? unconsciousMarker : deathMarker;
             attributes['status_'+marker] = true;
             attributes['status_'+halfMarker] = false;
         }else{
