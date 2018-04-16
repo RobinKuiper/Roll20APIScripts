@@ -79,7 +79,7 @@ var Template = Template || (function() {
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
         message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = makeList(message+listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
@@ -96,8 +96,8 @@ var Template = Template || (function() {
     },
 
     makeAndSendMenu = (contents, title, whisper) => {
-        title = (title && title != '') && makeTitle(title)
-        whisper = (whisper && whisper !== '') && '/w ' + whisper + ' ';
+        title = (title && title != '') ? makeTitle(title) : '';
+        whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
         sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+'">'+title+contents+'</div>');
     },
 
