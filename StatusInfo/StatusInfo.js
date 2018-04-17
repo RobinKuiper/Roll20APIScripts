@@ -212,7 +212,7 @@ var StatusInfo = StatusInfo || (function() {
                             // Send it to chat.
                             sendConditionToChat(condition);
                         }else{
-                            sendChat((whisper) ? script_name : '', whisper + 'Condition ' + condition_name + ' does not exist.');
+                            sendChat((whisper) ? script_name : '', whisper + 'Condition ' + condition_name + ' does not exist.', null, {noarchive:true});
                         }
                     }else{
                         sendHelpMenu();
@@ -353,7 +353,7 @@ var StatusInfo = StatusInfo || (function() {
     makeAndSendMenu = (contents, title, settings) => {
         settings = (settings) ? settings : {};
         title = (title && title != '') && makeTitle(title, (settings.title_tag) && settings.title_tag)
-        sendChat((whisper) ? script_name : '', whisper + '<div style="'+style+'">'+title+contents+'</div>');
+        sendChat((whisper) ? script_name : '', whisper + '<div style="'+style+'">'+title+contents+'</div>', null, {noarchive:true});
     },
 
     makeTitle = (title, title_tag) => {

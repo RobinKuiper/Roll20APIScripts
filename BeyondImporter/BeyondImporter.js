@@ -55,7 +55,7 @@
     on('ready',()=>{ 
         checkInstall();
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!', null, {noarchive:true}); }
     });
 
     on('chat:message', function(msg) {
@@ -446,9 +446,9 @@
                     });
 
                     if(class_spells.length > 15){
-                        sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>There are some more spells than expected, they will be imported over time.</p></div>');
+                        sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>There are some more spells than expected, they will be imported over time.</p></div>', null, {noarchive:true});
                     }else{
-                        sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is ready.</div>');
+                        sendChat('', '<div style="'+style+'">Import of <b>' + character.name + '</b> is ready.</div>', null, {noarchive:true});
                     }
                 break;
 
@@ -597,7 +597,7 @@
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
         let text = '<div style="'+style+'">'+makeTitle(title_text)+list+debug+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!beyond config`.</p><hr>'+resetButton+'</div>';
 
-        sendChat('', '/w gm ' + text);
+        sendChat('', '/w gm ' + text, null, {noarchive:true});
     }
 
     const sendHelpMenu = (first) => {
@@ -613,7 +613,7 @@
         
         let text = '<div style="'+style+'">'+makeTitle(script_name + ' Help')+'<p>Go to a character on <a href="http://www.dndbeyond.com" target="_blank">DNDBeyond</a>, and put `/json` behind the link. Copy the full contents of this page and paste it behind the command `!beyond import`.</p><p>For more information take a look at my <a style="text-decoration: underline" href="https://github.com/RobinKuiper/Roll20APIScripts" target="_blank">Github</a> repository.</p><hr><b>Commands:</b>'+command_list+'<hr>'+configButton+'</div>';
 
-        sendChat('', '/w gm ' + text);
+        sendChat('', '/w gm ' + text, null, {noarchive:true});
     }
 
     const makeTitle = (title) => {

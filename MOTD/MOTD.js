@@ -172,7 +172,7 @@ var MOTD = MOTD || (function() {
     makeAndSendMenu = (contents, title, whisper) => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
-        sendChat(script_name, whisper + '<div style="'+style+'">'+title+contents+'</div>');
+        sendChat(script_name, whisper + '<div style="'+style+'">'+title+contents+'</div>', null, {noarchive:true});
     },
 
     makeTitle = (title) => {
@@ -205,7 +205,7 @@ var MOTD = MOTD || (function() {
         setDefaults();
 
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!'); }
+        if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!', null, {noarchive:true}); }
     },
 
     registerEventHandlers = () => {
