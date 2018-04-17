@@ -1,5 +1,5 @@
 /*
- * Version: 0.1.8
+ * Version: 0.1.9
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -223,11 +223,11 @@ var StatusInfo = StatusInfo || (function() {
     },
 
     handleStatusmarkerChange = (obj, prev) => {
-        if(handled.includes(obj.get('represents'))){ return; }
+        if(handled.includes(obj.get('represents')) || !prev){ return; }
 
-        prev.statusmarkers = prev.statusmarkers || prev.get('statusmarkers');
+        prev.statusmarkers = prev.statusmarkers || prev.get('statusmarkers') || false;
 
-        if(state[state_name].config.showDescOnStatusChange){
+        if(state[state_name].config.showDescOnStatusChange && prev.statusmarkers){
             // Check if the statusmarkers string is different from the previous statusmarkers string.
             if(obj.get('statusmarkers') !== prev.statusmarkers){
                 // Create arrays from the statusmarkers strings.
