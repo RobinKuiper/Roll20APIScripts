@@ -223,9 +223,9 @@ var StatusInfo = StatusInfo || (function() {
     },
 
     handleStatusmarkerChange = (obj, prev) => {
-        if(handled.includes(obj.get('represents')) || !prev){ return; }
+        if(handled.includes(obj.get('represents')) || !prev || !obj){ return; }
 
-        prev.statusmarkers = prev.statusmarkers || prev.get('statusmarkers') || false;
+        prev.statusmarkers = (typeof prev.get === 'function') ? prev.get('statusmarkers') : prev.statusmarkers;
 
         if(state[state_name].config.showDescOnStatusChange && prev.statusmarkers){
             // Check if the statusmarkers string is different from the previous statusmarkers string.

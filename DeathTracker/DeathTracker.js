@@ -1,5 +1,5 @@
 /*
- * Version 0.1.3
+ * Version 0.1.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -90,10 +90,11 @@ var DeathTracker = DeathTracker || (function() {
     },
 
     handleBarValueChange = (obj, prev) => {
-        if(!obj || !obj.get('represents')){ return; }
+        let bar = 'bar'+state[state_name].config.bar;
+
+        if(!obj || !prev || !obj.get('represents') || obj.get(bar+'_value') === prev[bar+'_value']){ return; }
 
         let attributes = {};
-        let bar = 'bar'+state[state_name].config.bar;
         let set_death_statusmarker = state[state_name].config.set_death_statusmarker;
         let set_half_statusmarker = state[state_name].config.set_half_statusmarker;
         let pc_unconscious = state[state_name].config.pc_unconscious;
@@ -221,7 +222,7 @@ var DeathTracker = DeathTracker || (function() {
 
     registerEventHandlers = () => {
         on('chat:message', handleInput);
-        on('change:graphic:bar'+state[state_name].config.bar+'_value', handleBarValueChange);
+        on('change:graphic', handleBarValueChange);
     },
 
     setDefaults = (reset) => {
