@@ -1,5 +1,5 @@
 /*
- * Version 0.1.1
+ * Version 0.1.2
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -90,7 +90,7 @@ var InspirationTracker = InspirationTracker || (function() {
             let tokens = findObjs({ represents: characterid, _type: 'graphic' });
 
             tokens.forEach(token => {
-                setStatusmarker(token, inspired);
+                setStatusmarker(token, inspired, true);
             });
 
             if(inspired){
@@ -111,7 +111,7 @@ var InspirationTracker = InspirationTracker || (function() {
         setStatusmarker(obj, (getAttrByName(obj.get('represents'), 'inspiration', 'current') === 'on'));
     },
 
-    setStatusmarker = (obj, inspired) => {
+    setStatusmarker = (obj, inspired, notify) => {
         let statusmarker = state[state_name].config.statusmarker;
         let prev = obj;
 
@@ -119,7 +119,7 @@ var InspirationTracker = InspirationTracker || (function() {
         attributes['status_'+statusmarker] = inspired;
         obj.set(attributes);
 
-        notifyObservers('tokenChange', obj, prev);
+        if(notify) notifyObservers('tokenChange', obj, prev);
     },
 
     sendConfigMenu = (first, message) => {
