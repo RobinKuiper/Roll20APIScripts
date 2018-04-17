@@ -1,5 +1,5 @@
 /*
- * Version 0.0.5
+ * Version 0.0.6
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -72,9 +72,10 @@ var MOTD = MOTD || (function() {
     },
 
     handlePlayerOnline = (obj) => {
-        let message = readyMessage(state[state_name].message);
+        let message = state[state_name].message;
         let show = (!state[state_name].config.onlyOnce || !state[state_name].showedTo.includes(obj.get('d20userid')))
         if(show && obj.get('online') && message && message !== ''){
+            message = readyMessage(message);
             setTimeout(() => {
                 makeAndSendMenu(message, 'Message of the Day', obj.get('displayname'));
                 state[state_name].showedTo.push(obj.get('d20userid'));
