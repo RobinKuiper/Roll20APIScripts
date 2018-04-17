@@ -139,29 +139,32 @@ var DeathTracker = DeathTracker || (function() {
         let pc_unconsciousButton = makeButton(state[state_name].config.pc_unconscious, '!' + state[state_name].config.command + ' config pc_unconscious|'+!state[state_name].config.pc_unconscious, styles.button + styles.float.right);
         let pc_unconscious_markerButton = makeButton(state[state_name].config.pc_unconscious_statusmarker, '!' + state[state_name].config.command + ' config pc_unconscious_statusmarker|'+markerDropdown, styles.button + styles.float.right);
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
-            '<span style="'+styles.float.left+'">HP Bar:</span> ' + barButton,
-            '<span style="'+styles.float.left+'">Set Dead Statusmarker:</span> ' + set_death_statusmarkerButton,
-            '<span style="'+styles.float.left+'">Set Half HP Statusmarker:</span> ' + set_half_statusmarkerButton,
-            '<span style="'+styles.float.left+'">Unconscious if PC: <p style="font-size: 8pt">Unconscious if PC.</p></span> ' + pc_unconsciousButton,
-        ];
-
-        if(state[state_name].config.set_death_statusmarker){
-            listItems.push('<span style="'+styles.float.left+'">Dead Marker:</span> ' + death_markerButton)
-        }
-        if(state[state_name].config.set_half_statusmarker){
-            listItems.push('<span style="'+styles.float.left+'">Half HP Marker:</span> ' + half_markerButton)
-        }
-        if(state[state_name].config.pc_unconscious){
-            listItems.push('<span style="'+styles.float.left+'">Unconscious Marker:</span> ' + pc_unconscious_markerButton)
-        }
+        let buttons = '<div style="'+styles.overflow+'">';
+            buttons += '<div style="'+styles.overflow+' clear: both;"><span style="'+styles.float.left+'">Command:</span> ' + commandButton +'</div>';
+            buttons += '<div style="'+styles.overflow+' clear: both;"><span style="'+styles.float.left+'">HP Bar:</span> ' + barButton +'</div>';
+            buttons += '<hr>';
+            buttons += '<div style="'+styles.overflow+'"><span style="'+styles.float.left+'">Set Dead:</span> ' + set_death_statusmarkerButton +'</div>';
+            if(state[state_name].config.set_death_statusmarker){
+                buttons += '<div style="'+styles.overflow+'"><span style="'+styles.float.left+'">Dead Marker:</span> ' + death_markerButton +'</div>';
+            }
+            buttons += '<br>';
+            buttons += '<div style="'+styles.overflow+'"><span style="'+styles.float.left+'">Set Half HP:</span> ' + set_half_statusmarkerButton +'</div>';
+            if(state[state_name].config.set_half_statusmarker){
+                buttons += '<div style="'+styles.overflow+'"><span style="'+styles.float.left+'">Half HP Marker:</span> ' + half_markerButton +'</div>';
+            }
+            buttons += '<br>';
+            buttons += '<div style="'+styles.overflow+'"><span style="'+styles.float.left+'">Set Unconscious: <p style="font-size: 8pt">Unconscious if PC.</p></span> ' + pc_unconsciousButton +'</div>';
+            if(state[state_name].config.pc_unconscious){
+                buttons += '<div style="'+styles.overflow+'"><span style="'+styles.float.left+'">Unconscious Marker:</span> ' + pc_unconscious_markerButton +'</div>';
+            }
+            buttons += '<br>';
+        buttons += '</div>';
 
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
         message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        let contents = message+buttons+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
