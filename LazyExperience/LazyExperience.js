@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.7
+ * Version 0.1.8
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -262,8 +262,7 @@ var LazyExperience = LazyExperience || (function() {
     getPlayerCharacters = (playerid) => {
         return findObjs({
             _type: 'character',
-            controlledby: playerid,
-            inplayerjournals: playerid
+            controlledby: playerid
         }).map(character => {
             return {
                 name: character.get('name'),
