@@ -1,5 +1,5 @@
 /*
- * Version 0.0.6
+ * Version 0.0.7
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -77,7 +77,7 @@ var MOTD = MOTD || (function() {
         if(show && obj.get('online') && message && message !== ''){
             message = readyMessage(message);
             setTimeout(() => {
-                makeAndSendMenu(message, 'Message of the Day', obj.get('displayname'));
+                makeAndSendMenu(message, 'Message of the Day', createWhisperName(obj.get('displayname')));
                 state[state_name].showedTo.push(obj.get('d20userid'));
             }, 6000)
         }
@@ -107,6 +107,10 @@ var MOTD = MOTD || (function() {
 
     readyMessage = (message) => {
         return message+allowed_tags.join('').replace(/\</g, '</'); // End the message with the closing tags of the allowed tags, Roll20 automaticly deletes not used tags.
+    },
+
+    createWhisperName = (name) => {
+        return name.split(' ').shift();
     },
 
     strip_tags = (input, allowed) => {

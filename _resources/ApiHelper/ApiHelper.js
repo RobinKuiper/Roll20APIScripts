@@ -97,11 +97,41 @@ var ApiHelper = ApiHelper || (function() {
         return options;
     },
 
+    listPlayersWithMacros = () => {
+        let players = findObjs({ _type: 'player' });
+        players.forEach(player => {
+            if(!player) return;
+
+            let p = {
+                id: player.get('id'),
+                name: player.get('displayname'),
+                show: player.get('showmacrobar'),
+                macros: player.get('macrobar').split(',') || []
+            }
+
+            //if(playerIsGM(p.id) || p.name === 'robbinghope') return;
+
+            pre_log();
+            log(p.id + ' :: ' + p.name + ' :: ' + p.show);
+            if(p.show){
+                p.macros.forEach(macro => {
+                    if(!macro || macro === '') return;
+
+                    macro.split('|').forEach(id => {
+                        //log(getObj('macro', id))
+                        log(id)
+                    });
+                });
+            }
+            pre_log();
+        })
+    },
+
     pre_log = (message) => {
-        log('---------------------------------------------------------------------------------------------');
-        if(message === 'line'){ return; }
+        log('------------------------------------------'+script_name+'------------------------------------------')
+        if(!message || message === 'line'){ return; }
         log(message);
-        log('---------------------------------------------------------------------------------------------');
+        log('---------------------------------------------------------------------------------------------------');
     },
 
     registerEventHandlers = () => {
