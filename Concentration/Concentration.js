@@ -1,5 +1,5 @@
 /*
- * Version 0.1.3
+ * Version 0.1.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -33,6 +33,7 @@ var Concentration = Concentration || (function() {
     handleInput = (msg) => {
         if(state[state_name].config.auto_add_concentration_marker && msg && msg.rolltemplate && msg.rolltemplate === 'spell' && (msg.content.includes("{{concentration=1}}"))){
             let character_name = (msg.content.split("{{charname=")[1]||'').split("}}")[0];
+            if(!character_name) return;
             let spell_name = (msg.content.split("{{name=")[1]||'').split("}}")[0];
             let player = getObj('player', msg.playerid);
             let characterid = findObjs({ name: character_name, _type: 'character' }).shift().get('id');                    
