@@ -6,6 +6,7 @@
     "description": "",
     "authors": "Robin Kuiper",
     "roll20userid": "1226016",
+    "patreon": "https://www.patreon.com/robinkuiper",
     "useroptions": [],
     "dependencies": {
         "state.TEMPLATE": "read,write",
