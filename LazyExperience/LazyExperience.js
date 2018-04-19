@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.9
+ * Version 0.1.10
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -474,7 +474,7 @@ var LazyExperience = LazyExperience || (function() {
 
         let characterListItems = [];
         let characterDropdown = '?{Character';
-        player.characters.forEach((character) => {
+        player.characters.forEach((character, i) => {
             if(!character){
                 state[state_name].players[playerid].characters.splice(i, 1);
                 return;
