@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.10
+ * Version 0.1.11
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -294,7 +294,7 @@ var LazyExperience = LazyExperience || (function() {
 
         // Give XP Directly?
         if(state[state_name].config.directxp){
-            pp_experience = (characterid) ? experience : experience/getExperienceSharers();
+            let pp_experience = (characterid) ? experience : experience/getExperienceSharers();
             let send_message_text = (characterid) ? 'You have been awarded ' + pp_experience + ' experience' : 'Everyone is awarded '+pp_experience+' experience.';
 
             // Update Sheet with new experience?
