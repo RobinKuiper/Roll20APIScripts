@@ -62,6 +62,10 @@ var ApiHelper = ApiHelper || (function() {
                     });
                 break;
 
+                case 'state':
+                    log(state[args.shift()]);
+                break;
+
                 case 'campaign':
                     log(Campaign());
                 break;
