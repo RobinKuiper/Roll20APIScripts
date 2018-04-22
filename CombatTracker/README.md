@@ -10,7 +10,8 @@
 
 ---
 
-This is just the template I use when I start working on a new script.
+CombatTracker will be a great help in battles. Easily keep tracks of who's turn it is, use a turn timer, let players progress to the next turn by themselves.
+It has a lot of customizable configuration options.
 
 ![Prone Description](https://i.imgur.com/UpBHjVh.png "Prone Description")
 
