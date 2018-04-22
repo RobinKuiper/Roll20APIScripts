@@ -10,6 +10,10 @@
 
 ---
 
+```
+This is my latest script, and i'm still working on it. All functions included now should work, but it probably still has some bugs.
+```
+
 CombatTracker will be a great help in battles. Easily keep tracks of who's turn it is, use a turn timer, let players progress to the next turn by themselves.
 It has a lot of customizable configuration options.
 
