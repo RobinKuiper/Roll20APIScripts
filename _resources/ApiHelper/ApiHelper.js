@@ -53,6 +53,18 @@ var ApiHelper = ApiHelper || (function() {
                         }
                     });
                 break;
+                
+                case 'get':
+                    if(!msg.selected) return;
+
+                    msg.selected.forEach(s => {
+                        log(getObj(s._type, s._id));
+                    });
+                break;
+
+                case 'campaign':
+                    log(Campaign());
+                break;
 
                 case 'cls':
                     let i = 0;
