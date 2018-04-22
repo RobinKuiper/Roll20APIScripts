@@ -1,5 +1,5 @@
 /*
- * Version: 0.2
+ * Version: 0.3.1
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -142,6 +142,30 @@ var StatusInfo = StatusInfo || (function() {
                     }
 
                     sendConditionsConfigMenu();
+                break;
+
+                case 'add': case 'remove':
+                    let condition_key = args.shift();
+                    if(!msg.selected || !msg.selected.length){
+                        makeAndSendMenu('No tokens are selected.');
+                        return;
+                    }
+                    if(!condition_key){
+                        makeAndSendMenu('No condition name was given. Use: <i>!'+state[state_name].config.command+' '+extracommand+' prone</i>');
+                        return;
+                    }
+                    if(!state[state_name].conditions[condition_key.toLowerCase()]){
+                        makeAndSendMenu('The condition `'+condition_key+'` does not exist.');
+                        return;
+                    }
+
+                    condition_key = condition_key.toLowerCase();
+
+                    msg.selected.forEach(s => {
+                        getObj(s._type, s._id).set('status_'+getConditionByName(condition_key).icon, (extracommand === 'add'));
+                    });
+
+                    if(extracommand === 'add') sendConditionToChat(getConditionByName(condition_key));
                 break;
 
                 default:
@@ -351,7 +375,7 @@ var StatusInfo = StatusInfo || (function() {
 
     makeAndSendMenu = (contents, title, settings) => {
         settings = (settings) ? settings : {};
-        title = (title && title != '') && makeTitle(title, (settings.title_tag) && settings.title_tag)
+        title = (title && title != '') ? makeTitle(title, settings.title_tag || '') : '';
         sendChat((whisper) ? script_name : '', whisper + '<div style="'+style+'">'+title+contents+'</div>', null, {noarchive:true});
     },
 

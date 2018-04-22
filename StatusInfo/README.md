@@ -23,6 +23,9 @@ It shows condition descriptions whenever a statusmarker is set or when the comma
 * **!condition config** - Shows the config menu.
 * **!condition [CONDITION NAME]** - Shows the description of the condition entered.
 
+* **!condition add [Condition Name]** - Adds the condition given to the selected tokens.
+* **!condition remove [Condition Name]** - Removes the condition given from the selected tokens.
+
 ### Config
 ![Config](https://i.imgur.com/y9DlZB6.png "Config")
 
