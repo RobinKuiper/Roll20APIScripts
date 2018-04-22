@@ -12,6 +12,9 @@
  * !condition [CONDITION] - Shows condition.
  * !condtion help - Shows help menu.
  * !condition config - Shows config menu.
+ * 
+ * TODO:
+ * Add conditions to character/token.
 */
 
 var StatusInfo = StatusInfo || (function() {
