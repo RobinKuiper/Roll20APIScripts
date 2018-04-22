@@ -1,6 +1,6 @@
 {
-    "name": "CustomizableCrit",
-    "script": "CustomizableCrit.js",
+    "name": "CombatTracker",
+    "script": "CombatTracker.js",
     "version": "0.1.0",
     "previousversions": [],
     "description": "",
@@ -9,8 +9,7 @@
     "patreon": "https://www.patreon.com/robinkuiper",
     "useroptions": [],
     "dependencies": {
-        "state.TEMPLATE": "read,write",
-        "attribute.current": "read"
+        "state.COMBATTRACKER": "read,write"
     },
     "modifies": {},
     "conflicts": []
