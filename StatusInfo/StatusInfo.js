@@ -20,7 +20,9 @@
  * !condition config import [json] - Import the given config (with conditions).
  * 
  * TODO:
- * Add conditions to character/token.
+ * Icon span
+ * whisper system
+ * stylings
 */
 
 var StatusInfo = StatusInfo || (function() {
@@ -304,13 +306,17 @@ var StatusInfo = StatusInfo || (function() {
         let X = '';
         let iconStyle = ''
 
-        if(typeof icon_image_positions[icon] === 'undefined') return false;
+        //if(typeof icon_image_positions[icon] === 'undefined') return false;
+        if(!icon_image_positions[icon]) return false;
 
-        iconStyle += 'width: 24px; height: 24px; ' + style;
+        log(icon_image_positions[icon])
+        
+        iconStyle += 'width: 24px; height: 24px;';
 
         if(Number.isInteger(icon_image_positions[icon])){
             iconStyle += 'background-image: url(https://roll20.net/images/statussheet.png);'
-            iconStyle += 'background-position: -'+icon_image_positions[icon]+'px 0;'
+            iconStyle += 'background-repeat: no-repeat;'
+            iconStyle += 'background-position-x: -'+icon_image_positions[icon]+'px;'
         }else if(icon_image_positions[icon] === 'X'){
             iconStyle += 'color: red; margin-right: 0px;';
             X = 'X';
@@ -319,6 +325,9 @@ var StatusInfo = StatusInfo || (function() {
             iconStyle += 'border: 1px solid white; border-radius: 50%;'
         }
 
+        iconStyle += style;
+
+        // TODO: Make span
         return '<div style="'+iconStyle+'">'+X+'</div>';
     },
 
