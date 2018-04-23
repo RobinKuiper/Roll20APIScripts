@@ -296,7 +296,7 @@ var StatusInfo = StatusInfo || (function() {
 
         makeAndSendMenu(condition.description, icon+condition.name, {
             title_tag: 'h2',
-            whisper: whisper
+            whisper: (state[state_name].config.sendOnlyToGM) ? 'gm' : '' 
         });
     },
 
@@ -448,7 +448,7 @@ var StatusInfo = StatusInfo || (function() {
 
     makeAndSendMenu = (contents, title, settings) => {
         settings = settings || {};
-        settings.whisper = settings.whisper || '/w gm ';
+        settings.whisper = (typeof settings.whisper === 'undefined' || settings.whisper === 'gm') ? '/w gm ' : '';
         title = (title && title != '') ? makeTitle(title, settings.title_tag || '') : '';
         sendChat(script_name, settings.whisper + '<div style="'+style+'">'+title+contents+'</div>', null, {noarchive:true});
     },
