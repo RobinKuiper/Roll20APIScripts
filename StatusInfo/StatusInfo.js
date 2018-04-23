@@ -316,7 +316,7 @@ var StatusInfo = StatusInfo || (function() {
         if(Number.isInteger(icon_image_positions[icon])){
             iconStyle += 'background-image: url(https://roll20.net/images/statussheet.png);'
             iconStyle += 'background-repeat: no-repeat;'
-            iconStyle += 'background-position-x: -'+icon_image_positions[icon]+'px;'
+            iconStyle += 'background-position: -'+icon_image_positions[icon]+'px 0;'
         }else if(icon_image_positions[icon] === 'X'){
             iconStyle += 'color: red; margin-right: 0px;';
             X = 'X';
