@@ -30,7 +30,7 @@ var StatusInfo = StatusInfo || (function() {
     listStyle = 'list-style: none; padding: 0; margin: 0;',
 
     icon_image_positions = {red:"#C91010",blue:"#1076C9",green:"#2FC910",brown:"#C97310",purple:"#9510C9",pink:"#EB75E1",yellow:"#E5EB75",dead:"X",skull:0,sleepy:34,"half-heart":68,"half-haze":102,interdiction:136,snail:170,"lightning-helix":204,spanner:238,"chained-heart":272,"chemical-bolt":306,"death-zone":340,"drink-me":374,"edge-crack":408,"ninja-mask":442,stopwatch:476,"fishing-net":510,overdrive:544,strong:578,fist:612,padlock:646,"three-leaves":680,"fluffy-wing":714,pummeled:748,tread:782,arrowed:816,aura:850,"back-pain":884,"black-flag":918,"bleeding-eye":952,"bolt-shield":986,"broken-heart":1020,cobweb:1054,"broken-shield":1088,"flying-flag":1122,radioactive:1156,trophy:1190,"broken-skull":1224,"frozen-orb":1258,"rolling-bomb":1292,"white-tower":1326,grab:1360,screaming:1394,grenade:1428,"sentry-gun":1462,"all-for-one":1496,"angel-outfit":1530,"archery-target":1564},
-    markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
+    markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-bomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
 
     script_name = 'StatusInfo',
     state_name = 'STATUSINFO',
@@ -231,7 +231,7 @@ var StatusInfo = StatusInfo || (function() {
 
         let icon = (state[state_name].config.showIconInDescription) ? getIcon(condition.icon, 'margin-right: 5px; margin-top: 5px; display: inline-block;') || '' : '';
 
-        makeAndSendMenu(condition.description.replace('{command}', state[state_name].config.command), icon+condition.name, {
+        makeAndSendMenu(condition.description, icon+condition.name, {
             title_tag: 'h2'
         });
     },
@@ -240,7 +240,7 @@ var StatusInfo = StatusInfo || (function() {
         let X = '';
         let iconStyle = ''
 
-        if(!icon_image_positions[icon]) return false;
+        if(typeof icon_image_positions[icon] === 'undefined') return false;
 
         iconStyle += 'width: 24px; height: 24px; ' + style;
 
@@ -323,7 +323,7 @@ var StatusInfo = StatusInfo || (function() {
 
         let markerDropdown = '?{Marker';
         markers.forEach((marker) => {
-            markerDropdown += '|'+ucFirst(marker).replace('-', ' ')+','+marker
+            markerDropdown += '|'+ucFirst(marker).replace(/-/, ' ')+','+marker
         })
         markerDropdown += '}';
 
@@ -335,7 +335,7 @@ var StatusInfo = StatusInfo || (function() {
         let changeButton = makeButton('Edit Description', '!' + state[state_name].config.command + ' config-conditions '+conditionKey+' description|?{Description|'+condition.description+'}', buttonStyle);
 
         message = (message) ? '<p style="color: red">'+message+'</p>' : '';
-        let contents = message+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Description:</b>'+condition.description.replace('{command}', state[state_name].config.command)+changeButton+'<hr><p>'+removeButton+backButton+'</p>';
+        let contents = message+makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr><b>Description:</b>'+condition.description+changeButton+'<hr><p>'+removeButton+backButton+'</p>';
         makeAndSendMenu(contents, condition.name + ' Config');
     },
 
@@ -366,7 +366,10 @@ var StatusInfo = StatusInfo || (function() {
         let listItems = [
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' help</span> - Shows this menu.',
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
-            '<span style="text-decoration: underline">!'+state[state_name].config.command+' [CONDITION]</span> - Shows the description of the condition entered.'
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' [CONDITION]</span> - Shows the description of the condition entered.',
+            '&nbsp;',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' add [CONDITION]</span> - Add the given condition to the selected token(s).',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' remove [CONDITION]</span> - Remove the given condition from the selected token(s).'
         ]
 
         let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton;
