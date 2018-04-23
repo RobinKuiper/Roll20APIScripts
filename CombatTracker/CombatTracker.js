@@ -252,7 +252,7 @@ var CombatTracker = CombatTracker || (function() {
 
         intervalHandle = setInterval(() => {
             if(timerObj) timerObj.set({
-                top: token.get('top')-75,
+                top: token.get('top')+token.get('width')/2+40,
                 left: token.get('left'),
                 text: 'Timer: ' + time,
                 layer: token.get('layer')
