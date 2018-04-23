@@ -1,5 +1,5 @@
 /*
- * Version: 0.3.1
+ * Version: 0.3.2
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -12,6 +12,12 @@
  * !condition [CONDITION] - Shows condition.
  * !condtion help - Shows help menu.
  * !condition config - Shows config menu.
+ * 
+ * !condition add [condtion(s)] - Add condition(s) to selected tokens, eg. !condition add prone paralyzed
+ * !condition remove [condtion(s)] - Remove condition(s) from selected tokens, eg. !condition remove prone paralyzed
+ * 
+ * !condition config export - Exports the config (with conditions).
+ * !condition config import [json] - Import the given config (with conditions).
  * 
  * TODO:
  * Add conditions to character/token.
@@ -58,7 +64,29 @@ var StatusInfo = StatusInfo || (function() {
                 break;
 
                 case 'config':
-                   if(args.length > 0){
+                    if(args.length > 0){
+                        if(args[0] === 'export' || args[0] === 'import'){
+                            if(args[0] === 'export'){
+                                makeAndSendMenu('<pre>'+HE(JSON.stringify(state[state_name]))+'</pre><p>Copy the entire content above and save it on your pc.</p>');
+                            }
+                            if(args[0] === 'import'){
+                                let json;
+                                let config = msg.content.substring(('!'+state[state_name].config.command+' config import ').length);
+                                log(config)
+                                try{
+                                    json = JSON.parse(config);
+                                } catch(e) {
+                                    makeAndSendMenu('This is not a valid JSON string.');
+                                    return;
+                                }
+                                state[state_name] = json;
+                                sendConfigMenu();
+                            }
+
+                            return;
+                        }
+
+
                         let setting = args.shift().split('|');
                         let key = setting.shift();
                         let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
@@ -68,9 +96,9 @@ var StatusInfo = StatusInfo || (function() {
                         state[state_name].config[key] = value;
 
                         whisper = (state[state_name].config.sendOnlyToGM) ? '/w gm ' : '';
-                   }
+                    }
 
-                   sendConfigMenu();
+                    sendConfigMenu();
                 break;
 
                 // !s config-conditions
@@ -144,28 +172,38 @@ var StatusInfo = StatusInfo || (function() {
                     sendConditionsConfigMenu();
                 break;
 
-                case 'add': case 'remove':
-                    let condition_key = args.shift();
+                case 'add': case 'remove': case 'toggle':
                     if(!msg.selected || !msg.selected.length){
                         makeAndSendMenu('No tokens are selected.');
                         return;
                     }
-                    if(!condition_key){
-                        makeAndSendMenu('No condition name was given. Use: <i>!'+state[state_name].config.command+' '+extracommand+' prone</i>');
-                        return;
-                    }
-                    if(!state[state_name].conditions[condition_key.toLowerCase()]){
-                        makeAndSendMenu('The condition `'+condition_key+'` does not exist.');
+                    if(!args.length){
+                        makeAndSendMenu('No condition(s) were given. Use: <i>!'+state[state_name].config.command+' '+extracommand+' prone</i>');
                         return;
                     }
 
-                    condition_key = condition_key.toLowerCase();
+                    args.forEach(condition_key => {
+                        if(!state[state_name].conditions[condition_key.toLowerCase()]){
+                            makeAndSendMenu('The condition `'+condition_key+'` does not exist.');
+                            return;
+                        }
 
-                    msg.selected.forEach(s => {
-                        getObj(s._type, s._id).set('status_'+getConditionByName(condition_key).icon, (extracommand === 'add'));
+                        condition_key = condition_key.toLowerCase();
+
+                        let sended = false;
+                        msg.selected.forEach(s => {
+                            let token = getObj(s._type, s._id);
+                            let add = (extracommand === 'add') ? true : (extracommand === 'toggle') ? !token.get('status_'+getConditionByName(condition_key).icon) : false;
+                            token.set('status_'+getConditionByName(condition_key).icon, add);
+
+                            if(extracommand === 'toggle' && add && !sended){
+                                sendConditionToChat(getConditionByName(condition_key));
+                                sended = true;
+                            }
+                        });
+
+                        if(extracommand === 'add') sendConditionToChat(getConditionByName(condition_key));
                     });
-
-                    if(extracommand === 'add') sendConditionToChat(getConditionByName(condition_key));
                 break;
 
                 default:
@@ -186,6 +224,31 @@ var StatusInfo = StatusInfo || (function() {
             }
         }
     },
+
+    esRE = function (s) {
+        var escapeForRegexp = /(\\|\/|\[|\]|\(|\)|\{|\}|\?|\+|\*|\||\.|\^|\$)/g;
+        return s.replace(escapeForRegexp,"\\$1");
+    },
+
+    HE = (function(){
+        var entities={
+                //' ' : '&'+'nbsp'+';',
+                '<' : '&'+'lt'+';',
+                '>' : '&'+'gt'+';',
+                "'" : '&'+'#39'+';',
+                '@' : '&'+'#64'+';',
+                '{' : '&'+'#123'+';',
+                '|' : '&'+'#124'+';',
+                '}' : '&'+'#125'+';',
+                '[' : '&'+'#91'+';',
+                ']' : '&'+'#93'+';',
+                '"' : '&'+'quot'+';'
+            },
+            re=new RegExp('('+_.map(_.keys(entities),esRE).join('|')+')','g');
+        return function(s){
+            return s.replace(re, function(c){ return entities[c] || c; });
+        };
+    }()),
 
     handleStatusmarkerChange = (obj, prev) => {
         if(handled.includes(obj.get('represents')) || !prev || !obj){ return; }
@@ -227,12 +290,13 @@ var StatusInfo = StatusInfo || (function() {
     },
 
     sendConditionToChat = (condition, w) => {
-        let description = '';
+        if(!condition.description || condition.description === '') return;
 
         let icon = (state[state_name].config.showIconInDescription) ? getIcon(condition.icon, 'margin-right: 5px; margin-top: 5px; display: inline-block;') || '' : '';
 
         makeAndSendMenu(condition.description, icon+condition.name, {
-            title_tag: 'h2'
+            title_tag: 'h2',
+            whisper: whisper
         });
     },
 
@@ -323,7 +387,7 @@ var StatusInfo = StatusInfo || (function() {
 
         let markerDropdown = '?{Marker';
         markers.forEach((marker) => {
-            markerDropdown += '|'+ucFirst(marker).replace(/-/, ' ')+','+marker
+            markerDropdown += '|'+ucFirst(marker).replace(/-/g, ' ')+','+marker
         })
         markerDropdown += '}';
 
@@ -353,10 +417,13 @@ var StatusInfo = StatusInfo || (function() {
         ];
 
         let configConditionsButton = makeButton('Conditions Config', '!' + state[state_name].config.command + ' config-conditions', buttonStyle + ' width: 100%');
-        let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', buttonStyle + ' width: 100%');
+        let resetButton = makeButton('Reset Config', '!' + state[state_name].config.command + ' reset', buttonStyle + ' width: 100%');
+
+        let exportButton = makeButton('Export Config', '!' + state[state_name].config.command + ' config export', buttonStyle + ' width: 100%');
+        let importButton = makeButton('Import Config', '!' + state[state_name].config.command + ' config import ?{Config}', buttonStyle + ' width: 100%');
 
         let title_text = (first) ? script_name+' First Time Setup' : script_name+' Config';
-        let contents = makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr>'+configConditionsButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        let contents = makeList(listItems, listStyle + ' overflow:hidden;', 'overflow: hidden')+'<hr>'+configConditionsButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+exportButton+importButton+resetButton;
         makeAndSendMenu(contents, title_text)
     },
 
@@ -368,8 +435,11 @@ var StatusInfo = StatusInfo || (function() {
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
             '<span style="text-decoration: underline">!'+state[state_name].config.command+' [CONDITION]</span> - Shows the description of the condition entered.',
             '&nbsp;',
-            '<span style="text-decoration: underline">!'+state[state_name].config.command+' add [CONDITION]</span> - Add the given condition to the selected token(s).',
-            '<span style="text-decoration: underline">!'+state[state_name].config.command+' remove [CONDITION]</span> - Remove the given condition from the selected token(s).'
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' add [CONDITIONS]</span> - Add the given condition(s) to the selected token(s).',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' remove [CONDITIONS]</span> - Remove the given condition(s) from the selected token(s).',
+            '&nbsp;',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' config export</span> - Exports the config (with conditions).',
+            '<span style="text-decoration: underline">!'+state[state_name].config.command+' config import [JSON]</span> - Imports the given config (with conditions).'
         ]
 
         let contents = '<b>Commands:</b>'+makeList(listItems, listStyle)+'<hr>'+configButton;
@@ -377,9 +447,10 @@ var StatusInfo = StatusInfo || (function() {
     },
 
     makeAndSendMenu = (contents, title, settings) => {
-        settings = (settings) ? settings : {};
+        settings = settings || {};
+        settings.whisper = settings.whisper || '/w gm ';
         title = (title && title != '') ? makeTitle(title, settings.title_tag || '') : '';
-        sendChat((whisper) ? script_name : '', whisper + '<div style="'+style+'">'+title+contents+'</div>', null, {noarchive:true});
+        sendChat(script_name, settings.whisper + '<div style="'+style+'">'+title+contents+'</div>', null, {noarchive:true});
     },
 
     makeTitle = (title, title_tag) => {

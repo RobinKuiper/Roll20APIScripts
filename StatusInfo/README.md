@@ -9,7 +9,7 @@
 ---
 
 ```
-LATEST UPDATE: It now allows you to create and edit conditions, see below.
+LATEST UPDATE: It now allows you to create and edit conditions, export/import the config, and add/remove/toggle condition(s) to/from token(s), see below.
 ```
 
 StatusInfo works nicely together with [Tokenmod](https://app.roll20.net/forum/post/4225825/script-update-tokenmod-an-interface-to-adjusting-properties-of-a-token-from-a-macro-or-the-chat-area/?pageforid=4225825#post-4225825) and my own [DeathTracker](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/DeathTracker) and [InspirationTracker](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/InspirationTracker) scripts.
@@ -23,8 +23,12 @@ It shows condition descriptions whenever a statusmarker is set or when the comma
 * **!condition config** - Shows the config menu.
 * **!condition [CONDITION NAME]** - Shows the description of the condition entered.
 
-* **!condition add [Condition Name]** - Adds the condition given to the selected tokens.
-* **!condition remove [Condition Name]** - Removes the condition given from the selected tokens.
+* **!condition add [Condition Name(s)]** - Adds the condition(s) given to the selected token(s), eg. `!condition add prone paralyzed`.
+* **!condition remove [Condition Name(s)]** - Removes the condition(s) given from the selected token(s).
+* **!condition toggle [Condition Name(s)]** - Toggles the condition(s) given from the selected token(s).
+
+* **!condition config export** - Exports the config (with conditions).
+* **!condition config import [Exported Content]** - Imports the config (with conditions).
 
 ### Config
 ![Config](https://i.imgur.com/y9DlZB6.png "Config")
