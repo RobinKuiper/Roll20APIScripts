@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.11
+ * Version 0.1.12
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -346,26 +346,15 @@ var LazyExperience = LazyExperience || (function() {
     },
 
     handleStatusmarkerChange = (obj, prev) => {
-        // Check if the statusmarkers string is different from the previous statusmarkers string.
-        if(obj.get('statusmarkers') !== prev.statusmarkers){
-            // Create arrays from the statusmarkers strings.
-            var prevstatusmarkers = prev.statusmarkers.split(",");
-            var statusmarkers = obj.get('statusmarkers').split(",");
+        let marker = state[state_name].config.marker;
+        if(!obj.get('status_'+marker) || prev['status_'+marker]) return;
 
-            if(!prevstatusmarkers.includes(state[state_name].config.marker) && statusmarkers.includes(state[state_name].config.marker)){
-                /*var experience = findObjs({                                                          
-                    _type: "attribute",
-                    name: state[state_name].config.experience_attribute_name,
-                    characterid: obj.get('represents')                    
-                }).shift().get('current');*/
-                let experience = getAttrByName(obj.get('represents'), state[state_name].config.npc_experience_attribute_name, 'current')
+        let experience = getAttrByName(obj.get('represents'), state[state_name].config.npc_experience_attribute_name, 'current')
 
-                if(experience > 0){
-                    let yesButton = makeButton('Yes', '!' + state[state_name].config.command + ' add session '+experience, buttonStyle2);
-                    makeAndSendMenu('<b>' + obj.get('name') + '</b> just died, do you want to add <b>'+experience+'</b> xp to the threshold?<br>'+yesButton, '', 'gm');
-                }                
-            }
-        }
+        if(experience > 0){
+            let yesButton = makeButton('Yes', '!' + state[state_name].config.command + ' add session '+experience, buttonStyle2);
+            makeAndSendMenu('<b>' + obj.get('name') + '</b> just died, do you want to add <b>'+experience+'</b> xp to the threshold?<br>'+yesButton, '', 'gm');
+        }   
     },
 
     sendMenu = () => {
@@ -684,6 +673,12 @@ var LazyExperience = LazyExperience || (function() {
 
         if('undefined' !== typeof DeathTracker && DeathTracker.ObserveTokenChange){
             DeathTracker.ObserveTokenChange(function(obj,prev){
+                handleStatusmarkerChange(obj,prev);
+            });
+        }
+
+        if('undefined' !== typeof StatusInfo && StatusInfo.ObserveTokenChange){
+            StatusInfo.ObserveTokenChange(function(obj,prev){
                 handleStatusmarkerChange(obj,prev);
             });
         }
