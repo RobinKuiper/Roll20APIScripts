@@ -21,6 +21,7 @@ It shows condition descriptions whenever a statusmarker is set or when the comma
 
 * **!condition help** - Shows the help menu.
 * **!condition config** - Shows the config menu.
+* **!condition** - Shows the condition menu, where you can easily toggle conditions on selected token(s). If you have (a) token(s) selected when you use this command it will show the current conditions.
 * **!condition [CONDITION NAME]** - Shows the description of the condition entered.
 
 * **!condition add [Condition Name(s)]** - Adds the condition(s) given to the selected token(s), eg. `!condition add prone paralyzed`.
