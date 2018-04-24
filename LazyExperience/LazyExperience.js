@@ -7,6 +7,8 @@
  * Roll20 Thread: 
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
+ * Patreon: https://patreon.com/robinkuiper
+ * Paypal.me: https://www.paypal.me/robinkuiper
 */
 
 /*

@@ -7,6 +7,8 @@
  * Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
+ * Patreon: https://patreon.com/robinkuiper
+ * Paypal.me: https://www.paypal.me/robinkuiper
  * 
  * COMMANDS (with default command):
  * !condition [CONDITION] - Shows condition.
@@ -15,6 +17,7 @@
  * 
  * !condition add [condtion(s)] - Add condition(s) to selected tokens, eg. !condition add prone paralyzed
  * !condition remove [condtion(s)] - Remove condition(s) from selected tokens, eg. !condition remove prone paralyzed
+* !condition toggle [condtion(s)] - Toggles condition(s) of selected tokens, eg. !condition toggle prone paralyzed
  * 
  * !condition config export - Exports the config (with conditions).
  * !condition config import [json] - Import the given config (with conditions).
