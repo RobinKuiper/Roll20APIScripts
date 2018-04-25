@@ -13,6 +13,8 @@
 var SyncPage = SyncPage || (function() {
     'use strict';
 
+    let syncing = false;
+
     // Styling for the chat responses.
     const styles = {
         reset: 'padding: 0; margin: 0;',
@@ -70,9 +72,144 @@ var SyncPage = SyncPage || (function() {
         }
     },
 
+    handlePageChange = (page, prev_page) => {
+        let synced_pages;
+        // If name is changed to _synced do full sync.
+        if(page.get('name') !== prev_page.name && page.get('name').toLowerCase().includes('_synced')){
+            doSync(page);
+        }else{ // Else sync only settings.
+            findObjs({ _type: 'page', name: page.get('name')+'_synced' }).forEach(synced_page => {
+                syncPageSettings(page, synced_page);
+            });
+        }
+    },
+
+    handleTokenCreate = (token) => {
+        if(syncing) return;
+
+        let page_name = getObj('page', token.get('pageid')).get('name').toLowerCase().split('_synced')[0];
+
+        getConnectedPagesByName(page_name).forEach(pageid => {
+            if(pageid === token.get('pageid')) return;
+
+            let attributes = {}
+            for(let key in token.attributes){
+                if(key === '_id' || key === '_type'){
+                    // Do nothing
+                }else if(key === '_pageid'){
+                    attributes['pageid'] = pageid;
+                }else if(key === 'imgsrc'){
+                    attributes['imgsrc'] = createImgSrc(token.attributes['imgsrc']);
+                }else{
+                    attributes[key] = token.attributes[key];
+                }
+            }
+
+            let synced_object = createObj(token.get('type'), attributes);
+
+            addSyncedObjects(page_name, token.get('id'), synced_object.get('id'));
+        })
+    },
+
+    handleTokenChange = (token, prev_token) => {
+        if(syncing) return;
+
+        let page_name = getObj('page', token.get('pageid')).get('name').toLowerCase().split('_synced')[0];
+
+        if(state[state_name].synced_pages[page_name]){
+            getSyncedObjects(page_name, token.get('id')).forEach(objectid => {
+                if(objectid === token.get('id')) return;
+
+                let synced_token = getObj(token.get('type'), objectid);
+                if(!synced_token) return;
+
+                let attributes = {}
+                for(let key in token.attributes){
+                    if(key !== '_id' && key !== '_type' && key !== '_pageid' && key !== 'imgsrc'){
+                        attributes[key] = token.attributes[key];
+                    }
+                }
+
+                synced_token.set(attributes);
+            })
+        }
+    },
+
+    handleTokenDestroy = (token) => {
+        if(syncing) return;
+
+        let page_name = getObj('page', token.get('pageid')).get('name').toLowerCase().split('_synced')[0];
+
+        getSyncedObjects(page_name, token.get('id')).forEach(tokenid => {
+            removedSyncedObject(page_name, tokenid);
+
+            if(tokenid === token.get('id')) return;
+
+            getObj(token.get('type'), tokenid).remove();
+        });
+    },
+
+    // MAYBE NOT NEEDED
+    isOnSyncedPage = (pageid) => {
+        let isSynced = false;
+        state[state_name].synced_pages.forEach(sp => {
+            if(isSynced) return;
+            if(sp.original_pageid === pageid) isSynced = true;
+        });
+        return isSynced;
+    },
+
+    checkSyncedPages = () => {
+        state[state_name].synced_pages = {};
+
+        let pages = findObjs({ _type: 'page' });
+        pages.forEach(page => {
+            if(page.get('name').includes('_synced')){
+                doSync(page);
+            }
+        });
+    },
+
     doSync = (page) => {
-        let original_page = findObjs({ _type: 'page', name: page.get('name').split(']')[1] })[0];
-        let synced_page = createObj('page', {
+        syncing = true;
+
+        findObjs({ _pageid: page.get('id') }).forEach(obj => {
+            obj.remove();
+        });
+
+        let original_page = findObjs({ _type: 'page', name: page.get('name').split('_')[0] })[0];
+
+        if(!original_page){
+            makeAndSendMenu(page.get('name') + ' original page does not exist anymore.', '', 'gm');
+            return;
+        }
+
+        syncPageSettings(original_page, page);
+
+        findObjs({ pageid: original_page.get('id') }).forEach(original_object => {
+            let attributes = {}
+            for(let key in original_object.attributes){
+                if(key === '_id' || key === '_type'){
+                    // Do nothing
+                }else if(key === '_pageid'){
+                    attributes['pageid'] = page.get('id');
+                }else if(key === 'imgsrc'){
+                    attributes['imgsrc'] = createImgSrc(original_object.attributes['imgsrc']);
+                }else{
+                    attributes[key] = original_object.attributes[key];
+                }
+            }
+
+            let synced_object = createObj(original_object.get('type'), attributes);
+
+            addSyncedObjects(original_page.get('name'), original_object.get('id'), synced_object.get('id'));
+        });
+
+        syncing = false;
+    },
+
+    syncPageSettings = (original_page, synced_page) => {
+        synced_page.set({
             showgrid: original_page.get('showgrid'),
             showdarkness: original_page.get('showdarkness'),
             showlighting: original_page.get('showlighting'),
@@ -94,102 +231,70 @@ var SyncPage = SyncPage || (function() {
             lightrestrictmove: original_page.get('lightrestrictmove'),
             lightglobalillum: original_page.get('lightglobalillum'),
         });
-
-        findObjs({ pageid }).forEach(object => {
-            let attributes = {
-                name: object.get('name'),
-                pageid: synced_page.get('id'),
-                layer: object.get('layer'),
-                width: object.get('width'),
-                height: object.get('height'),
-                top: object.get('top'),
-                left: object.get('left'),
-                controlledby: object.get('controlledby'),
-                rotation: object.get('rotation')
-            };
-
-            switch(object.get('type')){
-                case 'path':
-                    attributes.path = object.get('path');
-                    attributes.fill = object.get('fill');
-                    attributes.stroke = object.get('stroke');
-                    attributes.stroke_width = object.get('stroke_width');
-                    attributes.scaleX = object.get('scaleX');
-                    attributes.scaleY = object.get('scaleY');
-                break;
-
-                case 'text':
-                    attributes.text = object.get('text');
-                    attributes.font_size = object.get('font_size');
-                    attributes.color = object.get('color');
-                    attributes.font_family = object.get('font_family');
-                break;
-
-                case 'graphic':
-                    attributes.imgsrc = object.get('imgsrc');
-                    attributes.bar1_link = object.get('bar1_link');
-                    attributes.bar2_link = object.get('bar2_link');
-                    attributes.bar3_link = object.get('bar3_link');
-                    attributes.represents = object.get('represents');
-                    attributes.isdrawing = object.get('isdrawing');
-                    attributes.flipv = object.get('flipv');
-                    attributes.fliph = object.get('fliph');
-                    attributes.gmnotes = object.get('gmnotes');
-                    attributes.bar1_value = object.get('bar1_value');
-                    attributes.bar2_value = object.get('bar2_value');
-                    attributes.bar3_value = object.get('bar3_value');
-                    attributes.bar1_max = object.get('bar1_max');
-                    attributes.bar2_max = object.get('bar2_max');
-                    attributes.bar3_max = object.get('bar3_max');
-                    attributes.aura1_radius = object.get('aura1_radius');
-                    attributes.aura2_radius = object.get('aura2_radius');
-                    attributes.aura1_color = object.get('aura1_color');
-                    attributes.aura2_color = object.get('aura2_color');
-                    attributes.aura1_square = object.get('aura1_square');
-                    attributes.aura2_square = object.get('aura2_square');
-                    attributes.tint_color = object.get('tint_color');
-                    attributes.statusmarkers = object.get('statusmarkers');
-                    attributes.showname = object.get('showname');
-                    attributes.showplayers_name = object.get('showplayers_name');
-                    attributes.showplayers_bar1 = object.get('showplayers_bar1');
-                    attributes.showplayers_bar2 = object.get('showplayers_bar2');
-                    attributes.showplayers_bar3 = object.get('showplayers_bar3');
-                    attributes.showplayers_aura1 = object.get('showplayers_aura1');
-                    attributes.showplayers_aura2 = object.get('showplayers_aura2');
-                    attributes.playersedit_name = object.get('playersedit_name');
-                    attributes.playersedit_bar1 = object.get('playersedit_bar1');
-                    attributes.playersedit_bar2 = object.get('playersedit_bar2');
-                    attributes.playersedit_bar3 = object.get('playersedit_bar3');
-                    attributes.playersedit_aura1 = object.get('playersedit_aura1');
-                    attributes.playersedit_aura2 = object.get('playersedit_aura2');
-                    attributes.light_radius = object.get('light_radius');
-                    attributes.light_dimradius = object.get('light_dimradius');
-                    attributes.light_otherplayers = object.get('light_otherplayers');
-                    attributes.light_hassight = object.get('light_hassight');
-                    attributes.light_angle = object.get('light_angle');
-                    attributes.light_losangle = object.get('light_losangle');
-                    attributes.lastmove = object.get('lastmove');
-                    attributes.light_multiplier = object.get('light_multiplier');
-                break;
-            }
-
-            createObj(object.get('type'), attributes);
-        });
-
-        state[state_name].synced.push({ pageid: synced_page });
     },
 
-    handlePageChange = (obj, prev) => {
-        /*if(!state[state_name].synced[obj.get('id')] || obj === prev) return;
+    addSyncedObjects = (page_name, original_objectid, synced_objectid) => {
+        page_name = page_name.toLowerCase();
+        if(!state[state_name].synced_pages[page_name]) state[state_name].synced_pages[page_name] = [];
 
-        if(obj.get('zorder') !== prev._zorder){
-            // Tokens changed.
-        }*/
+        let added = false;
+        state[state_name].synced_pages[page_name].forEach((objects, i) => {
+            if(!objects.includes(original_objectid)) return;
+            if(objects.includes(synced_objectid)) return;
 
-        if(obj.get('name') !== prev.name || obj.get('name').toLowerCase().includes('[synced]')){
-            // Page got synced status
-            doSync(obj);
+            state[state_name].synced_pages[page_name][i].push(synced_objectid);
+            added = true;
+        });
+
+        if(!added){
+            state[state_name].synced_pages[page_name].push([original_objectid, synced_objectid]);
         }
+    },
+
+    removedSyncedObject = (page_name, tokenid) => {
+        page_name = page_name.toLowerCase();
+
+        state[state_name].synced_pages[page_name] = state[state_name].synced_pages[page_name].filter(objects => !objects.includes(tokenid))
+    },
+    
+    getSyncedObjects = (page_name, objectid) => {
+        return state[state_name].synced_pages[page_name.toLowerCase()].filter(objects => objects.includes(objectid))[0] || [];
+    },
+
+    getConnectedPagesByName = (page_name) => {
+        return findObjs({ type: 'page' }).filter(page => page.get('name').toLowerCase().includes(page_name)).map(page => page.get('id'));
+    },
+
+    createImgSrc = (imgsrc) => {
+        return (!imgsrc.includes('marketplace') && imgsrc !== '/images/character.png') ? getCleanImgsrc(imgsrc) : 'https://s3.amazonaws.com/files.d20.io/images/52606400/wT6_1s2nnOfWktmRd-1yOg/thumb.png?1524592552';
+    },
+
+    getCleanImgsrc = (imgsrc) => {
+        var parts = imgsrc.match(/(.*\/images\/.*)(thumb|med|original|max)([^\?]*)(\?[^?]+)?$/);
+        if(parts) {
+            return parts[1]+'thumb'+parts[3]+(parts[4]?parts[4]:`?${Math.round(Math.random()*9999999)}`);
+        }
+        return '';
+    },
+
+    getObjects = (obj, key, val) => {
+        var objects = [];
+        for (var i in obj) {
+            if (!obj.hasOwnProperty(i)) continue;
+            if (typeof obj[i] == 'object') {
+                objects = objects.concat(getObjects(obj[i], key, val));    
+            } else 
+            //if key matches and value matches or if key matches and value is not passed (eliminating the case where key matches but passed value does not)
+            if (i == key && obj[i] == val || i == key && val == '') { //
+                objects.push(obj);
+            } else if (obj[i] == val && key == ''){
+                //only add if the object is not already in the array
+                if (objects.lastIndexOf(obj) == -1){
+                    objects.push(obj);
+                }
+            }
+        }
+        return objects;
     },
 
     sendConfigMenu = (first, message) => {
@@ -244,7 +349,7 @@ var SyncPage = SyncPage || (function() {
 
     pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
-        if(message === 'line'){ return; }
+        if(!message){ return; }
         log(message);
         log('---------------------------------------------------------------------------------------------');
     },
@@ -262,14 +367,24 @@ var SyncPage = SyncPage || (function() {
     registerEventHandlers = () => {
         on('chat:message', handleInput);
         on('change:page', handlePageChange);
+        on('change:graphic', handleTokenChange);
+        on('change:text', handleTokenChange);
+        on('change:path', handleTokenChange);
+
+        on('add:graphic', handleTokenCreate);
+
+        on('destroy:graphic', handleTokenDestroy);
+        on('destroy:text', handleTokenDestroy);
+        on('destroy:path', handleTokenDestroy);
     },
 
     setDefaults = (reset) => {
         const defaults = {
             config: {
-                command: 'sync'
+                command: 'sync',
+                invisible_marker: 'ninja-mask'
             },
-            synced: []
+            synced_pages: {}
         };
 
         if(!state[state_name].config){
@@ -278,10 +393,13 @@ var SyncPage = SyncPage || (function() {
             if(!state[state_name].config.hasOwnProperty('command')){
                 state[state_name].config.command = defaults.config.command;
             }
+            if(!state[state_name].config.hasOwnProperty('invisible_marker')){
+                state[state_name].config.invisible_marker = defaults.config.invisible_marker;
+            }
         }
 
-        if(typeof state[state_name].synced !== 'array'){
-            state[state_name].synced = defaults.synced;
+        if(!state[state_name].config.hasOwnProperty('synced_pages')){
+            state[state_name].synced_pages = defaults.synced_pages;
         }
 
         if(!state[state_name].config.hasOwnProperty('firsttime') && !reset){
@@ -292,7 +410,8 @@ var SyncPage = SyncPage || (function() {
 
     return {
         CheckInstall: checkInstall,
-        RegisterEventHandlers: registerEventHandlers
+        RegisterEventHandlers: registerEventHandlers,
+        CheckSyncedPages: checkSyncedPages,
     }
 })();
 
@@ -301,4 +420,13 @@ on('ready',function() {
 
     SyncPage.CheckInstall();
     SyncPage.RegisterEventHandlers();
+    SyncPage.CheckSyncedPages();
 });
+
+/*let synced_pages = {
+    page_name: [
+            ['45646', '45645', '4764'],
+            ['45646', '45645', '4764'],
+        ]
+    }
+}*/
