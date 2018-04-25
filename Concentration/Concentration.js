@@ -1,5 +1,5 @@
 /*
- * Version 0.1.5
+ * Version 0.1.6
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1014
@@ -38,11 +38,12 @@ var Concentration = Concentration || (function() {
             character_name = RegExp.$1;
             let spell_name = msg.content.match(/name=([^\n{}]*[^"\n{}])/);  
             spell_name = RegExp.$1;
-            let player = getObj('player', msg.playerid);
-            let characterid = findObjs({ name: character_name, _type: 'character' }).shift().get('id');                    
-            let represented_tokens = findObjs({ represents: characterid, _type: 'graphic' });
-            let marker = state[state_name].config.statusmarker;
-            let message;
+            let player = getObj('player', msg.playerid),
+                characterid = findObjs({ name: character_name, _type: 'character' }).shift().get('id'),                 
+                represented_tokens = findObjs({ represents: characterid, _type: 'graphic' }),
+                marker = state[state_name].config.statusmarker,
+                message,
+                target = state[state_name].config.send_reminder_to;
 
             if(!character_name || !spell_name || !player || !characterid) return;
 
@@ -65,7 +66,14 @@ var Concentration = Concentration || (function() {
                 });
             }
 
-            makeAndSendMenu(message);
+            if(target === 'character'){
+                target = createWhisperName(character_name);
+                chat_text = "Make a Concentration Check - <b>DC " + DC + "</b>.";
+            }else if(target === 'everyone'){
+                target = ''
+            }
+
+            makeAndSendMenu(message, '', target);
         }
 
         if (msg.type != 'api' || !playerIsGM(msg.playerid)) return;
