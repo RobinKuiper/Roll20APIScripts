@@ -1,5 +1,6 @@
-## Concentration - v0.1.5
+## Concentration
 
+* Version: 0.1.5
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1014
 * Roll20: https://app.roll20.net/users/1226016/robin-k
