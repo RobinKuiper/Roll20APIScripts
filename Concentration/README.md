@@ -1,6 +1,5 @@
-## Concentration
+## Concentration - 0.1.5
 
-* Version 0.1.5
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1014
 * Roll20: https://app.roll20.net/users/1226016/robin-k
@@ -23,3 +22,7 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 * **!concentration** - Shows the config menu.
 
 ![Config Menu](https://i.imgur.com/1rB3ezY.png "Config Menu")
+
+#### Changelog:
+**v0.1.5 - 25-04-2018**
+* Correct whisper target on spell cast concentration check.
