@@ -7,9 +7,9 @@
  * Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/
-  * Patreon: https://patreon.com/robinkuiper
-  * Paypal.me: https://www.paypal.me/robinkuiper
- */
+ * Patreon: https://patreon.com/robinkuiper
+ * Paypal.me: https://www.paypal.me/robinkuiper
+*/
 
 (function() {
     const _ABILITY = {'STR': 'strength', 'DEX': 'dexterity', 'CON': 'constitution', 'INT': 'intelligence', 'WIS': 'wisdom', 'CHA': 'charisma'}
