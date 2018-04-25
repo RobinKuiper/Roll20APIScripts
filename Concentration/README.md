@@ -2,7 +2,7 @@
 
 * Version: 0.1.5
 * Skype: RobinKuiper.eu
-* Discord: Atheos#1014
+* Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin-k
 * Roll20 Wiki: https://wiki.roll20.net/Script:Concentration
 * Github: https://github.com/RobinKuiper/Roll20APIScripts
