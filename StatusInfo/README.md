@@ -1,10 +1,15 @@
 ## StatusInfo
 
+* Version: 0.3.3
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin-k
+* Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
+* Roll20 Wiki: https://wiki.roll20.net/Script:StatusInfo
+* Github: https://github.com/RobinKuiper/Roll20APIScripts
 * Reddit: https://www.reddit.com/user/robinkuiper/
-* Patreon: https://www.patreon.com/robinkuiper
+* Patreon: https://patreon.com/robinkuiper
+* Paypal.me: https://www.paypal.me/robinkuiper
 
 ---
 
@@ -28,8 +33,8 @@ It shows condition descriptions whenever a statusmarker is set or when the comma
 * **!condition remove [Condition Name(s)]** - Removes the condition(s) given from the selected token(s).
 * **!condition toggle [Condition Name(s)]** - Toggles the condition(s) given from the selected token(s).
 
-* **!condition config export** - Exports the config (with conditions).
-* **!condition config import [Exported Content]** - Imports the config (with conditions).
+* **!condition config export** - Exports the config (with conditions), also possible through the config menu.
+* **!condition config import [Exported Content]** - Imports the config (with conditions), also possible through the config menu.
 
 ### Config
 ![Config](https://i.imgur.com/y9DlZB6.png "Config")
