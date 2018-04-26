@@ -99,7 +99,7 @@
                     }
 
                     // Create character object
-                    object = createObj("character", { name: character.name + state[state_name].config.prefix  });
+                    object = createObj("character", { name: character.name + state[state_name].config.prefix });
 
                     // Make Speed String
                     let speed = character.weightSpeeds.normal.walk + 'ft.';
@@ -108,6 +108,18 @@
                             speed += ', ' + key + ' ' + character.weightSpeeds.normal[key] + 'ft.';
                         }
                     }
+
+                    // If character has unarmored defense, add it to the inventory, so a player can enable/disable it.
+                    let unarmored = getObjects(character, 'subType', 'unarmored-armor-class');
+                    unarmored.forEach(ua => {
+                        var row = generateRowID();
+                        let attributes = {}
+                        attributes["repeating_inventory_"+row+"_itemname"] = 'Unarmored Defense';
+                        attributes["repeating_inventory_"+row+"_equipped"] = '1';
+                        attributes["repeating_inventory_"+row+"_itemcount"] = 1;
+                        attributes["repeating_inventory_"+row+"_itemmodifiers"] = 'AC: '+ua.value;
+                        setAttrs(object.id, attributes);
+                    });
 
                     // Import Character Inventory
                     if(state[state_name].config.imports.inventory){
@@ -182,6 +194,7 @@
                         const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
                         let proficiencies = getObjects(character, 'type', 'proficiency');
                         proficiencies.forEach((prof) => {
+                            pre_log(prof)
                             var row = generateRowID();
 
                             let attributes = {}
