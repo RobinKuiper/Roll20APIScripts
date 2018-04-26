@@ -92,20 +92,7 @@ var SyncPage = SyncPage || (function() {
         getConnectedPagesByName(page_name).forEach(pageid => {
             if(pageid === token.get('pageid')) return;
 
-            let attributes = {}
-            for(let key in token.attributes){
-                if(key === '_id' || key === '_type'){
-                    // Do nothing
-                }else if(key === '_pageid'){
-                    attributes['pageid'] = pageid;
-                }else if(key === 'imgsrc'){
-                    attributes['imgsrc'] = createImgSrc(token.attributes['imgsrc']);
-                }else{
-                    attributes[key] = token.attributes[key];
-                }
-            }
-
-            let synced_object = createObj(token.get('type'), attributes);
+            let synced_object = duplicateToken(token, false, pageid);
 
             addSyncedObjects(page_name, token.get('id'), synced_object.get('id'));
         })
@@ -123,14 +110,35 @@ var SyncPage = SyncPage || (function() {
                 let synced_token = getObj(token.get('type'), objectid);
                 if(!synced_token) return;
 
-                let attributes = {}
-                for(let key in token.attributes){
-                    if(key !== '_id' && key !== '_type' && key !== '_pageid' && key !== 'imgsrc'){
-                        attributes[key] = token.attributes[key];
-                    }
-                }
+                
 
-                synced_token.set(attributes);
+                /*token.get('gmnotes').split(/\n/g).forEach(option =>{
+                    log(option)
+                    log(option === 'invisible_only_here')
+                    switch(option){
+                        case 'visible_only_here':
+                            token.set('layer', 'objects');
+                            attributes['layer'] = 'gmlayer';
+                        break;
+
+                        case 'visibles_only_others':
+                            token.set('layer', 'gmlayer');
+                            attributes['layer'] = 'objects';
+                        break;
+
+                        case 'invisible_only_here':
+                            token.set('layer', 'gmlayer');
+                            attributes['layer'] = 'objects';
+                        break;
+
+                        case 'invisible_only_others':
+                            token.set('layer', 'objects');
+                            attributes['layer'] = 'gmlayer';
+                        break;
+                    }
+                });*/
+
+                duplicateToken(token, synced_token);
             })
         }
     },
@@ -147,6 +155,25 @@ var SyncPage = SyncPage || (function() {
 
             getObj(token.get('type'), tokenid).remove();
         });
+    },
+
+    duplicateToken = (token, synced_token, pageid) => {
+        let attributes = {}
+
+        for(let key in token.attributes){
+            if(key !== '_id' && key !== '_type' && key !== '_pageid' && key !== 'imgsrc' && key !== 'gmnotes'){
+                attributes[key] = token.attributes[key];
+            }
+        }
+
+        if(!synced_token){
+            if(token.get('type') === 'graphic') attributes['imgsrc'] = createImgSrc(token.get('imgsrc'));
+            attributes['pageid'] = pageid;
+            return createObj(token.get('type'), attributes);
+        }else{
+            synced_token.set(attributes);
+            return synced_token;
+        }
     },
 
     // MAYBE NOT NEEDED
@@ -187,20 +214,7 @@ var SyncPage = SyncPage || (function() {
         syncPageSettings(original_page, page);
 
         findObjs({ pageid: original_page.get('id') }).forEach(original_object => {
-            let attributes = {}
-            for(let key in original_object.attributes){
-                if(key === '_id' || key === '_type'){
-                    // Do nothing
-                }else if(key === '_pageid'){
-                    attributes['pageid'] = page.get('id');
-                }else if(key === 'imgsrc'){
-                    attributes['imgsrc'] = createImgSrc(original_object.attributes['imgsrc']);
-                }else{
-                    attributes[key] = original_object.attributes[key];
-                }
-            }
-
-            let synced_object = createObj(original_object.get('type'), attributes);
+            let synced_object = duplicateToken(original_object, false, page.get('id'));
 
             addSyncedObjects(original_page.get('name'), original_object.get('id'), synced_object.get('id'));
         });
@@ -366,12 +380,16 @@ var SyncPage = SyncPage || (function() {
 
     registerEventHandlers = () => {
         on('chat:message', handleInput);
+
         on('change:page', handlePageChange);
+
         on('change:graphic', handleTokenChange);
         on('change:text', handleTokenChange);
         on('change:path', handleTokenChange);
 
         on('add:graphic', handleTokenCreate);
+        on('add:text', handleTokenCreate);
+        on('add:path', handleTokenCreate);
 
         on('destroy:graphic', handleTokenDestroy);
         on('destroy:text', handleTokenDestroy);
