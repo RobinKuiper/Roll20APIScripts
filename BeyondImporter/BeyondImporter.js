@@ -509,13 +509,13 @@
     }
 
     const importSpell = (spell) => {
-        pre_log('Import spell: ' + spell.definition.name);
         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
         var row = generateRowID();
 
         let attributes = {}
         attributes["repeating_spell-"+level+"_"+row+"_spellprepared"] = (spell.prepared || spell.alwaysPrepared) ? '1' : '0';
         attributes["repeating_spell-"+level+"_"+row+"_spellname"] = spell.definition.name;
+        attributes["repeating_spell-"+level+"_"+row+"_spelllevel"] = level;
         attributes["repeating_spell-"+level+"_"+row+"_spellschool"] = spell.definition.school.toLowerCase();
         attributes["repeating_spell-"+level+"_"+row+"_spellritual"] = (spell.ritual) ? '{{ritual=1}}' : '0';
         attributes["repeating_spell-"+level+"_"+row+"_spellcastingtime"] = spell.castingTime.castingTimeInterval + ' ' + spell.castingTime.castingTimeUnit;
@@ -537,20 +537,23 @@
 
         // Damage/Attack
         let damage = getObjects(spell, 'type', 'damage');
-        if(damage.length !== 0){
+        if(damage.length !== 0 && (spell.definition.attackType !== "" || spell.definition.saveDcStat !== null)){
             damage = damage[0];
-
-            //attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
-            attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.range.origin === 'Ranged') ? 'Ranged' : 'Melee';
+            attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.attackType === '') ? 'None' : spell.definition.attackType;
+            pre_log(spell.definition.saveDcStat)
+            attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcStat === null) ? 'NONE' : ucFirst(_ABILITY[spell.definition.saveDcStat]);
+            pre_log(spell.definition.name + ' :: ' + attributes["repeating_spell-"+level+"_"+row+"_spellsave"])
             attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = (damage.die.fixedValue !== null) ? damage.die.fixedValue : damage.die.diceString;
             attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = damage.friendlySubtypeName;
+
+            //if(spell.definition.requiresAttackRoll) attributes["repeating_spell-"+level+"_"+row+"_spelldmgmod"] = 'yes';
 
             // FOR SPELLS WITH MULTIPLE DAMAGE OUTPUTS
             //attributes["repeating_spell-"+level+"_"+row+"_spelldamage2"] = damage.die.diceString;
             //attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype2"] = damage.friendlySubtypeName;
 
             // CREATE ATTACK
-            let attack = {
+            /*let attack = {
                 name: spell.definition.name,
                 range: (spell.definition.range.origin === 'Ranged') ? spell.definition.range.rangeValue + 'ft.' : spell.definition.range.origin,
                 attack: {
@@ -565,16 +568,25 @@
             }
 
             let attackid = createRepeatingAttack(object, attack);
-            attributes["repeating_spell-"+level+"_"+row+"_rollcontent"] = '%{'+object.id+'|repeating_attack_'+attackid+'_attack}';
+            attributes["repeating_spell-"+level+"_"+row+"_rollcontent"] = '%{'+object.id+'|repeating_attack_'+attackid+'_attack}';*/
             // /CREATE ATTACK
 
             if(damage.hasOwnProperty('atHigherLevels') && damage.atHigherLevels.scaleType === 'spellscale'){
                 attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
                 attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+damage.die.diceValue;
             }
+
+            //let newrowid = generateRowID();
+            //attributes["repeating_spell-"+level+"_"+row+"_spellattackid"] = newrowid;
+            //attributes["repeating_spell-"+level+"_"+row+"_rollcontent"] = "%{" + object.id + "|repeating_attack_" + newrowid + "_attack}";
+            attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
         }
 
         setAttrs(object.id, attributes);
+    }
+
+    const ucFirst = (string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
     const sendConfigMenu = (first) => {
