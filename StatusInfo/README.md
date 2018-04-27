@@ -1,6 +1,5 @@
 ## StatusInfo
 
-* Version: 0.3.3
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin-k
@@ -78,3 +77,10 @@ I run this with the following Tokenmod macro:
 ```
 
 Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
+
+---
+
+#### Changelog
+
+* **v0.3.4 - 24-04-2018**
+Fixed a "huge" bug that wouldn't send conditions to chat on statusmarker change.

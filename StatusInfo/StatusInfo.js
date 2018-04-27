@@ -1,5 +1,5 @@
 /*
- * Version: 0.3.3
+ * Version: 0.3.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -266,7 +266,7 @@ var StatusInfo = StatusInfo || (function() {
 
         prev.statusmarkers = (typeof prev.get === 'function') ? prev.get('statusmarkers') : prev.statusmarkers;
 
-        if(state[state_name].config.showDescOnStatusChange && prev.statusmarkers){
+        if(state[state_name].config.showDescOnStatusChange && typeof prev.statusmarkers === 'string'){
             // Check if the statusmarkers string is different from the previous statusmarkers string.
             if(obj.get('statusmarkers') !== prev.statusmarkers){
                 // Create arrays from the statusmarkers strings.
@@ -280,16 +280,16 @@ var StatusInfo = StatusInfo || (function() {
                         let condition;
                         if(condition = getConditionByMarker(marker)){
                             sendConditionToChat(condition);
+
+                            let length = handled.push(obj.get('represents'));
+                            setTimeout(() => {
+                                handled.splice(length-1, 1);
+                            }, 1000);
                         }
                     }
                 });
             }
         }
-
-        let length = handled.push(obj.get('represents'));
-        setTimeout(() => {
-            handled.splice(length-1, 1);
-        }, 1000);
     },
 
     getConditionByMarker = (marker) => {
