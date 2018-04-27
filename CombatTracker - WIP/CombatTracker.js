@@ -1,5 +1,5 @@
 /* WORK IN PROGRESS
- * Version 0.1.3
+ * Version 0.1.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -136,7 +136,8 @@ var CombatTracker = CombatTracker || (function() {
         let turnorder = JSON.parse(obj.get('turnorder'));
         let prevTurnorder = JSON.parse(prev.turnorder);
 
-        if(typeof turnorder !== 'array' || !turnorder.length){
+        if(obj.get('turnorder') === "[]"){
+            log('Resetting')
             resetMarker();
             stopTimer();
             return;
@@ -335,13 +336,21 @@ var CombatTracker = CombatTracker || (function() {
             return;
         }
 
-        marker.set({
+        let settings = {
             layer: token.get('layer'),
             top: token.get('top'),
             left: token.get('left'),
             width: token.get('width')+(token.get('width')*0.35),
             height: token.get('height')+(token.get('height')*0.35),
-        });
+        };
+
+        log('PageID: ' + token.get('pageid') + ' :: ' + marker.get('pageid'))
+        log('Top: ' + token.get('top') + ' :: ' + settings.top)
+        log('Left: ' + token.get('left') + ' :: ' + settings.left)
+        log('Width: ' + token.get('width') + ' :: ' + settings.width)
+        log('Height: ' + token.get('height') + ' :: ' + settings.height)
+
+        marker.set(settings);
         toBack(marker);
     },
 
@@ -436,11 +445,13 @@ var CombatTracker = CombatTracker || (function() {
         let iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|'+state[state_name].config.initiative_attribute_name, styles.button + styles.float.right);
         let announceTurnButton = makeButton(state[state_name].config.announce_turn, '!' + state[state_name].config.command + ' config announce_turn|'+!state[state_name].config.announce_turn, styles.button + styles.float.right);
         let announceRoundButton = makeButton(state[state_name].config.announce_round, '!' + state[state_name].config.command + ' config announce_round|'+!state[state_name].config.announce_round, styles.button + styles.float.right);
+        let closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
             '<span style="'+styles.float.left+'">Ini. Attribute:</span> ' + iniAttrButton,
             '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
+            '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
             '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
             '<span style="'+styles.float.left+'">Announce Turn:</span> ' + announceTurnButton,
             '<span style="'+styles.float.left+'">Announce Round:</span> ' + announceRoundButton,
@@ -556,7 +567,7 @@ var CombatTracker = CombatTracker || (function() {
         const defaults = {
             config: {
                 command: 'ct',
-                marker_img: 'https://s3.amazonaws.com/files.d20.io/images/4095816/086YSl3v0Kz3SlDAu245Vg/thumb.png?1400535580',
+                marker_img: 'https://s3.amazonaws.com/files.d20.io/images/52550079/U-3U950B3wk_KRtspSPyuw/thumb.png?1524507826',
                 throw_initiative: true,
                 initiative_attribute_name: 'initiative_bonus',
                 announce_turn: true,

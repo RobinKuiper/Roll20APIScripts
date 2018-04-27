@@ -2,11 +2,11 @@
 
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
-* Roll20 Thread: 
 * Roll20: https://app.roll20.net/users/1226016/robin-k
+* Github: https://github.com/RobinKuiper/Roll20APIScripts
 * Reddit: https://www.reddit.com/user/robinkuiper/
-* Patreon: https://www.patreon.com/robinkuiper
-* Paypal.me: http://paypal.me/robinkuiper
+* Patreon: https://patreon.com/robinkuiper
+* Paypal.me: https://www.paypal.me/robinkuiper
 
 ---
 
@@ -17,22 +17,21 @@ This is my latest script, and i'm still working on it. All functions included no
 CombatTracker will be a great help in battles. Easily keep tracks of who's turn it is, use a turn timer, let players progress to the next turn by themselves.
 It has a lot of customizable configuration options.
 
-![Prone Description](https://i.imgur.com/UpBHjVh.png "Prone Description")
-
 ### Commands
 
 * **!ct help** - Shows the help menu.
 * **!ct config** - Shows the config menu.
 * **!ct start** - Starts the combat, if you have tokens selected it will try to roll initiative for them and add them to the tracker.
-* **!ct stop** - Stops the combat (closes the turntracker, removes the marker).
+* **!ct stop** - Stops the combat (closes the turntracker, removes the marker, clears the turnorder list, etc.).
 * **!ct next** - Goes to the next turn.
 
 ### Config
-![Config](https://i.imgur.com/1SvD1uE.png "Config")
+![Config](https://i.imgur.com/JYuK6Qw.png "Config")
 
 * **Command** - The command used for this script, eg. !ct.
 * **Ini. Attribute** - The initiative bonus attribute used in the character sheet that you are using, defaults to `initiative_bonus` used in the 5e OGL sheet.
 * **Marker Img.** - Image (url) you want to use as a marker.
+* **Stop on Close** - Stop the combat on turnorder close (removes the marker, clears the turnorder list, etc.).
 * **Auto Roll Ini.** - If you want to autoroll (and add) the selected tokens' initiative when you start combat.
 * **Announce Turn** - Announce who's turn it is in chat.
 * **Announce Round** - Announce a new round in chat.
@@ -48,3 +47,11 @@ It has a lot of customizable configuration options.
 * **Font Size** - The font size used for the token timer.
 
 Roll20 Thread: 
+
+---
+
+#### Changelog
+
+* **v0.1.4 - 27-04-2018**
+Fixed a bug were manually going further in the turnorder list didn't work.
+Added the option to stop combat on turnorder list close.
