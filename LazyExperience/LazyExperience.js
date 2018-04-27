@@ -558,13 +558,15 @@ var LazyExperience = LazyExperience || (function() {
         // Player added?
         array_diff(saved_players, getPlayers()).forEach((playerid) => {
             let player = getPlayerById(playerid);
-            state[state_name].players[playerid] = {
-                name: player.get('_displayname'),
-                id: playerid,
-                active: true,
-                experience: 0,
-                characters: getPlayerCharacters(playerid)
-            };
+            if(player){
+                state[state_name].players[playerid] = {
+                    name: player.get('_displayname'),
+                    id: playerid,
+                    active: true,
+                    experience: 0,
+                    characters: getPlayerCharacters(playerid)
+                };
+            }
         });
 
         // Player removed?
