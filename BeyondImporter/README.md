@@ -1,6 +1,5 @@
 ## BeyondImporter
 
-* Version 0.1.10
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin-k
@@ -48,3 +47,15 @@ Your character will be imported now!
 ![Config Menu](https://i.imgur.com/WLb76Uy.png "Config Menu")
 
 Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimporter-import-dndbeyond-character-sheets
+
+--- 
+
+#### Changelog:
+| 5e OGL                                        | Shaped                                                    |
+| --------------------------------------------- | --------------------------------------------------------- |
+| **v0.1.10**                                   | **v0.0.6**                                                |
+| Unarmored Defense shows in inventory          | Background description shows in backstory field now.      |
+| Spells are now added as attacks with save DC. | Background features added.                                |
+|                                               | Racial Traits added.                                      |
+|                                               | Background features added.                                |
+|                                               | Fixed some skill proficiencies                            |

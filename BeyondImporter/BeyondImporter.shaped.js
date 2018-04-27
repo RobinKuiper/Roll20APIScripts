@@ -1,5 +1,5 @@
 /*
- * Version 0.0.4
+ * Version 0.0.6
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -24,7 +24,7 @@
 
     const skills = [
         'acrobatics',
-        'animal_handling',
+        'animal-handling',
         'arcana',
         'athletics',
         'deception',
@@ -38,7 +38,7 @@
         'performance',
         'persuasion',
         'religion',
-        'sleight_of_hand',
+        'sleight-of-hand',
         'stealth',
         'survival'
     ]
@@ -265,6 +265,7 @@
             attributes['languages'] = str;
         }
 
+        let skills_added = [];
         if(state[state_name].config.imports.proficiencies){
             const proficiencies = getObjects(character, 'type', 'proficiency');
             let str = '';
@@ -275,13 +276,13 @@
 
                 if(prof.subType.includes('saving-throws')){
                     let ability = prof.subType.split('-').shift();
-                    pre_log(ability);
                     attributes[ability+'_saving_throw_proficient'] = '1';
                 }
 
                 if(skills.includes(prof.subType)){
+                    skills_added.push(prof.subType);
                     let fields = {
-                        storage_name: prof.subType.replace('-', '').toUpperCase(),
+                        storage_name: prof.subType.replace(/-/g, '').toUpperCase(),
                         name: prof.friendlySubtypeName,
                         proficiency: 'proficient'
                     }
@@ -305,7 +306,7 @@
         }
 
         if(state[state_name].config.imports.traits){
-            let raceFeatures = character.features.racialTraits;
+            let racialTraits = character.features.racialTraits;
             let feats = character.features.feats;
 
             feats.forEach((feat) => {
@@ -321,8 +322,44 @@
                     fields['recharge'] = limited.resetType.toUpperCase().replace(' ', '_');
                 });
 
-                attributes = Object.assign(attributes, createRepeating('feat', feat.name, fields, object));
+                attributes = Object.assign(attributes, createRepeating('feat', feat.definition.name, fields, object));
             });
+
+            let disallowed_traits = [
+                'Ability Score Increase',
+                'Age',
+                'Languages',
+                'Alignment',
+                'Size',
+                'Speed'
+            ]
+            racialTraits.forEach((trait) => {
+                if(disallowed_traits.includes(trait.definition.name)) return;
+
+                let fields = {
+                    name: trait.definition.name,
+                    content: trait.definition.description,
+                }
+
+                trait.limitedUseAbilities.forEach((limited) => {
+                    fields['uses'] = limited.maxUses - limited.numberUsed;
+                    fields['per_use'] = 1;
+                    fields['uses_max'] = limited.maxUses;
+                    fields['recharge'] = limited.resetType.toUpperCase().replace(' ', '_');
+                });
+
+                attributes = Object.assign(attributes, createRepeating('racialtrait', trait.definition.name, fields, object));
+            });
+
+            let background = character.features.background.definition;
+            if(background.featureName && background.featureDescription){
+                let fields = {
+                    name: background.featureName,
+                    content: background.featureDescription,
+                }
+
+                attributes = Object.assign(attributes, createRepeating('trait', background.name, fields, object));
+            }
         }
 
         
@@ -358,6 +395,9 @@
             }
             attributes['miscellaneous_notes'] += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
             attributes['miscellaneous_notes'] += (character.lifestyle) ? 'LIFESTYLE: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.\n' : '';
+            backstory = '';
+            backstory += (character.notes.backstory) ? character.notes.backstory + '\n\n' : '';
+            backstory += '---- Background: '+character.features.background.definition.name+' ---- \n\n'+character.features.background.definition.description;
         }
 
         attributes = Object.assign(attributes, { 
@@ -401,7 +441,7 @@
             'wisdom': getTotalAbilityScore(character, 'wisdom', 'wis'),
             'charisma': getTotalAbilityScore(character, 'charisma', 'cha'),
 
-            'backstory': character.notes.backstory,
+            'backstory': backstory,
         });
 
         setAttrs(object.id, Object.assign(attributes)); 
@@ -530,7 +570,6 @@
         let overwriteButton = makeButton(state[state_name].config.overwrite, '!' + state[state_name].config.command + ' config overwrite|'+!state[state_name].config.overwrite, buttonStyle);
 
         let listItems = [
-            '<span style="float: left">Command:</span> ' + commandButton,
             '<span style="float: left">Overwrite:</span> '+overwriteButton,
             '<span style="float: left">Prefix:</span> '+prefixButton
         ];
@@ -674,6 +713,7 @@
             command: 'beyond',
             overwrite: false,
             debug: false,
+            list_profs: true,
             prefix: '',
             imports: {
                 inventory: true,
@@ -694,13 +734,16 @@
             }
 
             if(!state[state_name].config.hasOwnProperty('overwrite')){
-                state[state_name].config.overwrite = false;
+                state[state_name].config.overwrite = defaults.overwrite;
             }
             if(!state[state_name].config.hasOwnProperty('debug')){
-                state[state_name].config.debug = false;
+                state[state_name].config.debug = defaults.debug;
             }
             if(!state[state_name].config.hasOwnProperty('prefix')){
-                state[state_name].config.prefix = '';
+                state[state_name].config.prefix = defaults.prefix;
+            }
+            if(!state[state_name].config.hasOwnProperty('list_profs')){
+                state[state_name].config.list_profs = defaults.list_profs;
             }
             if(!state[state_name].config.hasOwnProperty('imports')){
                 state[state_name].config.imports = {
