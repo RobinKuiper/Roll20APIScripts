@@ -65,6 +65,35 @@ var SyncPage = SyncPage || (function() {
                     sendConfigMenu();
                 break;
 
+                case 'show': case 'hide':
+                    if(!msg.selected || !msg.selected.length){
+                        makeAndSendMenu('Please select some token(s) before using this command.', '', 'gm');
+                        return;
+                    }
+
+                    let where = args.shift() || 'here';
+
+                    msg.selected.forEach(s => {
+                        let token = getObj(s._type, s._id);
+                        let gmnotes = token.get('gmnotes');
+                        if(gmnotes.includes(extracommand+'_'+where)) return;
+
+                        gmnotes = gmnotes.replace('%3Cbr%3Eshow_'+where, '').replace('%3Cbr%3Ehide_'+where).replace('hide_'+where, '').replace('show_'+where, '');
+                        gmnotes += '%3Cbr%3E'+extracommand+'_'+where;
+
+                        token.set('gmnotes', gmnotes);
+
+                        getSyncedObjects(getPagenameById(token.get('pageid')), token.get('id')).forEach(objectid => {
+                            if(objectid === token.get('id')) return;
+
+                            let synced_token = getObj(token.get('type'), objectid);
+                            if(!synced_token) return;                
+
+                            duplicateToken(token, synced_token);
+                        });
+                    });
+                break;
+
                 default:
                     doSync();
                 break;
@@ -87,56 +116,26 @@ var SyncPage = SyncPage || (function() {
     handleTokenCreate = (token) => {
         if(syncing) return;
 
-        let page_name = getObj('page', token.get('pageid')).get('name').toLowerCase().split('_synced')[0];
-
-        getConnectedPagesByName(page_name).forEach(pageid => {
+        getConnectedPagesByName(getPagenameById(token.get('pageid'))).forEach(pageid => {
             if(pageid === token.get('pageid')) return;
 
             let synced_object = duplicateToken(token, false, pageid);
 
-            addSyncedObjects(page_name, token.get('id'), synced_object.get('id'));
+            addSyncedObjects(getPagenameById(token.get('pageid')), token.get('id'), synced_object.get('id'));
         })
     },
 
     handleTokenChange = (token, prev_token) => {
         if(syncing) return;
 
-        let page_name = getObj('page', token.get('pageid')).get('name').toLowerCase().split('_synced')[0];
+        log('Change: ' + token.get('id'))
 
-        if(state[state_name].synced_pages[page_name]){
-            getSyncedObjects(page_name, token.get('id')).forEach(objectid => {
+        if(state[state_name].synced_pages[getPagenameById(token.get('pageid'))]){
+            getSyncedObjects(getPagenameById(token.get('pageid')), token.get('id')).forEach(objectid => {
                 if(objectid === token.get('id')) return;
 
                 let synced_token = getObj(token.get('type'), objectid);
-                if(!synced_token) return;
-
-                
-
-                /*token.get('gmnotes').split(/\n/g).forEach(option =>{
-                    log(option)
-                    log(option === 'invisible_only_here')
-                    switch(option){
-                        case 'visible_only_here':
-                            token.set('layer', 'objects');
-                            attributes['layer'] = 'gmlayer';
-                        break;
-
-                        case 'visibles_only_others':
-                            token.set('layer', 'gmlayer');
-                            attributes['layer'] = 'objects';
-                        break;
-
-                        case 'invisible_only_here':
-                            token.set('layer', 'gmlayer');
-                            attributes['layer'] = 'objects';
-                        break;
-
-                        case 'invisible_only_others':
-                            token.set('layer', 'objects');
-                            attributes['layer'] = 'gmlayer';
-                        break;
-                    }
-                });*/
+                if(!synced_token) return;                
 
                 duplicateToken(token, synced_token);
             })
@@ -146,15 +145,17 @@ var SyncPage = SyncPage || (function() {
     handleTokenDestroy = (token) => {
         if(syncing) return;
 
-        let page_name = getObj('page', token.get('pageid')).get('name').toLowerCase().split('_synced')[0];
-
-        getSyncedObjects(page_name, token.get('id')).forEach(tokenid => {
-            removedSyncedObject(page_name, tokenid);
+        getSyncedObjects(getPagenameById(token.get('pageid')), token.get('id')).forEach(tokenid => {
+            removedSyncedObject(getPagenameById(token.get('pageid')), tokenid);
 
             if(tokenid === token.get('id')) return;
 
             getObj(token.get('type'), tokenid).remove();
         });
+    },
+
+    getPagenameById = (pageid) => {
+        return getObj('page', pageid).get('name').toLowerCase().split('_synced')[0]
     },
 
     duplicateToken = (token, synced_token, pageid) => {
@@ -165,6 +166,32 @@ var SyncPage = SyncPage || (function() {
                 attributes[key] = token.attributes[key];
             }
         }
+
+        let original_layer = (synced_token) ? synced_token.get('layer') : token.get('layer');
+        if(token.get('gmnotes').includes('show_here')){
+            token.set('layer', 'objects');
+            attributes.layer = original_layer;
+        }
+
+        if(token.get('gmnotes').includes('hide_here')){
+            token.set('layer', 'gmlayer');
+            attributes.layer = original_layer;
+        }
+
+        if(token.get('gmnotes').includes('show_others') && (!synced_token || !synced_token.get('gmnotes').includes('hide_here'))){
+            log('CHANGE LAYER')
+            attributes.layer = 'objects';
+        }else if(synced_token && synced_token.get('gmnotes').includes('show_here')){
+            attributes.layer = original_layer;
+        }
+
+        if(token.get('gmnotes').includes('hide_others') && (!synced_token || !synced_token.get('gmnotes').includes('show_here'))){
+            attributes.layer = 'gmlayer';
+        }else if(synced_token && synced_token.get('gmnotes').includes('show_here')){
+            attributes.layer = original_layer;
+        }
+
+        log(attributes.layer)
 
         if(!synced_token){
             if(token.get('type') === 'graphic') attributes['imgsrc'] = createImgSrc(token.get('imgsrc'));
