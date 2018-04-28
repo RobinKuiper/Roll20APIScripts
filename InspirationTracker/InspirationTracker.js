@@ -1,5 +1,5 @@
 /*
- * Version 0.1.2
+ * Version 0.1.3
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -66,14 +66,31 @@ var InspirationTracker = InspirationTracker || (function() {
 
                 default:
                     if(msg.selected && msg.selected.length > 0){
-                        msg.selected.forEach(token => {
-                            let characterid = getObj('graphic', token._id).get('represents') || false;
-                            if(characterid){
-                                let attribute = findObjs({ characterid, _type: 'attribute', name: 'inspiration' }).shift();
+                        msg.selected.forEach(s => {
+                            let token = getObj('graphic', s._id);
+                            if(token){
+                                let characterid = token.get('represents');
+                                if(!characterid){
+                                    makeAndSendMenu('This token does not represent a character to add inspiration to.', '', 'gm');
+                                    return;
+                                }
 
-                                if(attribute.get('current') === 'on') return;
+                                let attribute = findObjs({
+                                    characterid,
+                                    type: 'attribute',
+                                    name: 'inspiration'
+                                }).shift();
+                                if(!attribute){
+                                    makeAndSendMenu('Could not find attribute named: inspiration', '', 'gm');
+                                    return;
+                                }
 
-                                attribute.set({ current: 'on' });
+                                if(attribute.get('current') === 'on'){
+                                    makeAndSendMenu(token.get('name') + ' is already inspired.', '', 'gm');
+                                    return;
+                                }
+
+                                attribute.set('current', 'on');
                                 handleAttributeChange(attribute);
                             }
                         });

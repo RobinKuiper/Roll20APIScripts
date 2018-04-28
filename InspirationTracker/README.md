@@ -3,8 +3,10 @@
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin-k
+* Github: https://github.com/RobinKuiper/Roll20APIScripts
 * Reddit: https://www.reddit.com/user/robinkuiper/
-* Patreon: https://www.patreon.com/robinkuiper
+* Patreon: https://patreon.com/robinkuiper
+* Paypal.me: https://www.paypal.me/robinkuiper
 
 ---
 
@@ -15,3 +17,8 @@ Works great with my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts
 
 * **!inspiration** - Gives an inspiration to selected token(s), or shows the config menu when nothing is selected.
 * **!inspiration config** - Shows the config menu.
+
+#### Changelog
+
+* **v0.1.2 - 28-04-2018**
+  Fixed a bug were giving inspiration could cause an error.
