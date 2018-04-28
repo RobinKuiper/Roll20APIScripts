@@ -23,7 +23,6 @@ You create a new page with exactly the same name as the page you want to sync, a
 
 The initial page will be synced (with all objects on it) to the newly created page, and everything that changes on one of the pages will now also change on the other pages.
 After this you can bring up the `SyncPage Menu` by using the `!sync` command, eg.:
-IMAGE_____________________________________ 
 ![Menu](https://i.imgur.com/ZvAtEtM.png "Menu")
 
 With this menu you can hide/show specific tokens on the different synced pages.

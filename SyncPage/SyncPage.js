@@ -355,15 +355,7 @@ var SyncPage = SyncPage || (function() {
     },
 
     sendHelpMenu = (first) => {
-        let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
-
-        let listItems = [
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
-        ]
-
-        let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list)+'<hr>'+configButton;
-        makeAndSendMenu(contents, script_name + ' Help', 'gm')
+        makeAndSendMenu(makeButton('HELP!' , 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/SyncPage', styles.button + styles.fullWidth), script_name + ' Help', 'gm')
     },
 
     sendMenu = () => {
