@@ -1,5 +1,5 @@
 /*
- * Version 0.1.6
+ * Version 0.1.7
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -117,6 +117,16 @@ var Concentration = Concentration || (function() {
         }
     },
 
+    handleStatusMarkerChange = (obj, prev) => {
+        const marker = state[state_name].config.statusmarker
+        
+        if(!obj.get('status_'+marker)){
+            findObjs({ type: obj.get('type'), represents: obj.get('represents') }).forEach(o => {
+                o.set('status_'+marker, false);
+            });
+        }
+    },
+
     handleGraphicChange = (obj, prev) => {
         if(checked.includes(obj.get('represents'))){ return false; }
 
@@ -127,22 +137,23 @@ var Concentration = Concentration || (function() {
         if(prev && obj.get('status_'+marker) && obj.get(bar) < prev[bar]){
             let calc_DC = Math.floor((prev[bar] - obj.get(bar))/2),
                 DC = (calc_DC > 10) ? calc_DC : 10,
-                chat_text = '<b>'+obj.get('name')+'</b> must make a Concentration Check - <b>DC ' + DC + '</b>.';
+                chat_text;
 
             if(target === 'character'){
                 target = createWhisperName(obj.get('name'));
                 chat_text = "Make a Concentration Check - <b>DC " + DC + "</b>.";
             }else if(target === 'everyone'){
                 target = ''
+                chat_text = '<b>'+obj.get('name')+'</b> must make a Concentration Check - <b>DC ' + DC + '</b>.';
             }
 
             makeAndSendMenu(chat_text, '', target);
-        }
 
-        let length = checked.push(obj.get('represents'));
-        setTimeout(() => {
-            checked.splice(length-1, 1);
-        }, 1000);
+            let length = checked.push(obj.get('represents'));
+            setTimeout(() => {
+                checked.splice(length-1, 1);
+            }, 1000);
+        }
     },
 
     createWhisperName = (name) => {
@@ -225,6 +236,7 @@ var Concentration = Concentration || (function() {
     registerEventHandlers = () => {
         on('chat:message', handleInput);
         on('change:graphic:bar'+state[state_name].config.bar+'_value', handleGraphicChange);
+        on('change:graphic:statusmarkers', handleStatusMarkerChange);
     },
 
     setDefaults = (reset) => {

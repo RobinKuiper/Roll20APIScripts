@@ -1,6 +1,5 @@
 ## Concentration
 
-* Version: 0.1.5
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin-k
@@ -28,5 +27,8 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 ---
 
 #### Changelog:
+**28-04-2018 - 0.1.7**
+* Remove statusmarker from all objects when removed.
+
 **25-04-2018 - 0.1.5**
 * Correct whisper target on spell cast concentration check.
