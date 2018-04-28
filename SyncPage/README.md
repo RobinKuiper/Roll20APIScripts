@@ -19,6 +19,7 @@ It also has commands to hide/show specific tokens on different synced pages, whi
 ``` NOTE: I wanted to do this automatically, but at the moment Roll20 doesn't allow the creation of pages through the API. ```
 
 You create a new page with exactly the same name as the page you want to sync, and give it a '_synced' prefix, eg.:
+
 ![Page Sync Demo](https://i.imgur.com/VAPEBy4.png "Page Sync Demo")
 
 The initial page will be synced (with all objects on it) to the newly created page, and everything that changes on one of the pages will now also change on the other pages.
@@ -31,6 +32,7 @@ With this menu you can hide/show specific tokens on the different synced pages.
 ``` NOTE: A token with the "Show Here" or "Hide Here" flag will always go before doing "Show on Other pages" or "Hide on Other pages" ```
 
 Now you can drag specific players to one of the synced maps to show them only the things they need to see.
+
 ![Player Demo](https://i.imgur.com/o1cCyEZ.png "Player Demo")
 
 ### Config
