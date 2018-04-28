@@ -1,5 +1,5 @@
 /* WORK IN PROGRESS
- * Version 0.1.0
+ * Version 0.1.8
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -95,7 +95,7 @@ var SyncPage = SyncPage || (function() {
                 break;
 
                 default:
-                    doSync();
+                    sendMenu();
                 break;
             }
         }
@@ -127,8 +127,6 @@ var SyncPage = SyncPage || (function() {
 
     handleTokenChange = (token, prev_token) => {
         if(syncing) return;
-
-        log('Change: ' + token.get('id'))
 
         if(state[state_name].synced_pages[getPagenameById(token.get('pageid'))]){
             getSyncedObjects(getPagenameById(token.get('pageid')), token.get('id')).forEach(objectid => {
@@ -167,31 +165,30 @@ var SyncPage = SyncPage || (function() {
             }
         }
 
-        let original_layer = (synced_token) ? synced_token.get('layer') : token.get('layer');
-        if(token.get('gmnotes').includes('show_here')){
-            token.set('layer', 'objects');
-            attributes.layer = original_layer;
-        }
+        if(token.get('type') === 'graphic'){
+            let original_layer = (synced_token) ? synced_token.get('layer') : token.get('layer');
+            if(token.get('gmnotes').includes('show_here')){
+                token.set('layer', 'objects');
+                attributes.layer = original_layer;
+            }
 
-        if(token.get('gmnotes').includes('hide_here')){
-            token.set('layer', 'gmlayer');
-            attributes.layer = original_layer;
-        }
+            if(token.get('gmnotes').includes('hide_here')){
+                token.set('layer', 'gmlayer');
+                attributes.layer = original_layer;
+            }
 
-        if(token.get('gmnotes').includes('show_others') && (!synced_token || !synced_token.get('gmnotes').includes('hide_here'))){
-            log('CHANGE LAYER')
-            attributes.layer = 'objects';
-        }else if(synced_token && synced_token.get('gmnotes').includes('show_here')){
-            attributes.layer = original_layer;
-        }
+            if(token.get('gmnotes').includes('show_others') && (!synced_token || !synced_token.get('gmnotes').includes('hide_here'))){
+                attributes.layer = 'objects';
+            }else if(synced_token && synced_token.get('gmnotes').includes('show_here')){
+                attributes.layer = original_layer;
+            }
 
-        if(token.get('gmnotes').includes('hide_others') && (!synced_token || !synced_token.get('gmnotes').includes('show_here'))){
-            attributes.layer = 'gmlayer';
-        }else if(synced_token && synced_token.get('gmnotes').includes('show_here')){
-            attributes.layer = original_layer;
+            if(token.get('gmnotes').includes('hide_others') && (!synced_token || !synced_token.get('gmnotes').includes('show_here'))){
+                attributes.layer = 'gmlayer';
+            }else if(synced_token && synced_token.get('gmnotes').includes('show_here')){
+                attributes.layer = original_layer;
+            }
         }
-
-        log(attributes.layer)
 
         if(!synced_token){
             if(token.get('type') === 'graphic') attributes['imgsrc'] = createImgSrc(token.get('imgsrc'));
@@ -214,6 +211,8 @@ var SyncPage = SyncPage || (function() {
     },
 
     checkSyncedPages = () => {
+        if(!state[state_name].config.refresh_sync) return;
+
         state[state_name].synced_pages = {};
 
         let pages = findObjs({ _type: 'page' });
@@ -340,9 +339,11 @@ var SyncPage = SyncPage || (function() {
 
     sendConfigMenu = (first, message) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
+        let refreshSyncButton = makeButton(state[state_name].config.refresh_sync, '!' + state[state_name].config.command + ' config refresh_sync|'+!state[state_name].config.refresh_sync, styles.button + styles.float.right)
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+            '<span style="'+styles.float.left+'">Reload Refresh:</span> ' + refreshSyncButton,
         ];
 
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
@@ -363,6 +364,16 @@ var SyncPage = SyncPage || (function() {
 
         let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list)+'<hr>'+configButton;
         makeAndSendMenu(contents, script_name + ' Help', 'gm')
+    },
+
+    sendMenu = () => {
+        let contents = '<b>With Selected:</b><br>';
+        contents += makeButton('Show Here', '!' + state[state_name].config.command + ' show here', styles.button + styles.fullWidth);
+        contents += makeButton('Hide Here', '!' + state[state_name].config.command + ' hide here', styles.button + styles.fullWidth);
+        contents += makeButton('Show on Other pages', '!' + state[state_name].config.command + ' show others', styles.button + styles.fullWidth);
+        contents += makeButton('Hide on Other pages', '!' + state[state_name].config.command + ' hide others', styles.button + styles.fullWidth);
+
+        makeAndSendMenu(contents, script_name + ' Menu', 'gm');
     },
 
     makeAndSendMenu = (contents, title, whisper) => {
@@ -427,7 +438,7 @@ var SyncPage = SyncPage || (function() {
         const defaults = {
             config: {
                 command: 'sync',
-                invisible_marker: 'ninja-mask'
+                refresh_sync: true
             },
             synced_pages: {}
         };
@@ -438,8 +449,8 @@ var SyncPage = SyncPage || (function() {
             if(!state[state_name].config.hasOwnProperty('command')){
                 state[state_name].config.command = defaults.config.command;
             }
-            if(!state[state_name].config.hasOwnProperty('invisible_marker')){
-                state[state_name].config.invisible_marker = defaults.config.invisible_marker;
+            if(!state[state_name].config.hasOwnProperty('refresh_sync')){
+                state[state_name].config.refresh_sync = defaults.config.refresh_sync;
             }
         }
 
