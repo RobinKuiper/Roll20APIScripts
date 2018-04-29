@@ -1,5 +1,5 @@
 /* WORK IN PROGRESS
- * Version 0.1.8
+ * Version 0.1.9
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -113,6 +113,17 @@ var SyncPage = SyncPage || (function() {
         }
     },
 
+    handlePageAdd = (page) => {
+        if(state[state_name].config.true_copy){
+            if(!page.get('name').includes('(Copy)')) return;
+
+            let original_page = findObjs({ type: 'page' , name: page.get('name').split(' (Copy)').shift() }).shift();
+            if(original_page){
+                doCopy(original_page, page);
+            }
+        }
+    },
+
     handleTokenCreate = (token) => {
         if(syncing) return;
 
@@ -221,6 +232,18 @@ var SyncPage = SyncPage || (function() {
                 doSync(page);
             }
         });
+    },
+
+    doCopy = (original_page, new_page) => {
+        syncing = true;
+
+        syncPageSettings(original_page, new_page);
+
+        findObjs({ pageid: original_page.get('id') }).forEach(original_object => {
+            duplicateToken(original_object, false, new_page.get('id'));
+        });
+
+        syncing = false;
     },
 
     doSync = (page) => {
@@ -340,10 +363,12 @@ var SyncPage = SyncPage || (function() {
     sendConfigMenu = (first, message) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
         let refreshSyncButton = makeButton(state[state_name].config.refresh_sync, '!' + state[state_name].config.command + ' config refresh_sync|'+!state[state_name].config.refresh_sync, styles.button + styles.float.right)
+        let trueCopyButton = makeButton(state[state_name].config.true_copy, '!' + state[state_name].config.command + ' config true_copy|'+!state[state_name].config.true_copy, styles.button + styles.float.right)
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
             '<span style="'+styles.float.left+'">Reload Refresh:</span> ' + refreshSyncButton,
+            '<span style="'+styles.float.left+'">True Copy:</span> ' + trueCopyButton,
         ];
 
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
@@ -412,6 +437,7 @@ var SyncPage = SyncPage || (function() {
         on('chat:message', handleInput);
 
         on('change:page', handlePageChange);
+        on('add:page', handlePageAdd);
 
         on('change:graphic', handleTokenChange);
         on('change:text', handleTokenChange);
@@ -430,7 +456,8 @@ var SyncPage = SyncPage || (function() {
         const defaults = {
             config: {
                 command: 'sync',
-                refresh_sync: true
+                refresh_sync: true,
+                true_copy: true
             },
             synced_pages: {}
         };
@@ -443,6 +470,9 @@ var SyncPage = SyncPage || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('refresh_sync')){
                 state[state_name].config.refresh_sync = defaults.config.refresh_sync;
+            }
+            if(!state[state_name].config.hasOwnProperty('true_copy')){
+                state[state_name].config.true_copy = defaults.config.true_copy;
             }
         }
 

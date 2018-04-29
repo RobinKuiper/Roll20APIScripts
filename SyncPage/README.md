@@ -15,6 +15,8 @@
 SyncPage gives you a way to sync pages. If an object is created, changed or removed on one of the synced pages, it will also be on the others.
 It also has commands to hide/show specific tokens on different synced pages, which gives you a way to hide/show certain tokens for players by dragging a player to another synced page.
 
+Due to API limitations, only tokens with an image that is in your library will be added with that image on the synced page(s), tokens with images not in your library will get the default token image.
+
 ### How It Works
 ``` NOTE: I wanted to do this automatically, but at the moment Roll20 doesn't allow the creation of pages through the API. ```
 
@@ -36,10 +38,11 @@ Now you can drag specific players to one of the synced maps to show them only th
 ![Player Demo](https://i.imgur.com/o1cCyEZ.png "Player Demo")
 
 ### Config
-![Config Menu](https://i.imgur.com/udtSv99.png "Config Menu")
+![Config Menu](https://i.imgur.com/SxLZPWr.png "Config Menu")
 
 * **Command** - The command you want to use for this script.
 * **Reload Refresh** - Refresh the synced pages on a reload.
+* **True Copy** - Will really duplicate the page, with all tokens, drawings, texts, etc.
 
 ### Commands
 
@@ -51,3 +54,5 @@ Now you can drag specific players to one of the synced maps to show them only th
 * **!sync hide others** - Sets the `hide others` flag to the selected token(s).
 
 #### Changelog
+**28-04-2018 - 0.1.9**
+* Added a "true copy" feature. Pages can be really duplicated now.
