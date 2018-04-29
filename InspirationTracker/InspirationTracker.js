@@ -1,5 +1,5 @@
 /*
- * Version 0.1.3
+ * Version 0.1.4
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -75,22 +75,14 @@ var InspirationTracker = InspirationTracker || (function() {
                                     return;
                                 }
 
-                                let attribute = findObjs({
-                                    characterid,
-                                    type: 'attribute',
-                                    name: 'inspiration'
-                                }).shift();
+                                let attribute = findObjs({ characterid, type: 'attribute', name: 'inspiration' }).shift();
                                 if(!attribute){
                                     makeAndSendMenu('Could not find attribute named: inspiration', '', 'gm');
                                     return;
                                 }
 
-                                if(attribute.get('current') === 'on'){
-                                    makeAndSendMenu(token.get('name') + ' is already inspired.', '', 'gm');
-                                    return;
-                                }
-
-                                attribute.set('current', 'on');
+                                let inspired = (attribute.get('current') === 'on') ? '0' : 'on';
+                                attribute.set('current', inspired);
                                 handleAttributeChange(attribute);
                             }
                         });
@@ -104,25 +96,27 @@ var InspirationTracker = InspirationTracker || (function() {
 
     handleAttributeChange = (obj) => {
         if(obj.get('name') === 'inspiration'){
-            let characterid = obj.get('characterid');
-            let inspired = (obj.get('current') === 'on');
-            let tokens = findObjs({ represents: characterid, _type: 'graphic' });
+            let characterid = obj.get('characterid'),
+                inspired = (obj.get('current') === 'on'),
+                tokens = findObjs({ represents: characterid, _type: 'graphic' }),
+                text = (inspired) ? 'is now inspired!' : 'used the inspiration.',
+                character = getObj('character', characterid),
+                name = character.get('name');
 
             tokens.forEach(token => {
                 setStatusmarker(token, inspired, true);
+
+                if(state[state_name].config.fx && inspired){
+                    spawnFx(token.get('left'), token.get('top'), state[state_name].config.fx_type, token.get('pageid'));
+                }
             });
 
-            if(inspired){
-                let character = getObj('character', characterid);
-                let name = character.get('name');
-
-                makeAndSendMenu('\
-                <div style="'+styles.overflow+'"> \
-                    <span style="'+styles.float.left+'"><b>'+name+'</b> is now inspired!</span> \
-                    <img style="'+styles.float.right+'" height="40px" width="40px" src="https://s3.amazonaws.com/files.d20.io/images/39783029/-w45_4ICV9QnFzijBimwKA/max.png" /> \
-                </div> \
-                ');
-            }
+            makeAndSendMenu('\
+            <div style="'+styles.overflow+'"> \
+                <span style="'+styles.float.left+'"><b>'+name+'</b> '+text+'</span> \
+                <img style="'+styles.float.right+'" height="40px" width="40px" src="https://s3.amazonaws.com/files.d20.io/images/39783029/-w45_4ICV9QnFzijBimwKA/max.png" /> \
+            </div> \
+            ');
         }
     },
 
@@ -149,12 +143,19 @@ var InspirationTracker = InspirationTracker || (function() {
         markerDropdown += '}';
 
         let markerButton = makeButton(state[state_name].config.statusmarker, '!' + state[state_name].config.command + ' config statusmarker|'+markerDropdown, styles.button + styles.float.right);
-        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
+        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
+        let fxButton = makeButton(state[state_name].config.fx, '!' + state[state_name].config.command + ' config fx|'+!state[state_name].config.fx, styles.button + styles.float.right);
+        let fxTypeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type}', styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
             '<span style="'+styles.float.left+'">Statusmarker:</span> ' + markerButton,
+            '<span style="'+styles.float.left+'">Special Effect:</span> ' + fxButton,
         ];
+
+        if(state[state_name].config.fx){
+            listItems.push('<span style="'+styles.float.left+'">Special Effect Type:</span> ' + fxTypeButton);
+        }
 
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
@@ -230,7 +231,9 @@ var InspirationTracker = InspirationTracker || (function() {
         const defaults = {
             config: {
                 command: 'inspiration',
-                statusmarker: 'black-flag'
+                statusmarker: 'black-flag',
+                fx: true,
+                fx_type: 'nova-holy'
             }
         };
 
@@ -242,6 +245,12 @@ var InspirationTracker = InspirationTracker || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('statusmarker')){
                 state[state_name].config.statusmarker = defaults.config.statusmarker;
+            }
+            if(!state[state_name].config.hasOwnProperty('fx')){
+                state[state_name].config.fx = defaults.config.fx;
+            }
+            if(!state[state_name].config.hasOwnProperty('fx_type')){
+                state[state_name].config.fx_type = defaults.config.fx_type;
             }
         }
 
