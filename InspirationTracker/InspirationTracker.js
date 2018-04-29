@@ -170,7 +170,7 @@ var InspirationTracker = InspirationTracker || (function() {
         let markerButton = makeButton(state[state_name].config.statusmarker, '!' + state[state_name].config.command + ' config statusmarker|'+markerDropdown, styles.button + styles.float.right);
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
         let fxButton = makeButton(state[state_name].config.fx, '!' + state[state_name].config.command + ' config fx|'+!state[state_name].config.fx, styles.button + styles.float.right);
-        let fxTypeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type}', styles.button + styles.float.right);
+        let fxTypeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type|'+state[state_name].config.fx_type+'}', styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
