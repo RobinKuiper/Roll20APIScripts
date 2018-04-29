@@ -29,6 +29,8 @@ Adding the selected statusmarker manually or through TokenMod will also handle i
 * **Special Effect Type** - The type of the effect you want, see below.
 
 #### Special Effects
+[FX](https://i.imgur.com/wt6SvCc.png "FX")
+
 This comes directly from the Roll20 API wiki:
 
 ``` For built-in effects type should be a string and be one of the following:beam-color, bomb-color, breath-color, bubbling-color, burn-color, burst-color, explode-color, glow-color, missile-color, nova-color, splatter-color

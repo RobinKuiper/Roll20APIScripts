@@ -42,7 +42,7 @@ Now you can drag specific players to one of the synced maps to show them only th
 
 * **Command** - The command you want to use for this script.
 * **Reload Refresh** - Refresh the synced pages on a reload.
-* **True Copy** - Will really duplicate the page, with all tokens, drawings, texts, etc.
+* **True Copy** - Will really duplicate the page, with all tokens, drawings, texts, etc. If enabled it will trigger on duplicating a page.
 
 ### Commands
 
