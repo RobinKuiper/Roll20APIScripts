@@ -9,3 +9,5 @@
 ---
 
 Every script has it's own README with information.
+
+``` ISSUES: Issues that get the "Fixed in next update" label, will be fixed in the development branch already. ```
