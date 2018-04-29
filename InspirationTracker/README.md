@@ -10,8 +10,10 @@
 
 ---
 
-InspirationTracker keeps track of inspiration and adds a statusmarker to the characters token(s). You can also easily give an inspiration with the command `!inspiration` when you have token(s) selected.
+InspirationTracker keeps track of inspiration and adds a statusmarker to the characters token(s). You can also easily toggle inspiration with the command `!inspiration` when you have token(s) selected.
 Works great with my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo) script.
+
+Adding the selected statusmarker manually or through TokenMod will also handle inspiration on the sheet.
 
 ### Commands
 
@@ -36,7 +38,8 @@ Where "color" in the above is one of: acid, blood, charm, death, fire, frost, ho
 For custom effects, type should be the ID of the custfx object for the custom effect. ```
 
 #### Changelog
-**v0.1.3 - 29-04-2018**
+**v0.1.4 - 29-04-2018**
+* Adding the selected statusmarker manually or through TokenMod will now also add an inspiration to the sheet.
 * Added an option to show a special effect when a character gets inspiration.
 * Added a way to toggle Inspiration by using the `!inspiration` command.
 

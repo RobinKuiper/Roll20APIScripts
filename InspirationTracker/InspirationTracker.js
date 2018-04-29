@@ -94,6 +94,31 @@ var InspirationTracker = InspirationTracker || (function() {
         }
     },
 
+    handleGraphicChange = (token, prev_token) => {
+        if(token.get('statusmarkers') === prev_token.statusmarkers) return;
+
+        const marker = state[state_name].config.statusmarker;
+        const character = getObj('character', token.get('represents'));
+
+        if(!character) return;
+
+        let attribute = findObjs({ characterid: character.get('id'), type: 'attribute', name: 'inspiration' }).shift();
+
+        if(!attribute) return;
+
+        // Marker added
+        if(token.get('statusmarkers').includes(marker) && !prev_token.statusmarkers.includes(marker)){
+            attribute.set('current', 'on');
+            handleAttributeChange(attribute);
+        }
+
+        // Marker removed
+        if(!token.get('statusmarkers').includes(marker) && prev_token.statusmarkers.includes(marker)){
+            attribute.set('current', '0');
+            handleAttributeChange(attribute);
+        }
+    },
+
     handleAttributeChange = (obj) => {
         if(obj.get('name') === 'inspiration'){
             let characterid = obj.get('characterid'),
@@ -224,7 +249,14 @@ var InspirationTracker = InspirationTracker || (function() {
     registerEventHandlers = () => {
         on('chat:message', handleInput);
         on('change:attribute', handleAttributeChange);
+        on('change:graphic', handleGraphicChange);
         on('add:token', handleAddToken);
+
+        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
+            TokenMod.ObserveTokenChange(function(obj,prev){
+                handleGraphicChange(obj,prev);
+            });
+        }
     },
 
     setDefaults = (reset) => {
