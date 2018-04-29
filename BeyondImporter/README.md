@@ -51,11 +51,7 @@ Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimpor
 --- 
 
 #### Changelog:
-| 5e OGL                                        | Shaped                                                    |
-| --------------------------------------------- | --------------------------------------------------------- |
-| **v0.1.10**                                   | **v0.0.6**                                                |
-| Unarmored Defense shows in inventory          | Background description shows in backstory field now.      |
-| Spells are now added as attacks with save DC. | Background features added.                                |
-|                                               | Racial Traits added.                                      |
-|                                               | Background features added.                                |
-|                                               | Fixed some skill proficiencies                            |
+|             	| 5e OGL                                                                               	|            	|                                                                               Shaped                                                                               	|
+|-------------	|--------------------------------------------------------------------------------------	|------------	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+| **v0.1.11** 	| Fixed HP Calculations.                                                               	| **v0.0.7** 	| Import of subclass features. Fixed HP Calculations.                                                                                                                	|
+| **v0.1.10** 	| Unarmored Defense shows in inventory   Spells are now added as attacks with save DC. 	| **v0.0.6** 	| Background description shows in backstory field now.  Background features added.  Racial Traits added. Background features added. Fixed some skill proficiencies   	|

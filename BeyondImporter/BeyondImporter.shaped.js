@@ -1,5 +1,5 @@
 /*
- * Version 0.0.6
+ * Version 0.0.7
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -73,6 +73,24 @@
         7: '7TH_LEVEL',
         8: '8TH_LEVEL',
         9: '9TH_LEVEL'
+    }
+
+    const auto_traits = {
+        artificer: ['Magic Item Analysis', 'Tool Expertise', 'Wondrous Invention', 'Infuse Magic', 'Superior Attunement', 'Mechanical Servant', 'Soul of Artifice'],
+        barbarian: ['Rage', 'Unarmored Defense', 'Reckless Attack', 'Danger Sense', 'Fast Movement', 'Feral Instinct', 'Brutal Critical', 'Relentless Rage', 'Persistent Rage', 'Indomitable Might', 'Primal Champion'],
+        bard: ['Bardic Inspiration', 'Jack of all Trades', 'Song of Rest', 'Expertise', 'Countercharm', 'Magical Secrets', 'Superior Inspiration'],
+        cleric: ['Channel Divinity', 'Turn Undead (Channel Divinity)', 'Divine Intervention'],
+        druid: ['Druidic', 'Wild Shape', 'Timeless Body', 'Beast Spells', 'Archdruid'],
+        fighter: ['Fighting Style (Fighter)', 'Second Wind', 'Action Surge', 'Indomitable', 'Remarkable Athlete'],
+        monk: ['Unarmored Defense', 'Martial Arts', 'Ki', 'Flurry of Blows', 'Patient Defense', 'Step of the Wind', 'Unarmored Movement', 'Deflect Missiles', 'Slow Fall', 'Stunning Strike', 'Ki-Empowered Strikes', 'Evasion', 'Stillness of Mind', 'Purity of Body', 'Tongue of the Sun and Moon', 'Diamond Soul', 'Timeless Body', 'Empty Body', 'Perfect Self'],
+        paladin: ['Divine Sense', 'Lay on Hands', 'Fighting Style (Paladin)', 'Divine Smite', 'Divine Health', 'Channel Divinity', 'Aura of Protection', 'Aura of Courage', 'Improved Divine Smite', 'Cleansing Touch'],
+        ranger: ['Favored Enemy', 'Natural Explorer', 'Fighting Style (Ranger)', 'Primeval Awareness', 'Land\'s Stride', 'Hide in Plain Sight', 'Vanish', 'Feral Senses', 'Foe Slayer'],
+        rangerua: ['Favored Enemy', 'Natural Explorer', 'Fighting Style (Ranger UA)', 'Primeval Awareness', 'Greater Favored Enemy', 'Fleet of Foot', 'Hide in Plain Sight', 'Vanish', 'Feral Senses', 'Foe Slayer'],
+        rogue: ['Expertise', 'Sneak Attack', 'Thieves\' Cant', 'Cunning Action', 'Uncanny Dodge', 'Evasion', 'Reliable Talent', 'Blindsense', 'Slippery Mind', 'Elusive', 'Stroke of Luck'],
+        sorcerer: ['Sorcery Points', 'Flexible Casting', 'Metamagic', 'Sorcerous Restoration', 'Careful Spell', 'Distant Spell', 'Empowered Spell', 'Extended Spell', 'Heightened Spell', 'Quickened Spell', 'Subtle Spell', 'Twinned Spell'],
+        warlock: ['Eldritch Invocations', 'Pact Boon', 'Mystic Arcanum', 'Eldritch Master'],
+        wizard: ['Arcane Recovery', 'Spell Mastery', 'Signature Spells'],
+        general: ['Ability Score Increase', 'Age', 'Languages', 'Size', 'Alignment', 'Speed', 'Proficiencies', 'Ability Score Improvement', 'Hit Points']
     }
 
     on('ready',()=>{ 
@@ -325,16 +343,8 @@
                 attributes = Object.assign(attributes, createRepeating('feat', feat.definition.name, fields, object));
             });
 
-            let disallowed_traits = [
-                'Ability Score Increase',
-                'Age',
-                'Languages',
-                'Alignment',
-                'Size',
-                'Speed'
-            ]
             racialTraits.forEach((trait) => {
-                if(disallowed_traits.includes(trait.definition.name)) return;
+                if(auto_traits.general.includes(trait.definition.name)) return;
 
                 let fields = {
                     name: trait.definition.name,
@@ -446,7 +456,7 @@
 
         setAttrs(object.id, Object.assign(attributes)); 
 
-        let hp = Math.floor(character.hitPoints.max + (character.level * ((attributes.constitution-10)/2)));
+        let hp = Math.floor(character.hitPoints.max + ( character.level * Math.floor( ( ( attributes.constitution - 10 ) / 2 ) ) ) );
 
         createObj('attribute', {
             characterid: object.id,
@@ -490,6 +500,28 @@
             }else{
                 attributes["repeating_class_"+row+"_name"] = c.class.name.toUpperCase();
             }
+
+            // Import Class Features
+            c.features.forEach(trait => {
+                if(auto_traits[c.class.name.toLowerCase()].includes(trait.definition.name) ||
+                    auto_traits.general.includes(trait.definition.name)) return;
+
+                if(trait.definition.name.includes('Rage')) return;
+
+                let fields = {
+                    name: trait.definition.name,
+                    content: trait.definition.description,
+                }
+
+                trait.limitedUseAbilities.forEach((limited) => {
+                    fields['uses'] = limited.maxUses - limited.numberUsed;
+                    fields['per_use'] = 1;
+                    fields['uses_max'] = limited.maxUses;
+                    fields['recharge'] = limited.resetType.toUpperCase().replace(' ', '_');
+                });
+
+                attributes = Object.assign(attributes, createRepeating('classfeature', trait.definition.name, fields, object));
+            });
 
             // Import Class Spells
             c.spells.forEach((spell) => {

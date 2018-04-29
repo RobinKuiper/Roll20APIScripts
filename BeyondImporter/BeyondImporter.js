@@ -1,5 +1,5 @@
 /*
- * Version 0.1.10
+ * Version 0.1.11
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -446,7 +446,7 @@
 
                     setAttrs(object.id, Object.assign(other_attributes, bonus_attributes)); 
 
-                    let hp = Math.floor(character.hitPoints.max + (character.level * ((other_attributes.constitution_base-10)/2)));
+                    let hp = Math.floor(character.hitPoints.max + ( character.level * Math.floor( ( ( other_attributes.constitution_base - 10 ) / 2 ) ) ) );
 
                     createObj('attribute', {
                         characterid: object.id,
