@@ -26,8 +26,11 @@ var WildMagic = WildMagic || (function() {
             character_name = RegExp.$1;
             let attack_name = msg.content.match(/rname=([^\n{}]*[^"\n{}])/);            
             attack_name = RegExp.$1;
-            let id = findObjs({ name: character_name, _type: 'character' }).shift().get('id') || false;
+            let character = findObjs({ name: character_name, _type: 'character' }).shift();
+            let id = (character) ? character.get('id') : false;
+
             if((msg.rolltemplate === 'atk' || msg.rolltemplate === 'dmg' || msg.rolltemplate === 'atkdmg') && (!id || !getObjects(getRepeatingSectionAttrs(id, 'spell-'), 'current', attack_name).length)) return;
+
             let allowed_characters = CHARACTERS.split(',');
             if(allowed_characters.includes(character_name)){
                 let tokens = findObjs({
@@ -41,7 +44,7 @@ var WildMagic = WildMagic || (function() {
 
                         if(token.get('status_'+TIDES_MARKER)){
                             tides = true;
-                        }  
+                        }
                     })
                 }
 
