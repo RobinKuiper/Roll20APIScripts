@@ -134,18 +134,8 @@ var CombatTracker = CombatTracker || (function() {
                     let token = getObj(s._type, s._id);
                     if(!token) return;
 
-                    if(state[state_name].conditions[strip(token.get('name'))]){
-                        state[state_name].conditions[strip(token.get('name'))].push(condition);
-                    }else{
-                        state[state_name].conditions[strip(token.get('name'))] = [condition];
-                    }
-
-                    if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
-                        StatusInfo.Conditions([name], msg.selected, 'add', false);
-                    }else{
-                        makeAndSendMenu('Condition ' + name + ' added to ' + token.get('name'));
-                    }
-                })
+                    addCondition(token, condition);
+                });
             break;
 
             case 'remove':
@@ -157,18 +147,7 @@ var CombatTracker = CombatTracker || (function() {
                     let token = getObj(s._type, s._id);
                     if(!token) return;
 
-                    if(!state[state_name].conditions[strip(token.get('name'))]) return;
-
-                    state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
-                        if(condition.name !== cname) return;
-
-                        state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
-                        makeAndSendMenu('Condition ' + cname + ' removed from ' + token.get('name'));
-
-                        if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
-                            StatusInfo.Conditions([name], msg.selected, 'remove', false);
-                        }
-                    });
+                    removeCondition(token, cname);
                 });
             break;
 
@@ -176,6 +155,44 @@ var CombatTracker = CombatTracker || (function() {
                 sendMenu();
             break;
         }
+    },
+
+    addCondition = (token, condition) => {
+        if(state[state_name].conditions[strip(token.get('name'))]){
+            let hasCondition = false;
+            state[state_name].conditions[strip(token.get('name'))].forEach(c => {
+                if(c.name.toLowerCase() === condition.name.toLowerCase()) hasCondition = true;
+            })
+            if(!hasCondition){
+                state[state_name].conditions[strip(token.get('name'))].push(condition);
+            }else{
+                makeAndSendMenu(token.get('name') + ' already has the condition ' + condition.name);
+                return;
+            }
+        }else{
+            state[state_name].conditions[strip(token.get('name'))] = [condition];
+        }
+
+        if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
+            StatusInfo.Conditions([condition.name], [token], 'add', false);
+        }else{
+            makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
+        }
+    },
+
+    removeCondition = (token, condition_name) => {
+        if(!state[state_name].conditions[strip(token.get('name'))]) return;
+
+        state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+            if(condition.name !== condition_name) return;
+
+            state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
+            makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));
+
+            if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
+                StatusInfo.Conditions([condition_name], [token], 'remove', false);
+            }
+        });
     },
 
     strip = (str) => {
@@ -293,7 +310,7 @@ var CombatTracker = CombatTracker || (function() {
         state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
             if(condition.duration <= 0){
                 contents += '<b>'+condition.name+'</b> removed.<br>';
-                state[state_name].conditions[strip(token.get('name'))].splice(i, 1)
+                removeCondition(token, condition.name);
             }else{
                 contents += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
                 state[state_name].conditions[strip(token.get('name'))][i].duration--;

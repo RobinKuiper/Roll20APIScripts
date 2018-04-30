@@ -190,7 +190,8 @@ var StatusInfo = StatusInfo || (function() {
                         return;
                     }
 
-                    handleConditions(args, msg.selected, extracommand);
+                    let tokens = msg.selected.map(s => getObj(s._type, s._id))
+                    handleConditions(args, tokens, extracommand);
                 break;
 
                 default:
@@ -222,8 +223,7 @@ var StatusInfo = StatusInfo || (function() {
             condition_key = condition_key.toLowerCase();
 
             let sended = false;
-            tokens.forEach(s => {
-                let token = getObj(s._type, s._id);
+            tokens.forEach(token => {
                 let prev = token;
                 let add = (type === 'add') ? true : (type === 'toggle') ? !token.get('status_'+getConditionByName(condition_key).icon) : false;
                 token.set('status_'+getConditionByName(condition_key).icon, add);
