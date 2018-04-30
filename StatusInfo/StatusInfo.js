@@ -190,31 +190,7 @@ var StatusInfo = StatusInfo || (function() {
                         return;
                     }
 
-                    args.forEach(condition_key => {
-                        if(!state[state_name].conditions[condition_key.toLowerCase()]){
-                            makeAndSendMenu('The condition `'+condition_key+'` does not exist.');
-                            return;
-                        }
-
-                        condition_key = condition_key.toLowerCase();
-
-                        let sended = false;
-                        msg.selected.forEach(s => {
-                            let token = getObj(s._type, s._id);
-                            let prev = token;
-                            let add = (extracommand === 'add') ? true : (extracommand === 'toggle') ? !token.get('status_'+getConditionByName(condition_key).icon) : false;
-                            token.set('status_'+getConditionByName(condition_key).icon, add);
-
-                            notifyObservers('tokenChange', token, prev);
-
-                            if(extracommand === 'toggle' && add && !sended){
-                                sendConditionToChat(getConditionByName(condition_key));
-                                sended = true;
-                            }
-                        });
-
-                        if(extracommand === 'add') sendConditionToChat(getConditionByName(condition_key));
-                    });
+                    handleConditions(args, msg.selected, extracommand);
                 break;
 
                 default:
@@ -234,6 +210,34 @@ var StatusInfo = StatusInfo || (function() {
                 break;
             }
         }
+    },
+
+    handleConditions = (conditions, tokens, type='add', error=true) => {
+        conditions.forEach(condition_key => {
+            if(!state[state_name].conditions[condition_key.toLowerCase()]){
+                if(error) makeAndSendMenu('The condition `'+condition_key+'` does not exist.');
+                return;
+            }
+
+            condition_key = condition_key.toLowerCase();
+
+            let sended = false;
+            tokens.forEach(s => {
+                let token = getObj(s._type, s._id);
+                let prev = token;
+                let add = (type === 'add') ? true : (type === 'toggle') ? !token.get('status_'+getConditionByName(condition_key).icon) : false;
+                token.set('status_'+getConditionByName(condition_key).icon, add);
+
+                notifyObservers('tokenChange', token, prev);
+
+                if(type === 'toggle' && add && !sended){
+                    sendConditionToChat(getConditionByName(condition_key));
+                    sended = true;
+                }
+            });
+
+            if(type === 'add') sendConditionToChat(getConditionByName(condition_key));
+        });
     },
 
     esRE = function (s) {
@@ -519,6 +523,10 @@ var StatusInfo = StatusInfo || (function() {
         return list;
     },
 
+    getConditions = () => {
+        return state[state_name].conditions;
+    },
+
     checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
@@ -686,7 +694,9 @@ var StatusInfo = StatusInfo || (function() {
     return {
         CheckInstall: checkInstall,
         ObserveTokenChange: observeTokenChange,
-        RegisterEventHandlers: registerEventHandlers
+        RegisterEventHandlers: registerEventHandlers,
+        GetConditions: getConditions,
+        Conditions : handleConditions
     };
 })();
 

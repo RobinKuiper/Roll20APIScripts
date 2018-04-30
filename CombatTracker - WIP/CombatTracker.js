@@ -14,7 +14,6 @@
  *
  * Styling
  * Conditions?
- * Config Expansion
  * Show menu with B shows always
 */
 
@@ -124,10 +123,63 @@ var CombatTracker = CombatTracker || (function() {
                 if(args.shift() === 'b') sendMenu();
             break;
 
+            case 'add':
+                let name = args.shift(),
+                    duration = args.shift(),
+                    condition = { name, duration };
+
+                if(!msg.selected || !msg.selected.length || !name || !duration) return;
+
+                msg.selected.forEach(s => {
+                    let token = getObj(s._type, s._id);
+                    if(!token) return;
+
+                    if(state[state_name].conditions[strip(token.get('name'))]){
+                        state[state_name].conditions[strip(token.get('name'))].push(condition);
+                    }else{
+                        state[state_name].conditions[strip(token.get('name'))] = [condition];
+                    }
+
+                    if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
+                        StatusInfo.Conditions([name], msg.selected, 'add', false);
+                    }else{
+                        makeAndSendMenu('Condition ' + name + ' added to ' + token.get('name'));
+                    }
+                })
+            break;
+
+            case 'remove':
+                let cname = args.shift();
+
+                if(!msg.selected || !msg.selected.length || !cname) return;
+
+                msg.selected.forEach(s => {
+                    let token = getObj(s._type, s._id);
+                    if(!token) return;
+
+                    if(!state[state_name].conditions[strip(token.get('name'))]) return;
+
+                    state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+                        if(condition.name !== cname) return;
+
+                        state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
+                        makeAndSendMenu('Condition ' + cname + ' removed from ' + token.get('name'));
+
+                        if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
+                            StatusInfo.Conditions([name], msg.selected, 'remove', false);
+                        }
+                    });
+                });
+            break;
+
             default:
                 sendMenu();
             break;
         }
+    },
+
+    strip = (str) => {
+        return str.replace(/[^a-zA-Z0-9]+/g, '_');
     },
 
     handleTurnorderChange = (obj, prev) => {
@@ -137,7 +189,6 @@ var CombatTracker = CombatTracker || (function() {
         let prevTurnorder = JSON.parse(prev.turnorder);
 
         if(obj.get('turnorder') === "[]"){
-            log('Resetting')
             resetMarker();
             stopTimer();
             return;
@@ -192,6 +243,7 @@ var CombatTracker = CombatTracker || (function() {
             initiativepage: false,
             turnorder: ''
         });
+        state[state_name].turnorder = {};
         round = 0;
     },
 
@@ -233,6 +285,22 @@ var CombatTracker = CombatTracker || (function() {
         if(state[state_name].config.announce_turn){
             announceTurn(token || turn.custom)
         }
+
+        let contents = '';
+        if(!state[state_name].conditions[strip(token.get('name'))] || !state[state_name].conditions[strip(token.get('name'))].length) return;
+
+        contents = '<h4>Conditions:</h4>';
+        state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+            if(condition.duration <= 0){
+                contents += '<b>'+condition.name+'</b> removed.<br>';
+                state[state_name].conditions[strip(token.get('name'))].splice(i, 1)
+            }else{
+                contents += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
+                state[state_name].conditions[strip(token.get('name'))][i].duration--;
+            }
+        });
+
+        makeAndSendMenu(contents);
     },
 
     startTimer = (token) => {
@@ -343,12 +411,6 @@ var CombatTracker = CombatTracker || (function() {
             width: token.get('width')+(token.get('width')*0.35),
             height: token.get('height')+(token.get('height')*0.35),
         };
-
-        log('PageID: ' + token.get('pageid') + ' :: ' + marker.get('pageid'))
-        log('Top: ' + token.get('top') + ' :: ' + settings.top)
-        log('Left: ' + token.get('left') + ' :: ' + settings.left)
-        log('Width: ' + token.get('width') + ' :: ' + settings.width)
-        log('Height: ' + token.get('height') + ' :: ' + settings.height)
 
         marker.set(settings);
         toBack(marker);
@@ -561,6 +623,12 @@ var CombatTracker = CombatTracker || (function() {
         on('change:campaign:turnorder', handleTurnorderChange);
         on('change:graphic', handleGraphicChange);
         on('change:campaign:initiativepage', handeIniativePageChange);
+
+        /*if('undefined' !== typeof StatusInfo && StatusInfo.ObserveTokenChange){
+            StatusInfo.ObserveTokenChange(function(obj,prev){
+                handleStatusmarkerChange(obj,prev);
+            });
+        }*/
     },
 
     setDefaults = (reset) => {
@@ -582,7 +650,8 @@ var CombatTracker = CombatTracker || (function() {
                     token_font_size: 16,
                     token_font_color: 'rgb(255, 0, 0)'
                 }
-            }
+            },
+            conditions: {}
         };
 
         if(!state[state_name].config){
@@ -636,6 +705,10 @@ var CombatTracker = CombatTracker || (function() {
             }
         }
 
+        if(!state[state_name].hasOwnProperty('conditions')){
+            state[state_name].conditions = defaults.conditions;
+        }
+
         if(!state[state_name].config.hasOwnProperty('firsttime') && !reset){
             sendConfigMenu(true);
             state[state_name].config.firsttime = false;
@@ -654,3 +727,11 @@ on('ready',function() {
     CombatTracker.CheckInstall();
     CombatTracker.RegisterEventHandlers();
 });
+
+/*
+conditions = {
+    xandir: [
+        { name: 'prone', duration: '1' }
+    ]
+}
+*/
