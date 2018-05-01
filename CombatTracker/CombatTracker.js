@@ -188,7 +188,7 @@ var CombatTracker = CombatTracker || (function() {
         }
     },
 
-    removeCondition = (token, condition_name) => {
+    removeCondition = (token, condition_name, auto=false) => {
         if(!state[state_name].conditions[strip(token.get('name'))]) return;
 
         state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
@@ -202,7 +202,7 @@ var CombatTracker = CombatTracker || (function() {
                 if(c){
                     token.set('status_'+c.icon) = false;
                 }
-            }else{
+            }else if(!auto){
                 makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));
             }
         });
@@ -363,7 +363,7 @@ var CombatTracker = CombatTracker || (function() {
         changeMarker(token || false);
         if(state[state_name].config.announce_turn && token.get('layer') === 'objects'){
             announceTurn(token || turn.custom)
-        }
+        }// Else announce conditions?
 
         /*let contents = '';
         if(!state[state_name].conditions[strip(token.get('name'))] || !state[state_name].conditions[strip(token.get('name'))].length) return;
@@ -445,11 +445,11 @@ var CombatTracker = CombatTracker || (function() {
         let conditionsSTR = '';
         if(state[state_name].conditions[strip(token.get('name'))] && state[state_name].conditions[strip(token.get('name'))].length){
             state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
-                if(!condition.duration){
+                if(typeof condition.duration === 'undefined' || condition.duration === false){
                     conditionsSTR += '<b>'+condition.name+'</b><br>';
                 }else if(condition.duration <= 0){
                     conditionsSTR += '<b>'+condition.name+'</b> removed.<br>';
-                    removeCondition(token, condition.name);
+                    removeCondition(token, condition.name, true);
                 }else{
                     conditionsSTR += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
                     state[state_name].conditions[strip(token.get('name'))][i].duration--;
