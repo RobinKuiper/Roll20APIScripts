@@ -361,7 +361,7 @@ var CombatTracker = CombatTracker || (function() {
         }
 
         changeMarker(token || false);
-        if(state[state_name].config.announce_turn){
+        if(state[state_name].config.announce_turn && token.get('layer') === 'objects'){
             announceTurn(token || turn.custom)
         }
 
@@ -443,20 +443,20 @@ var CombatTracker = CombatTracker || (function() {
 
         // CONDITIONS
         let conditionsSTR = '';
-        if(!state[state_name].conditions[strip(token.get('name'))] || !state[state_name].conditions[strip(token.get('name'))].length) return;
-
-        state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
-            if(!condition.duration){
-                conditionsSTR += '<b>'+condition.name+'</b><br>';
-            }else if(condition.duration <= 0){
-                conditionsSTR += '<b>'+condition.name+'</b> removed.<br>';
-                removeCondition(token, condition.name);
-            }else{
-                conditionsSTR += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
-                state[state_name].conditions[strip(token.get('name'))][i].duration--;
-            }
-        });
-        // /CONDITIONS
+        if(state[state_name].conditions[strip(token.get('name'))] && state[state_name].conditions[strip(token.get('name'))].length){
+            state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+                if(!condition.duration){
+                    conditionsSTR += '<b>'+condition.name+'</b><br>';
+                }else if(condition.duration <= 0){
+                    conditionsSTR += '<b>'+condition.name+'</b> removed.<br>';
+                    removeCondition(token, condition.name);
+                }else{
+                    conditionsSTR += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
+                    state[state_name].conditions[strip(token.get('name'))][i].duration--;
+                }
+            });
+            // /CONDITIONS
+        }
 
         let contents = '\
         <div style="'+styles.overflow+styles.float.left+'"> \
