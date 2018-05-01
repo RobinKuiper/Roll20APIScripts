@@ -697,6 +697,7 @@ var StatusInfo = StatusInfo || (function() {
         ObserveTokenChange: observeTokenChange,
         RegisterEventHandlers: registerEventHandlers,
         GetConditions: getConditions,
+        getConditionByName: getConditionByName,
         Conditions : handleConditions
     };
 })();

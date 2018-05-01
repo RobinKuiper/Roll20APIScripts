@@ -162,6 +162,12 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     addCondition = (token, condition) => {
+        if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
+            let duration = condition.duration;
+            condition = StatusInfo.getConditionByName(condition.name) || condition;
+            condition.duration = duration;
+        }
+
         if(state[state_name].conditions[strip(token.get('name'))]){
             let hasCondition = false;
             state[state_name].conditions[strip(token.get('name'))].forEach(c => {
@@ -177,33 +183,38 @@ var CombatTracker = CombatTracker || (function() {
             state[state_name].conditions[strip(token.get('name'))] = [condition];
         }
 
-        if('undefined' !== typeof StatusInfo && StatusInfo.GetConditions){
+        if(condition.icon) token.set('status_'+condition.icon, true);
+        else makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
+
+        /*if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
             //StatusInfo.Conditions([condition.name], [token], 'add', false);
-            let c = StatusInfo.GetConditions()[condition.name.toLowerCase()];
+            let c = StatusInfo.getConditionByName(condition.name);
             if(c){
                 token.set('status_'+c.icon) = true;
             }
         }else{
             makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
-        }
+        }*/
     },
 
     removeCondition = (token, condition_name, auto=false) => {
         if(!state[state_name].conditions[strip(token.get('name'))]) return;
+
+        let si_condition = false;
+        if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
+            si_condition = StatusInfo.getConditionByName(condition_name) || false;
+        }
 
         state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
             if(condition.name.toLowerCase() !== condition_name.toLowerCase()) return;
 
             state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
 
-            if('undefined' !== typeof StatusInfo && StatusInfo.GetConditions){
+            if(si_condition){
                 //StatusInfo.Conditions([condition_name], [token], 'remove', false);
-                let c = StatusInfo.GetConditions()[condition.name.toLowerCase()];
-                if(c){
-                    token.set('status_'+c.icon) = false;
-                }
+                token.set('status_'+condition.icon, false);
             }else if(!auto){
-                makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));
+                makeAndSendMenu('Condition ' + condition.name + ' removed from ' + token.get('name'));
             }
         });
     },
