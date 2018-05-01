@@ -317,7 +317,7 @@ var CombatTracker = CombatTracker || (function() {
                 //whisper = (token.get('layer') === 'gmlayer') ? '/w gm ' : '',
                 bonus = getAttrByName(token.get('represents'), state[state_name].config.initiative_attribute_name, 'current') || 0;
                 
-                addToTurnorder({ id: token.get('id'), pr: randomBetween(1,20)+bonus, custom: '', pageid: token.get('pageid') });
+                addToTurnorder({ id: token.get('id'), pr: randomBetween(1,20)+Math.floor(bonus), custom: '', pageid: token.get('pageid') });
         });
 
         if(sort){
