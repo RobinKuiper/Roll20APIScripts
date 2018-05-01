@@ -13,10 +13,10 @@
 /* TODO
  *
  * Styling
- * Remove conditions on statusmarker remove
- * Add conditions without duration
  * More chat message options
  * Show menu with B shows always
+ * Add icon if not StatusInfo (?)    (IF YES, remove conditions on statusmarker remove)
+ * Edit Conditions
 */
 
 var CombatTracker = CombatTracker || (function() {
@@ -191,10 +191,11 @@ var CombatTracker = CombatTracker || (function() {
             if(condition.name.toLowerCase() !== condition_name.toLowerCase()) return;
 
             state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
-            makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));
 
             if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
                 StatusInfo.Conditions([condition_name], [token], 'remove', false);
+            }else{
+                makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));
             }
         });
     },
@@ -226,6 +227,55 @@ var CombatTracker = CombatTracker || (function() {
         if(getCurrentTurn().id === obj.get('id')){
             changeMarker(obj);
         }
+
+        if('undefined' !== typeof StatusInfo && StatusInfo.GetConditions){
+
+            prev.statusmarkers = (typeof prev.get === 'function') ? prev.get('statusmarkers') : prev.statusmarkers;
+
+            if(obj.get('statusmarkers') !== prev.statusmarkers){
+                let nS = obj.get('statusmarkers').split(','),
+                    oS = prev.statusmarkers.split(',');
+
+                // Marker added?
+                array_diff(oS, nS).forEach(icon => {
+                    getObjects(StatusInfo.GetConditions(), 'icon', icon).forEach(condition => {
+                        addCondition(obj, { name: condition.name });
+                    });
+                })
+
+                // Marker Removed?
+                array_diff(nS, oS).forEach(icon => {
+                    getObjects(StatusInfo.GetConditions(), 'icon', icon).forEach(condition => {
+                        removeCondition(obj, condition.name);
+                    });
+                })
+            }
+        }
+    },
+
+    array_diff = (a, b) => {
+        return b.filter(function(i) {return a.indexOf(i) < 0;});
+    },
+
+    //return an array of objects according to key, value, or key and value matching
+    getObjects = (obj, key, val) => {
+        var objects = [];
+        for (var i in obj) {
+            if (!obj.hasOwnProperty(i)) continue;
+            if (typeof obj[i] == 'object') {
+                objects = objects.concat(getObjects(obj[i], key, val));    
+            } else 
+            //if key matches and value matches or if key matches and value is not passed (eliminating the case where key matches but passed value does not)
+            if (i == key && obj[i] == val || i == key && val == '') { //
+                objects.push(obj);
+            } else if (obj[i] == val && key == ''){
+                //only add if the object is not already in the array
+                if (objects.lastIndexOf(obj) == -1){
+                    objects.push(obj);
+                }
+            }
+        }
+        return objects;
     },
 
     startCombat = (selected) => {
@@ -312,7 +362,9 @@ var CombatTracker = CombatTracker || (function() {
 
         contents = '<h4>Conditions:</h4>';
         state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
-            if(condition.duration <= 0){
+            if(!condition.duration){
+                contents += '<b>'+condition.name+'</b><br>';
+            }else if(condition.duration <= 0){
                 contents += '<b>'+condition.name+'</b> removed.<br>';
                 removeCondition(token, condition.name);
             }else{
@@ -645,11 +697,17 @@ var CombatTracker = CombatTracker || (function() {
         on('change:graphic', handleGraphicChange);
         on('change:campaign:initiativepage', handeIniativePageChange);
 
-        /*if('undefined' !== typeof StatusInfo && StatusInfo.ObserveTokenChange){
+        if('undefined' !== typeof StatusInfo && StatusInfo.ObserveTokenChange){
             StatusInfo.ObserveTokenChange(function(obj,prev){
-                handleStatusmarkerChange(obj,prev);
+                handleGraphicChange(obj,prev);
             });
-        }*/
+        }
+
+        if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
+            TokenMod.ObserveTokenChange(function(obj,prev){
+                handleGraphicChange(obj,prev);
+            });
+        }
     },
 
     setDefaults = (reset) => {

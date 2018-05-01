@@ -223,9 +223,12 @@ var StatusInfo = StatusInfo || (function() {
             condition_key = condition_key.toLowerCase();
 
             tokens.forEach(token => {
-                let prev = token;
+                let prevSM = token.get('statusmarkers');
                 let add = (type === 'add') ? true : (type === 'toggle') ? !token.get('status_'+getConditionByName(condition_key).icon) : false;
                 token.set('status_'+getConditionByName(condition_key).icon, add);
+
+                let prev = token;
+                prev.attributes.statusmarkers = prevSM;
 
                 notifyObservers('tokenChange', token, prev);
 
