@@ -1,5 +1,5 @@
 /*
- * Version 0.1.7
+ * Version 0.1.8
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -69,7 +69,6 @@ var Concentration = Concentration || (function() {
 
             if(target === 'character'){
                 target = createWhisperName(character_name);
-                chat_text = "Make a Concentration Check - <b>DC " + DC + "</b>.";
             }else if(target === 'everyone'){
                 target = ''
             }

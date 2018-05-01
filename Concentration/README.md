@@ -27,6 +27,9 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 ---
 
 #### Changelog:
+**01-05-2018 - 0.1.8**
+* Bugfix.
+
 **28-04-2018 - 0.1.7**
 * Remove statusmarker from all objects when removed.
 
