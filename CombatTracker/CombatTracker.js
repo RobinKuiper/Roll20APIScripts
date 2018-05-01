@@ -24,7 +24,10 @@ var CombatTracker = CombatTracker || (function() {
 
     let round = 0,
         timerObj,
-        intervalHandle;
+        intervalHandle,
+        observers = {
+            tokenChange: []
+        };
 
     // Styling for the chat responses.
     const styles = {
@@ -173,28 +176,20 @@ var CombatTracker = CombatTracker || (function() {
             state[state_name].conditions[strip(token.get('name'))].forEach(c => {
                 if(c.name.toLowerCase() === condition.name.toLowerCase()) hasCondition = true;
             })
-            if(!hasCondition){
-                state[state_name].conditions[strip(token.get('name'))].push(condition);
-            }else{
-                makeAndSendMenu(token.get('name') + ' already has the condition ' + condition.name);
-                return;
-            }
+            if(hasCondition) return;
+
+            state[state_name].conditions[strip(token.get('name'))].push(condition);
         }else{
             state[state_name].conditions[strip(token.get('name'))] = [condition];
         }
 
-        if(condition.icon) token.set('status_'+condition.icon, true);
-        else makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
-
-        /*if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
-            //StatusInfo.Conditions([condition.name], [token], 'add', false);
-            let c = StatusInfo.getConditionByName(condition.name);
-            if(c){
-                token.set('status_'+c.icon) = true;
-            }
-        }else{
-            makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
-        }*/
+        if(condition.icon){
+            let prevSM = token.get('statusmarkers');
+            token.set('status_'+condition.icon, true);
+            let prev = token;
+            prev.attributes.statusmarkers = prevSM;
+            notifyObservers('tokenChange', token, prev);
+        }else makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
     },
 
     removeCondition = (token, condition_name, auto=false) => {
@@ -315,9 +310,11 @@ var CombatTracker = CombatTracker || (function() {
         selected.forEach(s => {
             let token = getObj('graphic', s._id),
                 //whisper = (token.get('layer') === 'gmlayer') ? '/w gm ' : '',
-                bonus = getAttrByName(token.get('represents'), state[state_name].config.initiative_attribute_name, 'current') || 0;
+                bonus = parseFloat(getAttrByName(token.get('represents'), state[state_name].config.initiative_attribute_name, 'current')) || 0;
+                let pr = randomBetween(1,20)+bonus
+                pr = (Math.round(pr) !== pr) ? pr.toFixed(2) : pr;
                 
-                addToTurnorder({ id: token.get('id'), pr: randomBetween(1,20)+Math.floor(bonus), custom: '', pageid: token.get('pageid') });
+                addToTurnorder({ id: token.get('id'), pr, custom: '', pageid: token.get('pageid') });
         });
 
         if(sort){
@@ -449,9 +446,6 @@ var CombatTracker = CombatTracker || (function() {
             name = token;
         }
 
-        name = '<span style="font-size: 16pt; margin-left: 10px; '+styles.float.left+'">'+handleLongString(name)+'\'s Turn</span>';
-        let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px" style="'+styles.float.left+'" />' : '';
-
         // CONDITIONS
         let conditionsSTR = '';
         if(state[state_name].conditions[strip(token.get('name'))] && state[state_name].conditions[strip(token.get('name'))].length){
@@ -469,13 +463,17 @@ var CombatTracker = CombatTracker || (function() {
             // /CONDITIONS
         }
 
+        let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px" style="'+styles.float.left+'" />' : '';
+
         let contents = '\
-        <div style="'+styles.overflow+styles.float.left+'"> \
-            <div style="line-height: 50px;">'+image+' \
-            '+name+'</div> \
-            '+conditionsSTR+' \
+        <div style="line-height: 50px; overflow: hidden; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid lightgray;"> \
+          '+image+' \
+          <span style="font-size: 16pt ; margin-left: 10px ; float: left">'+handleLongString(name)+'\'s Turn</span> \
         </div> \
-        ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right);
+        <div style="overflow: hidden"> \
+          <div style="float: left">'+conditionsSTR+'</div> \
+          ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right) +' \
+        </div>'
         makeAndSendMenu(contents);
     },
 
@@ -728,6 +726,18 @@ var CombatTracker = CombatTracker || (function() {
         }
     },
 
+    observeTokenChange = function(handler){
+        if(handler && _.isFunction(handler)){
+            observers.tokenChange.push(handler);
+        }
+    },
+
+    notifyObservers = function(event,obj,prev){
+        _.each(observers[event],function(handler){
+            handler(obj,prev);
+        });
+    },
+
     registerEventHandlers = () => {
         on('chat:message', handleInput);
         on('change:campaign:turnorder', handleTurnorderChange);
@@ -833,7 +843,8 @@ var CombatTracker = CombatTracker || (function() {
 
     return {
         CheckInstall: checkInstall,
-        RegisterEventHandlers: registerEventHandlers
+        RegisterEventHandlers: registerEventHandlers,
+        ObserveTokenChange: observeTokenChange,
     }
 })();
 

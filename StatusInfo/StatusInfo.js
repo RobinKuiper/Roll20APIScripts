@@ -267,7 +267,7 @@ var StatusInfo = StatusInfo || (function() {
     }()),
 
     handleStatusmarkerChange = (obj, prev) => {
-        if(handled.includes(obj.get('represents')) || !prev || !obj){ return; }
+        if(handled.includes(obj.get('represents')) || !prev || !obj) return
 
         prev.statusmarkers = (typeof prev.get === 'function') ? prev.get('statusmarkers') : prev.statusmarkers;
 
@@ -284,9 +284,12 @@ var StatusInfo = StatusInfo || (function() {
                     if(marker !== "" && !prevstatusmarkers.includes(marker)){
                         let condition;
                         if(condition = getConditionByMarker(marker)){
+                            if(handled.includes(condition.name.toLowerCase())) return;
+                            
                             sendConditionToChat(condition);
 
                             let length = handled.push(obj.get('represents'));
+                            handled.push(condition.name.toLowerCase());
                             setTimeout(() => {
                                 handled.splice(length-1, 1);
                             }, 1000);
@@ -555,19 +558,25 @@ var StatusInfo = StatusInfo || (function() {
 
         // Handle condition descriptions when tokenmod changes the statusmarkers on a token.
         if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
-            TokenMod.ObserveTokenChange(function(obj,prev){
+            TokenMod.ObserveTokenChange((obj,prev) => {
                 handleStatusmarkerChange(obj,prev);
             });
         }
 
         if('undefined' !== typeof DeathTracker && DeathTracker.ObserveTokenChange){
-            DeathTracker.ObserveTokenChange(function(obj,prev){
+            DeathTracker.ObserveTokenChange((obj,prev) => {
                 handleStatusmarkerChange(obj,prev);
             });
         }
 
         if('undefined' !== typeof InspirationTracker && InspirationTracker.ObserveTokenChange){
-            InspirationTracker.ObserveTokenChange(function(obj,prev){
+            InspirationTracker.ObserveTokenChange((obj,prev) => {
+                handleStatusmarkerChange(obj,prev);
+            });
+        }
+
+        if('undefined' !== typeof CombatTracker && CombatTracker.ObserveTokenChange){
+            CombatTracker.ObserveTokenChange((obj,prev) => {
                 handleStatusmarkerChange(obj,prev);
             });
         }
