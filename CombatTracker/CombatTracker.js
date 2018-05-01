@@ -177,8 +177,12 @@ var CombatTracker = CombatTracker || (function() {
             state[state_name].conditions[strip(token.get('name'))] = [condition];
         }
 
-        if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
-            StatusInfo.Conditions([condition.name], [token], 'add', false);
+        if('undefined' !== typeof StatusInfo && StatusInfo.GetConditions){
+            //StatusInfo.Conditions([condition.name], [token], 'add', false);
+            let c = StatusInfo.GetConditions()[condition.name.toLowerCase()];
+            if(c){
+                token.set('status_'+c.icon) = true;
+            }
         }else{
             makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
         }
@@ -192,8 +196,12 @@ var CombatTracker = CombatTracker || (function() {
 
             state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
 
-            if('undefined' !== typeof StatusInfo && StatusInfo.Conditions){
-                StatusInfo.Conditions([condition_name], [token], 'remove', false);
+            if('undefined' !== typeof StatusInfo && StatusInfo.GetConditions){
+                //StatusInfo.Conditions([condition_name], [token], 'remove', false);
+                let c = StatusInfo.GetConditions()[condition.name.toLowerCase()];
+                if(c){
+                    token.set('status_'+c.icon) = false;
+                }
             }else{
                 makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));
             }
@@ -357,7 +365,7 @@ var CombatTracker = CombatTracker || (function() {
             announceTurn(token || turn.custom)
         }
 
-        let contents = '';
+        /*let contents = '';
         if(!state[state_name].conditions[strip(token.get('name'))] || !state[state_name].conditions[strip(token.get('name'))].length) return;
 
         contents = '<h4>Conditions:</h4>';
@@ -373,7 +381,7 @@ var CombatTracker = CombatTracker || (function() {
             }
         });
 
-        makeAndSendMenu(contents);
+        makeAndSendMenu(contents);*/
     },
 
     startTimer = (token) => {
@@ -433,10 +441,28 @@ var CombatTracker = CombatTracker || (function() {
         name = '<span style="font-size: 16pt; margin-left: 10px; '+styles.float.left+'">'+handleLongString(name)+'\'s Turn</span>';
         let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px" style="'+styles.float.left+'" />' : '';
 
+        // CONDITIONS
+        let conditionsSTR = '';
+        if(!state[state_name].conditions[strip(token.get('name'))] || !state[state_name].conditions[strip(token.get('name'))].length) return;
+
+        state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+            if(!condition.duration){
+                conditionsSTR += '<b>'+condition.name+'</b><br>';
+            }else if(condition.duration <= 0){
+                conditionsSTR += '<b>'+condition.name+'</b> removed.<br>';
+                removeCondition(token, condition.name);
+            }else{
+                conditionsSTR += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
+                state[state_name].conditions[strip(token.get('name'))][i].duration--;
+            }
+        });
+        // /CONDITIONS
+
         let contents = '\
-        <div style="'+styles.overflow+' line-height: 50px;"> \
-            '+image+' \
-            '+name+' \
+        <div style="'+styles.overflow+styles.float.left+'"> \
+            <div style="line-height: 50px;">'+image+' \
+            '+name+'</div> \
+            '+conditionsSTR+' \
         </div> \
         ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right);
         makeAndSendMenu(contents);
