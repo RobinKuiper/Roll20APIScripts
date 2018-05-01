@@ -13,7 +13,9 @@
 /* TODO
  *
  * Styling
- * Conditions?
+ * Remove conditions on statusmarker remove
+ * Add conditions without duration
+ * More chat message options
  * Show menu with B shows always
 */
 
@@ -68,6 +70,8 @@ var CombatTracker = CombatTracker || (function() {
                     }
             }
         }
+
+        // Below commands are only for GM's
         if(!playerIsGM(msg.playerid)) return;
 
         switch(extracommand){
@@ -128,7 +132,7 @@ var CombatTracker = CombatTracker || (function() {
                     duration = args.shift(),
                     condition = { name, duration };
 
-                if(!msg.selected || !msg.selected.length || !name || !duration) return;
+                if(!msg.selected || !msg.selected.length || !name) return;
 
                 msg.selected.forEach(s => {
                     let token = getObj(s._type, s._id);
@@ -184,7 +188,7 @@ var CombatTracker = CombatTracker || (function() {
         if(!state[state_name].conditions[strip(token.get('name'))]) return;
 
         state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
-            if(condition.name !== condition_name) return;
+            if(condition.name.toLowerCase() !== condition_name.toLowerCase()) return;
 
             state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
             makeAndSendMenu('Condition ' + condition_name + ' removed from ' + token.get('name'));

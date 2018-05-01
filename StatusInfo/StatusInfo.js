@@ -222,7 +222,6 @@ var StatusInfo = StatusInfo || (function() {
 
             condition_key = condition_key.toLowerCase();
 
-            let sended = false;
             tokens.forEach(token => {
                 let prev = token;
                 let add = (type === 'add') ? true : (type === 'toggle') ? !token.get('status_'+getConditionByName(condition_key).icon) : false;
@@ -230,13 +229,12 @@ var StatusInfo = StatusInfo || (function() {
 
                 notifyObservers('tokenChange', token, prev);
 
-                if(type === 'toggle' && add && !sended){
+                if(add && !handled.includes(condition_key)){
                     sendConditionToChat(getConditionByName(condition_key));
-                    sended = true;
+                    let length = handled.push(condition_key)
+                    setTimeout(() =>{ handled.splice(length-1, 1) }, 1000);
                 }
             });
-
-            if(type === 'add') sendConditionToChat(getConditionByName(condition_key));
         });
     },
 
