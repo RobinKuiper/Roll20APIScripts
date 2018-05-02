@@ -388,11 +388,12 @@ var CombatTracker = CombatTracker || (function() {
 
         changeMarker(token || false);
 
-        if(state[state_name].config.announcements.announce_turn && token.get('layer') === 'objects'){
-            announceTurn(token || turn.custom)
-        }else if(state[state_name].config.announcements.announce_conditions && token.get('layer') === 'objects'){
-            let conditions = getConditionString(token.get(name));
-            if(conditions && conditions !== '') makeAndSendMenu(conditions, 'Conditions');
+        if(state[state_name].config.announcements.announce_turn){
+            announceTurn(token || turn.custom, (token.get('layer') === 'objects') ? '' : 'gm')
+        }else if(state[state_name].config.announcements.announce_conditions){
+            let name = token.get('name') || turn.custom;
+            let conditions = getConditionString(name);
+            if(conditions && conditions !== '') makeAndSendMenu(conditions, 'Conditions - ' + name, (token.get('layer') === 'objects') ? '' : 'gm');
         }
     },
 
@@ -441,7 +442,7 @@ var CombatTracker = CombatTracker || (function() {
         if(timerObj) timerObj.remove();
     },
 
-    announceTurn = (token) => {
+    announceTurn = (token, target) => {
         let name, imgurl;
         if(typeof token === 'object'){
             name = token.get('name');
@@ -463,7 +464,7 @@ var CombatTracker = CombatTracker || (function() {
           <div style="float: left">'+conditions+'</div> \
           ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right) +' \
         </div>'
-        makeAndSendMenu(contents);
+        makeAndSendMenu(contents, '', target);
     },
 
     getConditionString = (name) => {
@@ -644,7 +645,7 @@ var CombatTracker = CombatTracker || (function() {
     sendConfigAnnounceMenu = () =>{
         let announceTurnButton = makeButton(state[state_name].config.announcements.announce_turn, '!' + state[state_name].config.command + ' config announcements announce_turn|'+!state[state_name].config.announcements.announce_turn, styles.button + styles.float.right);
         let announceRoundButton = makeButton(state[state_name].config.announcements.announce_round, '!' + state[state_name].config.command + ' config announcements announce_round|'+!state[state_name].config.announcements.announce_round, styles.button + styles.float.right);
-        let announceConditionsButton = makeButton(state[state_name].config.announcements.announce_conditions, '!' + state[state_name].config.command + ' config announcements announce_round|'+!state[state_name].config.announcements.announce_conditions, styles.button + styles.float.right);
+        let announceConditionsButton = makeButton(state[state_name].config.announcements.announce_conditions, '!' + state[state_name].config.command + ' config announcements announce_conditions|'+!state[state_name].config.announcements.announce_conditions, styles.button + styles.float.right);
     
         let listItems = [
             '<span style="'+styles.float.left+'">Announce Turn:</span> ' + announceTurnButton,
