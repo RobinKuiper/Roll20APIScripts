@@ -194,7 +194,6 @@
                         const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
                         let proficiencies = getObjects(character, 'type', 'proficiency');
                         proficiencies.forEach((prof) => {
-                            pre_log(prof)
                             var row = generateRowID();
 
                             let attributes = {}
@@ -326,7 +325,6 @@
                     getObjects(character, 'type', 'expertise').forEach(expertise => {
                         let attributes = {}
                         let type = expertise.subType.replace(/-/g, '_')
-                        pre_log(type);
                         if(skills.includes(type)){
                             attributes[type + '_type'] = "2";
                         }
@@ -540,9 +538,7 @@
         if(damage.length !== 0 && (spell.definition.attackType !== "" || spell.definition.saveDcStat !== null)){
             damage = damage[0];
             attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.attackType === '') ? 'None' : spell.definition.attackType;
-            pre_log(spell.definition.saveDcStat)
             attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcStat === null) ? 'NONE' : ucFirst(_ABILITY[spell.definition.saveDcStat]);
-            pre_log(spell.definition.name + ' :: ' + attributes["repeating_spell-"+level+"_"+row+"_spellsave"])
             attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = (damage.die.fixedValue !== null) ? damage.die.fixedValue : damage.die.diceString;
             attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = damage.friendlySubtypeName;
 
@@ -738,7 +734,6 @@
         var i = 0;
         while (i < attrObjs.length)
         {
-            pre_log(attrObjs[i])
             // If this is a feat taken multiple times, strip the number of times it was taken from the name
             /*var attrName = attrObjs[i].get("current").toString();
             if (regexIndexOf(attrName, / x[0-9]+$/) !== -1)
