@@ -22,7 +22,7 @@
 var CombatTracker = CombatTracker || (function() {
     'use strict';
 
-    let round = 0,
+    let round = 1,
         timerObj,
         intervalHandle,
         observers = {
@@ -331,7 +331,7 @@ var CombatTracker = CombatTracker || (function() {
             turnorder: ''
         });
         state[state_name].turnorder = {};
-        round = 0;
+        round = 1;
     },
 
     removeMarker = () => {
@@ -341,7 +341,7 @@ var CombatTracker = CombatTracker || (function() {
     resetMarker = () => {
         let marker = getOrCreateMarker();
         marker.set({
-            name: 'Round 0',
+            name: 'Round ' + round,
             imgsrc: state[state_name].config.marker_img,
             pageid: Campaign().get('playerpageid'),
             layer: 'gmlayer',
