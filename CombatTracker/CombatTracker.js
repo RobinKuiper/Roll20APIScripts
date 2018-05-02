@@ -107,6 +107,16 @@ var CombatTracker = CombatTracker || (function() {
                     }
 
                     sendConfigTimerMenu();
+                }else if (args[0] === 'announcements'){
+                    if(args[1]){
+                        let setting = args[1].split('|');
+                        let key = setting.shift();
+                        let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+
+                        state[state_name].config.announcements[key] = value;
+                    }
+
+                    sendConfigAnnounceMenu();
                 }else{
                     if(args[0]){
                         let setting = args.shift().split('|');
@@ -372,32 +382,18 @@ var CombatTracker = CombatTracker || (function() {
         let token = getObj('graphic', turn.id);
         toFront(token);
 
-        if(state[state_name].config.use_timer){
+        if(state[state_name].config.timer.use_timer){
             startTimer(token);
         }
 
         changeMarker(token || false);
-        if(state[state_name].config.announce_turn && token.get('layer') === 'objects'){
+
+        if(state[state_name].config.announcements.announce_turn && token.get('layer') === 'objects'){
             announceTurn(token || turn.custom)
-        }// Else announce conditions?
-
-        /*let contents = '';
-        if(!state[state_name].conditions[strip(token.get('name'))] || !state[state_name].conditions[strip(token.get('name'))].length) return;
-
-        contents = '<h4>Conditions:</h4>';
-        state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
-            if(!condition.duration){
-                contents += '<b>'+condition.name+'</b><br>';
-            }else if(condition.duration <= 0){
-                contents += '<b>'+condition.name+'</b> removed.<br>';
-                removeCondition(token, condition.name);
-            }else{
-                contents += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
-                state[state_name].conditions[strip(token.get('name'))][i].duration--;
-            }
-        });
-
-        makeAndSendMenu(contents);*/
+        }else if(state[state_name].config.announcements.announce_conditions && token.get('layer') === 'objects'){
+            let conditions = getConditionString(token.get(name));
+            if(conditions && conditions !== '') makeAndSendMenu(conditions, 'Conditions');
+        }
     },
 
     startTimer = (token) => {
@@ -454,10 +450,27 @@ var CombatTracker = CombatTracker || (function() {
             name = token;
         }
 
-        // CONDITIONS
+        let conditions = getConditionString(name);
+
+        let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px" style="'+styles.float.left+'" />' : '';
+
+        let contents = '\
+        <div style="line-height: 50px; overflow: hidden; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #fcfcfc;"> \
+          '+image+' \
+          <span style="font-size: 16pt ; margin-left: 10px ; float: left">'+handleLongString(name)+'\'s Turn</span> \
+        </div> \
+        <div style="overflow: hidden"> \
+          <div style="float: left">'+conditions+'</div> \
+          ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right) +' \
+        </div>'
+        makeAndSendMenu(contents);
+    },
+
+    getConditionString = (name) => {
+        name = strip(name);
         let conditionsSTR = '';
-        if(state[state_name].conditions[strip(token.get('name'))] && state[state_name].conditions[strip(token.get('name'))].length){
-            state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+        if(state[state_name].conditions[name] && state[state_name].conditions[name].length){
+            state[state_name].conditions[name].forEach((condition, i) => {
                 if(typeof condition.duration === 'undefined' || condition.duration === false){
                     conditionsSTR += '<b>'+condition.name+'</b><br>';
                 }else if(condition.duration <= 0){
@@ -465,24 +478,11 @@ var CombatTracker = CombatTracker || (function() {
                     removeCondition(token, condition.name, true);
                 }else{
                     conditionsSTR += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
-                    state[state_name].conditions[strip(token.get('name'))][i].duration--;
+                    state[state_name].conditions[name][i].duration--;
                 }
             });
-            // /CONDITIONS
         }
-
-        let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px" style="'+styles.float.left+'" />' : '';
-
-        let contents = '\
-        <div style="line-height: 50px; overflow: hidden; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid lightgray;"> \
-          '+image+' \
-          <span style="font-size: 16pt ; margin-left: 10px ; float: left">'+handleLongString(name)+'\'s Turn</span> \
-        </div> \
-        <div style="overflow: hidden"> \
-          <div style="float: left">'+conditionsSTR+'</div> \
-          ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right) +' \
-        </div>'
-        makeAndSendMenu(contents);
+        return conditionsSTR;
     },
 
     handleLongString = (str, max=8) => {
@@ -504,7 +504,7 @@ var CombatTracker = CombatTracker || (function() {
         round++;
         marker.set({ name: 'Round ' + round});
 
-        if(state[state_name].config.announce_round){
+        if(state[state_name].config.announcements.announce_round){
             let text = '<span style="font-size: 16pt; font-weight: bold;">'+marker.get('name')+'</span>';
             makeAndSendMenu(text);
         }
@@ -621,8 +621,6 @@ var CombatTracker = CombatTracker || (function() {
         let markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right);
         let throwIniButton = makeButton(state[state_name].config.throw_initiative, '!' + state[state_name].config.command + ' config throw_initiative|'+!state[state_name].config.throw_initiative, styles.button + styles.float.right);
         let iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|'+state[state_name].config.initiative_attribute_name, styles.button + styles.float.right);
-        let announceTurnButton = makeButton(state[state_name].config.announce_turn, '!' + state[state_name].config.command + ' config announce_turn|'+!state[state_name].config.announce_turn, styles.button + styles.float.right);
-        let announceRoundButton = makeButton(state[state_name].config.announce_round, '!' + state[state_name].config.command + ' config announce_round|'+!state[state_name].config.announce_round, styles.button + styles.float.right);
         let closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right);
 
         let listItems = [
@@ -631,21 +629,39 @@ var CombatTracker = CombatTracker || (function() {
             '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
             '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
             '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
-            '<span style="'+styles.float.left+'">Announce Turn:</span> ' + announceTurnButton,
-            '<span style="'+styles.float.left+'">Announce Round:</span> ' + announceRoundButton,
         ];
 
         let configTimerButton = makeButton('Timer Config', '!'+state[state_name].config.command + ' config timer', styles.button);
+        let configAnnouncementsButton = makeButton('Announcement Config', '!'+state[state_name].config.command + ' config announcements', styles.button);
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
         message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+configTimerButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+configTimerButton+configAnnouncementsButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
+    sendConfigAnnounceMenu = () =>{
+        let announceTurnButton = makeButton(state[state_name].config.announcements.announce_turn, '!' + state[state_name].config.command + ' config announcements announce_turn|'+!state[state_name].config.announcements.announce_turn, styles.button + styles.float.right);
+        let announceRoundButton = makeButton(state[state_name].config.announcements.announce_round, '!' + state[state_name].config.command + ' config announcements announce_round|'+!state[state_name].config.announcements.announce_round, styles.button + styles.float.right);
+        let announceConditionsButton = makeButton(state[state_name].config.announcements.announce_conditions, '!' + state[state_name].config.command + ' config announcements announce_round|'+!state[state_name].config.announcements.announce_conditions, styles.button + styles.float.right);
+    
+        let listItems = [
+            '<span style="'+styles.float.left+'">Announce Turn:</span> ' + announceTurnButton,
+            '<span style="'+styles.float.left+'">Announce Round:</span> ' + announceRoundButton,
+        ];
+    
+        if(!state[state_name].config.announcements.announce_turn){
+            listItems.push('<span style="'+styles.float.left+'">Announce Conditions:</span> ' + announceConditionsButton)
+        }
+
+        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
+        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+        makeAndSendMenu(contents, script_name + ' Announcements Config', 'gm');
+    },
+
     sendConfigTimerMenu = () => {
-        let turnTimerButton = makeButton(state[state_name].config.use_timer, '!' + state[state_name].config.command + ' config use_timer|'+!state[state_name].config.use_timer, styles.button + styles.float.right);
+        let turnTimerButton = makeButton(state[state_name].config.timer.use_timer, '!' + state[state_name].config.command + ' config timer use_timer|'+!state[state_name].config.timer.use_timer, styles.button + styles.float.right);
         let timeButton = makeButton(state[state_name].config.timer.time, '!' + state[state_name].config.command + ' config timer time|?{Time|'+state[state_name].config.timer.time+'}', styles.button + styles.float.right);
         let chatTimerButton = makeButton(state[state_name].config.timer.chat_timer, '!' + state[state_name].config.command + ' config timer chat_timer|'+!state[state_name].config.timer.chat_timer, styles.button + styles.float.right);
         let tokenTimerButton = makeButton(state[state_name].config.timer.token_timer, '!' + state[state_name].config.command + ' config timer token_timer|'+!state[state_name].config.timer.token_timer, styles.button + styles.float.right);
@@ -772,17 +788,20 @@ var CombatTracker = CombatTracker || (function() {
                 marker_img: 'https://s3.amazonaws.com/files.d20.io/images/52550079/U-3U950B3wk_KRtspSPyuw/thumb.png?1524507826',
                 throw_initiative: true,
                 initiative_attribute_name: 'initiative_bonus',
-                announce_turn: true,
-                announce_round: true,
-                use_timer: true,
                 close_stop: true,
                 timer: {
+                    use_timer: true,
                     time: 120,
                     chat_timer: true,
                     token_timer: true,
                     token_font: 'Candal',
                     token_font_size: 16,
                     token_font_color: 'rgb(255, 0, 0)'
+                },
+                announcements: {
+                    announce_conditions: false,
+                    announce_turn: true,
+                    announce_round: true,
                 }
             },
             conditions: {}
@@ -803,21 +822,15 @@ var CombatTracker = CombatTracker || (function() {
             if(!state[state_name].config.hasOwnProperty('initiative_attribute_name')){
                 state[state_name].config.initiative_attribute_name = defaults.config.initiative_attribute_name;
             }
-            if(!state[state_name].config.hasOwnProperty('announce_turn')){
-                state[state_name].config.announce_turn = defaults.config.announce_turn;
-            }
-            if(!state[state_name].config.hasOwnProperty('announce_round')){
-                state[state_name].config.announce_round = defaults.config.announce_round;
-            }
-            if(!state[state_name].config.hasOwnProperty('use_timer')){
-                state[state_name].config.use_timer = defaults.config.use_timer;
-            }
             if(!state[state_name].config.hasOwnProperty('close_stop')){
                 state[state_name].config.close_stop = defaults.config.close_stop;
             }
             if(!state[state_name].config.hasOwnProperty('timer')){
                 state[state_name].config.timer = defaults.config.timer;
             }else{
+                if(!state[state_name].config.timer.hasOwnProperty('use_timer')){
+                    state[state_name].config.timer.use_timer = defaults.config.timer.use_timer;
+                }
                 if(!state[state_name].config.timer.hasOwnProperty('time')){
                     state[state_name].config.timer.time = defaults.config.timer.time;
                 }
@@ -835,6 +848,19 @@ var CombatTracker = CombatTracker || (function() {
                 }
                 if(!state[state_name].config.timer.hasOwnProperty('token_font_color')){
                     state[state_name].config.timer.token_font_color = defaults.config.timer.token_font_color;
+                }
+            }
+            if(!state[state_name].config.hasOwnProperty('announcements')){
+                state[state_name].config.announcements = defaults.config.announcements;
+            }else{
+                if(!state[state_name].config.announcements.hasOwnProperty('announce_turn')){
+                    state[state_name].config.announcements.announce_turn = defaults.config.announcements.announce_turn;
+                }
+                if(!state[state_name].config.announcements.hasOwnProperty('announce_round')){
+                    state[state_name].config.announcements.announce_round = defaults.config.announcements.announce_round;
+                }
+                if(!state[state_name].config.announcements.hasOwnProperty('announce_conditions')){
+                    state[state_name].config.announcements.announce_conditions = defaults.config.announcements.announce_conditions;
                 }
             }
         }
