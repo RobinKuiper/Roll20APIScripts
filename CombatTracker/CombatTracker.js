@@ -83,9 +83,17 @@ var CombatTracker = CombatTracker || (function() {
             break;
 
             case 'reset':
-                state[state_name] = {};
-                setDefaults(true);
-                sendConfigMenu();
+                switch(args.shift()){
+                    case 'conditions':
+                        state[state_name].conditions = {}
+                    break;
+
+                    default:
+                        state[state_name] = {};
+                        setDefaults(true);
+                        sendConfigMenu();
+                    break;
+                }
             break;
 
             case 'config':
