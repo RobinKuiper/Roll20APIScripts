@@ -30,8 +30,8 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **!ct start** - Starts the combat, if you have tokens selected it will try to roll initiative for them and add them to the tracker.
 * **!ct stop** - Stops the combat (closes the turntracker, removes the marker, clears the turnorder list, etc.).
 * **!ct next** - Goes to the next turn (a player can also use this if it is his turn).
-* **!ct add [condition name] [?duration]** - Adds a condition to the selected token(s).
-* **!ct remove [condition name] [?duration]** - Removes a condition from the selected token(s).
+* **!ct add [condition name] [?duration]** - Adds a condition to the selected token(s) (duration is optionally (how much rounds.)).
+* **!ct remove [condition name]** - Removes a condition from the selected token(s).
 * **!ct reset conditions** - Resets all conditions.
 
 ### Config
