@@ -545,20 +545,13 @@ var LazyExperience = LazyExperience || (function() {
         if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!', null, {noarchive:true}); }
     },
 
-    getPlayerById = (playerid) => {
-        return findObjs({
-            _type: 'player',
-            _id: playerid
-        }).shift()
-    },
-
     refreshPlayers = () => {
         let saved_players = Object.keys(state[state_name].players).map((playerid, i) => { return playerid });
 
         // Player added?
         array_diff(saved_players, getPlayers()).forEach((playerid) => {
-            let player = getPlayerById(playerid);
-            if(player){
+            let player;
+            if(player = getObj('player', playerid)){
                 state[state_name].players[playerid] = {
                     name: player.get('_displayname'),
                     id: playerid,
@@ -571,7 +564,7 @@ var LazyExperience = LazyExperience || (function() {
 
         // Player removed?
         array_diff(getPlayers(), saved_players).forEach((playerid) => {
-            delete state[state_name].players[player];
+            delete state[state_name].players[playerid];
         });
     },
 
