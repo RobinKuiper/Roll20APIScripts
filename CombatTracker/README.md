@@ -3,7 +3,7 @@
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
 * Roll20: https://app.roll20.net/users/1226016/robin
-* Roll20 Thread: 
+* Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 * Github: https://github.com/RobinKuiper/Roll20APIScripts
 * Reddit: https://www.reddit.com/user/robinkuiper/
 * Patreon: https://patreon.com/robinkuiper
@@ -61,7 +61,7 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **Announce Conditions** - If you don't announce the turn, you can choose to only announce conditions in chat.
 
 
-Roll20 Thread: 
+Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 
 ---
 
