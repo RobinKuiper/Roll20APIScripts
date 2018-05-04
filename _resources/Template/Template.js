@@ -33,6 +33,7 @@ var Template = Template || (function() {
 
     handleInput = (msg) => {
         if (msg.type != 'api') return;
+        if(!playerIsGM(msg.playerid)) return;
 
         // Split the message into command and argument(s)
         let args = msg.content.split(' ');
@@ -41,10 +42,6 @@ var Template = Template || (function() {
 
         if (command == state[state_name].config.command) {
             switch(extracommand){
-                case 'help':
-                    sendHelpMenu();
-                break;
-
                 case 'reset':
                     state[state_name] = {};
                     setDefaults(true);
@@ -64,7 +61,7 @@ var Template = Template || (function() {
                 break;
 
                 default:
-                    sendHelpMenu();
+                    
                 break;
             }
         }
@@ -85,22 +82,10 @@ var Template = Template || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    sendHelpMenu = (first) => {
-        let configButton = makeButton('Config', '!' + state[state_name].config.command + ' config', styles.button + styles.fullWidth)
-
-        let listItems = [
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' help</span> - Shows this menu.',
-            '<span style="'+styles.underline+'">!'+state[state_name].config.command+' config</span> - Shows the configuration menu.',
-        ]
-
-        let contents = '<b>Commands:</b>'+makeList(listItems, styles.reset + styles.list)+'<hr>'+configButton;
-        makeAndSendMenu(contents, script_name + ' Help', 'gm')
-    },
-
     makeAndSendMenu = (contents, title, whisper) => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
-        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+'">'+title+contents+'</div>');
+        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+'">'+title+contents+'</div>', null, {noarchive:true});
     },
 
     makeTitle = (title) => {
@@ -122,7 +107,7 @@ var Template = Template || (function() {
 
     pre_log = (message) => {
         log('---------------------------------------------------------------------------------------------');
-        if(message === 'line'){ return; }
+        if(!message){ return; }
         log(message);
         log('---------------------------------------------------------------------------------------------');
     },

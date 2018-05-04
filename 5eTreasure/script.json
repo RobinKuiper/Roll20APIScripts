@@ -1,0 +1,15 @@
+{
+    "name": "5eTreasure",
+    "script": "Treasure.js",
+    "version": "0.1.3",
+    "previousversions": [],
+    "description": "",
+    "authors": "Robin Kuiper",
+    "roll20userid": "1226016",
+    "useroptions": [],
+    "dependencies": {
+        "state.TREASURE": "read,write"
+    },
+    "modifies": {},
+    "conflicts": []
+}
