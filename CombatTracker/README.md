@@ -67,6 +67,10 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 
 #### Changelog
 
+**v0.1.10**
+* Fixed a bug were selecting tokens by dragging caused an error.
+* Some small fixes.
+
 **v0.1.9 - 02-05-2018**
 * Good connection with [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo)
 * Add/remove conditions.

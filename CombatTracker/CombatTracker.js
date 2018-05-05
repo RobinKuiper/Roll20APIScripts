@@ -190,7 +190,6 @@ var CombatTracker = CombatTracker || (function() {
             condition.duration = duration;
         }
 
-        log(parseInt(condition.duration));
         if(condition.duration === 0 || condition.duration === '') condition.duration = undefined;
 
         if(state[state_name].conditions[strip(token.get('name'))]){
@@ -243,8 +242,8 @@ var CombatTracker = CombatTracker || (function() {
     handleTurnorderChange = (obj, prev) => {
         if(obj.get('turnorder') === prev.turnorder) return;
 
-        let turnorder = JSON.parse(obj.get('turnorder'));
-        let prevTurnorder = JSON.parse(prev.turnorder);
+        let turnorder = (obj.get('turnorder') === "") ? [] : JSON.parse(obj.get('turnorder'));
+        let prevTurnorder = (prev.turnorder === "") ? [] : JSON.parse(prev.turnorder);
 
         if(obj.get('turnorder') === "[]"){
             resetMarker();
@@ -252,7 +251,7 @@ var CombatTracker = CombatTracker || (function() {
             return;
         }
 
-        if(turnorder[0].id !== prevTurnorder[0].id){
+        if(turnorder.length && prevTurnorder.length && turnorder[0].id !== prevTurnorder[0].id){
             doTurnorderChange();
         }
     },
@@ -330,6 +329,8 @@ var CombatTracker = CombatTracker || (function() {
     rollInitiative = (selected, sort) => {
         let character;
         selected.forEach(s => {
+            if(s._type !== 'graphic') return;
+
             let token = getObj('graphic', s._id),
                 //whisper = (token.get('layer') === 'gmlayer') ? '/w gm ' : '',
                 bonus = parseFloat(getAttrByName(token.get('represents'), state[state_name].config.initiative_attribute_name, 'current')) || 0;
