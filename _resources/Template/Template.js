@@ -148,14 +148,14 @@ var Template = Template || (function() {
     };
 
     return {
-        CheckInstall: checkInstall,
-        RegisterEventHandlers: registerEventHandlers
+        checkInstall,
+        registerEventHandlers
     }
 })();
 
 on('ready',function() {
     'use strict';
 
-    Template.CheckInstall();
-    Template.RegisterEventHandlers();
+    Template.checkInstall();
+    Template.registerEventHandlers();
 });
