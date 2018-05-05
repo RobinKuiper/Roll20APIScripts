@@ -1187,49 +1187,70 @@ var Treasure = Treasure || (function() {
     },
 
     sendTreasureToChat = (treasure) => {
-        let contents = '<h5>Currency</h5>';
+        let target, contents, currency_contents, gem_contents, art_contents, magic_contents;
+
+        currency_contents = '<h5>Currency</h5>';
         for(var currency in treasure.currency){
             if(treasure.currency[currency] > 0){
-                contents += '<b>'+currency+'</b>: ' + formatNumber(treasure.currency[currency]) + '<br>';
+                currency_contents += '<b>'+currency+'</b>: ' + formatNumber(treasure.currency[currency]) + '<br>';
             }
         }
 
         const grouped = groupBy(treasure.objects, object => object.type);
 
         if(grouped.get('gems') && grouped.get('gems').length){
-            contents += "<br><h5>Gems</h5>";
+            gem_contents = "<h5>Gems</h5>";
             grouped.get('gems').forEach(obj => {
-                contents += (obj.amount) ? obj.amount + 'x ' : '';
-                contents += obj.object + '<br>';
+                gem_contents += (obj.amount) ? obj.amount + 'x ' : '';
+                gem_contents += obj.object + '<br>';
             })
         }
 
         if(grouped.get('art') && grouped.get('art').length){
-            contents += "<br><h5>Art Objects</h5>";
+            art_contents = "<h5>Art Objects</h5>";
             grouped.get('art').forEach(obj => {
-                contents += (obj.amount) ? obj.amount + 'x ' : '';
-                contents += obj.object + '<br>';
+                art_contents += (obj.amount) ? obj.amount + 'x ' : '';
+                art_contents += obj.object + '<br>';
             })
         }
 
         if(grouped.get('magic') && grouped.get('magic').length){
-            contents += "<br><h5>Magic Items</h5>";
+            magic_contents = "<h5>Magic Items</h5>";
             grouped.get('magic').forEach(obj => {
-                contents += (obj.amount) ? obj.amount + 'x ' : '';
-                contents += obj.object + '<br>';
+                magic_contents += (obj.amount) ? obj.amount + 'x ' : '';
+                magic_contents += obj.object + '<br>';
             })
         }
 
-        makeAndSendMenu(contents, 'Treasure', (state[state_name].config.onlyGM) ? 'gm' : '');
+        contents = currency_contents;
+        if(gem_contents) contents += '<br>'+gem_contents;
+        if(art_contents) contents += '<br>'+art_contents;
+        
+        if(state[state_name].config.chat_normal_treasure === state[state_name].config.chat_magic_items){
+            if(magic_contents) contents += '<br>'+magic_contents;
+            target = (state[state_name].config.chat_normal_treasure === 'gm') ? 'gm' : '';
+            makeAndSendMenu(contents, 'Treasure', target);
+        }else{
+            target = (state[state_name].config.chat_normal_treasure === 'gm') ? 'gm' : '';
+            makeAndSendMenu(contents, 'Treasure', target);
+
+            target = (state[state_name].config.chat_magic_items === 'gm') ? 'gm' : '';
+            makeAndSendMenu(magic_contents, 'Treasure', target);
+        }
+
+        
+        //state[state_name].config.chat_normal_treasure
     },
 
     sendConfigMenu = (first, message) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
-        let onlyGMButton = makeButton(state[state_name].config.onlyGM, '!' + state[state_name].config.command + ' config onlyGM|'+!state[state_name].config.onlyGM, styles.button + styles.float.right);
+        let chatNormalButton = makeButton(state[state_name].config.chat_normal_treasure, '!' + state[state_name].config.command + ' config chat_normal_treasure|?{Target|gm|everyone}', styles.button + styles.float.right);
+        let chatMagicButton = makeButton(state[state_name].config.chat_magic_items, '!' + state[state_name].config.command + ' config chat_magic_items|?{Target|gm|everyone}', styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
-            '<span style="'+styles.float.left+'">Send to GM:</span> ' + onlyGMButton,
+            '<span style="'+styles.float.left+'">Treasure Target:</span> ' + chatNormalButton,
+            '<span style="'+styles.float.left+'">Magic Items Target:</span> ' + chatMagicButton,
         ];
 
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
@@ -1287,7 +1308,8 @@ var Treasure = Treasure || (function() {
         const defaults = {
             config: {
                 command: 'treasure',
-                onlyGM: true
+                chat_magic_items: 'everyone',
+                chat_normal_treasure: 'everyone'
             }
         };
 
@@ -1297,8 +1319,11 @@ var Treasure = Treasure || (function() {
             if(!state[state_name].config.hasOwnProperty('command')){
                 state[state_name].config.command = defaults.config.command;
             }
-            if(!state[state_name].config.hasOwnProperty('onlyGM')){
-                state[state_name].config.onlyGM = defaults.config.onlyGM;
+            if(!state[state_name].config.hasOwnProperty('chat_normal_treasure')){
+                state[state_name].config.chat_normal_treasure = defaults.config.chat_normal_treasure;
+            }
+            if(!state[state_name].config.hasOwnProperty('chat_magic_items')){
+                state[state_name].config.chat_magic_items = defaults.config.chat_magic_items;
             }
         }
 
