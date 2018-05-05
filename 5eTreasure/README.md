@@ -34,6 +34,7 @@ Just a simple script to generate a treasure in chat with the DnD 5e Dungeon Mast
 
 #### Changelog
 **0.1.5**
+* Show last hidden treasure in normal chat.
 * Change normal treasure and magic item treasure targets (to everyone or to gm).
 
 **0.1.4**

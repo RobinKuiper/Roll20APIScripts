@@ -1,5 +1,5 @@
 /*
- * Version 0.1.4
+ * Version 0.1.5
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -12,6 +12,8 @@
 
 var Treasure = Treasure || (function() {
     'use strict';
+
+    let treasure;
 
     // Styling for the chat responses.
     const styles = {
@@ -1032,13 +1034,17 @@ var Treasure = Treasure || (function() {
                     sendConfigMenu();
                 break;
 
+                case 'show':
+                    let what = args.shift() || 'all';
+
+                    sendTreasureToChat(what, true);
+                break;
+
                 default:
                     let type = (extracommand && extracommand.toLowerCase() === 'hoard') ? 'hoard' : 'individual',
                         cr = (extracommand === 'hoard') ? args.shift() : extracommand,
                         amount = parseInt(args.shift()),
                         table;
-
-                        log("amount: " + amount)
 
                     if(cr){
                         switch(cr){
@@ -1059,7 +1065,8 @@ var Treasure = Treasure || (function() {
                             break;
                         }
 
-                        sendTreasureToChat(calculateTreasure(table, type, amount));
+                        treasure = calculateTreasure(table, type, amount)
+                        sendTreasureToChat();
                     }
                 break;
             }
@@ -1069,7 +1076,6 @@ var Treasure = Treasure || (function() {
     calculateTreasure = (table, type='individual', times=1) => {
         let d100,
             checkRoll, 
-            treasure, 
             result = {
                 currency: { 
                     cp: 0,
@@ -1186,7 +1192,7 @@ var Treasure = Treasure || (function() {
         return map;
     },
 
-    sendTreasureToChat = (treasure) => {
+    sendTreasureToChat = (what='all', override) => {
         let target, contents, currency_contents, gem_contents, art_contents, magic_contents;
 
         currency_contents = '<h5>Currency</h5>';
@@ -1226,20 +1232,31 @@ var Treasure = Treasure || (function() {
         if(gem_contents) contents += '<br>'+gem_contents;
         if(art_contents) contents += '<br>'+art_contents;
         
+        if(override){
+            if(what === 'all'){
+                if(magic_contents) contents += '<br>' + magic_contents;
+            }else if(what === 'magic'){
+                contents = magic_contents;
+            }
+            makeAndSendMenu(contents, 'Treasure');
+
+            return;
+        }
+
         if(state[state_name].config.chat_normal_treasure === state[state_name].config.chat_magic_items){
             if(magic_contents) contents += '<br>'+magic_contents;
             target = (state[state_name].config.chat_normal_treasure === 'gm') ? 'gm' : '';
+            if(target === 'gm') contents += makeButton('Show', '!'+state[state_name].config.command+' show', styles.button + styles.float.right);
             makeAndSendMenu(contents, 'Treasure', target);
         }else{
             target = (state[state_name].config.chat_normal_treasure === 'gm') ? 'gm' : '';
+            if(target === 'gm') contents += makeButton('Show', '!'+state[state_name].config.command+' show normal', styles.button + styles.float.right);
             makeAndSendMenu(contents, 'Treasure', target);
 
             target = (state[state_name].config.chat_magic_items === 'gm') ? 'gm' : '';
+            if(target === 'gm') magic_contents += makeButton('Show', '!'+state[state_name].config.command+' show magic', styles.button + styles.float.right);
             makeAndSendMenu(magic_contents, 'Treasure', target);
         }
-
-        
-        //state[state_name].config.chat_normal_treasure
     },
 
     sendConfigMenu = (first, message) => {
