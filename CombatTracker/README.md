@@ -66,6 +66,13 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.1.11**
+* Save and use favorite conditions.
+* Possibility to add a custom message to a condition.
+* Possiblity to add a direction to the duration of a condition, eg. `+1`, `+3`, `-1`, `-3`.
+* Possibility to pause the timer, `!ct pt` will toggle the pause. There also is a button in the menu, `!ct menu` or `!ct`.
+* Possibility to shorten a long name in the chat announcements.
+![ac](https://i.imgur.com/BBVGnXH.png "ac")
 
 **v0.1.10**
 * Fixed a bug were conditions with StatusInfo support didn't get the duration provided (needs StatusInfo update to).

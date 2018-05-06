@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.10
+ * Version 0.1.11b
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -26,6 +26,7 @@ var CombatTracker = CombatTracker || (function() {
     let round = 1,
         timerObj,
         intervalHandle,
+        paused = false,
         observers = {
             tokenChange: []
         };
@@ -35,6 +36,7 @@ var CombatTracker = CombatTracker || (function() {
         reset: 'padding: 0; margin: 0;',
         menu:  'background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;',
         button: 'background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center;',
+        textButton: 'background-color: transparent; border: none; padding: 0; color: #000; text-decoration: underline',
         list: 'list-style: none;',
         float: {
             right: 'float: right;',
@@ -77,6 +79,8 @@ var CombatTracker = CombatTracker || (function() {
 
         // Below commands are only for GM's
         if(!playerIsGM(msg.playerid)) return;
+
+        let name, duration, direction, message, condition;
 
         switch(extracommand){
             case 'help':
@@ -149,12 +153,24 @@ var CombatTracker = CombatTracker || (function() {
                 if(args.shift() === 'b') sendMenu();
             break;
 
-            case 'add':
-                let name = args.shift(),
-                    duration = args.shift(),
-                    condition = { name, duration };
+            case 'pt':
+                pauseTimer();
 
-                if(!msg.selected || !msg.selected.length || !name) return;
+                if(args.shift() === 'b') sendMenu();
+            break;
+
+            case 'add':
+                name = args.shift();
+                duration = args.shift();
+                duration = (!duration || duration === 0) ? 'none' : duration;
+                direction = args.shift() || -1;
+                message = args.join(' ');
+                condition = { name, duration, direction, message };
+
+                if(!msg.selected || !msg.selected.length || !name){
+                    makeAndSendMenu('No tokens were selected.', '', 'gm');
+                    return;
+                }
 
                 msg.selected.forEach(s => {
                     let token = getObj(s._type, s._id);
@@ -162,6 +178,60 @@ var CombatTracker = CombatTracker || (function() {
 
                     addCondition(token, condition, true);
                 });
+            break;
+
+            case 'addfav':
+                name= args.shift();
+                duration = args.shift();
+                direction = args.shift() || -1;
+                message = args.join(' ');
+                condition = { name, duration, direction, message };
+
+                addOrEditFavoriteCondition(condition);
+
+                sendFavoritesMenu();
+            break;
+
+            case 'editfav':
+                name = args.shift();
+
+                if(!name){
+                    makeAndSendMenu('No condition name was given.', '', 'gm');
+                    return;
+                }
+
+                name = strip(name).toLowerCase();
+                condition = state[state_name].favorites[name]
+
+                if(!condition){
+                    makeAndSendMenu('Condition does not exists.', '', 'gm');
+                    return;
+                }                
+
+                if(args[0]){
+                    let setting = args.shift().split('|');
+                    let key = setting.shift();
+                    let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+
+                    state[state_name].favorites[name][key] = value;
+
+                    if(key === 'name'){
+                        state[state_name].favorites[strip(value).toLowerCase()] = state[state_name].favorites[name];
+                        delete state[state_name].favorites[name];
+                    }
+                }
+
+                sendEditFavoriteConditionButton(condition);
+            break;
+
+            case 'removefav':
+                removeFavoriteCondition(args.shift())
+
+                sendFavoritesMenu();
+            break;
+
+            case 'favorites':
+                sendFavoritesMenu();
             break;
 
             case 'remove':
@@ -183,14 +253,32 @@ var CombatTracker = CombatTracker || (function() {
         }
     },
 
+    addOrEditFavoriteCondition = (condition) => {
+        if(condition.duration === 0 || condition.duration === '') condition.duration = undefined;
+
+        let strippedName = strip(condition.name).toLowerCase();
+
+        state[state_name].favorites[strippedName] = condition;
+    },
+
+    removeFavoriteCondition = (name) => {
+        name = strip(name).toLowerCase();
+
+        delete state[state_name].favorites[name];
+    },
+
     addCondition = (token, condition, announce=false) => {
         if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
             const duration = condition.duration;
+            const direction = condition.direction;
+            const message = condition.message;
             condition = StatusInfo.getConditionByName(condition.name) || condition;
             condition.duration = duration;
+            condition.direction = direction;
+            condition.message = message;
         }
 
-        if(condition.duration === 0 || condition.duration === '') condition.duration = undefined;
+        if(!condition.duration || condition.duration === 0 || condition.duration === '0' || condition.duration === '' || condition.duration === 'none') condition.duration = undefined;
 
         if(state[state_name].conditions[strip(token.get('name'))]){
             let hasCondition = false;
@@ -314,6 +402,7 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     startCombat = (selected) => {
+        paused = false;
         resetMarker();
         Campaign().set('initiativepage', Campaign().get('playerpageid'));
 
@@ -349,6 +438,7 @@ var CombatTracker = CombatTracker || (function() {
         if(timerObj) timerObj.remove();
         clearInterval(intervalHandle);
         removeMarker();
+        paused = false;
         Campaign().set({
             initiativepage: false,
             turnorder: ''
@@ -403,6 +493,7 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     startTimer = (token) => {
+        paused = false;
         clearInterval(intervalHandle);
         if(timerObj) timerObj.remove();
 
@@ -421,6 +512,8 @@ var CombatTracker = CombatTracker || (function() {
         }
 
         intervalHandle = setInterval(() => {
+            if(paused) return;
+
             if(timerObj) timerObj.set({
                 top: token.get('top')+token.get('width')/2+40,
                 left: token.get('left'),
@@ -447,6 +540,10 @@ var CombatTracker = CombatTracker || (function() {
         if(timerObj) timerObj.remove();
     },
 
+    pauseTimer = () => {
+        paused = !paused;
+    },
+
     announceTurn = (token, target) => {
         let name, imgurl;
         if(typeof token === 'object'){
@@ -458,13 +555,16 @@ var CombatTracker = CombatTracker || (function() {
 
         let conditions = getConditionString(token);
 
-        let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px" style="'+styles.float.left+'" />' : '';
+        let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px"  />' : '';
+        name = (state[state_name].config.announcements.handleLongName) ? handleLongString(name) : name;
 
         let contents = '\
-        <div style="line-height: 50px; overflow: hidden; padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #fcfcfc;"> \
-          '+image+' \
-          <span style="font-size: 16pt ; margin-left: 10px ; float: left">'+handleLongString(name)+'\'s Turn</span> \
-        </div> \
+        <table> \
+          <tr> \
+            <td>'+image+'</td> \
+            <td style="padding-left: 5px;"><span style="font-size: 16pt;">'+name+'\'s Turn</span></td> \
+          </tr> \
+        </table> \
         <div style="overflow: hidden"> \
           <div style="float: left">'+conditions+'</div> \
           ' + makeButton('Done', '!'+state[state_name].config.command+' next', styles.button + styles.float.right) +' \
@@ -485,8 +585,9 @@ var CombatTracker = CombatTracker || (function() {
                     removeCondition(token, condition.name, true);
                 }else{
                     conditionsSTR += '<b>'+condition.name+'</b>: ' + condition.duration + '<br>';
-                    state[state_name].conditions[name][i].duration--;
+                    state[state_name].conditions[name][i].duration = parseInt(state[state_name].conditions[name][i].duration)+parseInt(condition.direction);
                 }
+                conditionsSTR += (condition.message) ? '<i style="font-size: 10pt">'+condition.message+'</i><br>' : '';
             });
         }
         return conditionsSTR;
@@ -494,7 +595,7 @@ var CombatTracker = CombatTracker || (function() {
 
     handleLongString = (str, max=8) => {
         str = str.split(' ')[0];
-        return (str.length > max) ? str.slice(0, 8) + '...' : str;
+        return (str.length > max) ? str.slice(0, max) + '...' : str;
     },
 
     NextTurn = () => {
@@ -623,6 +724,47 @@ var CombatTracker = CombatTracker || (function() {
         return Math.floor(Math.random()*(max-min+1)+min);
     },
 
+    sendFavoritesMenu = () => {
+        let addButton, editButton, removeButton;
+
+        let listItems = []
+        Object.keys(state[state_name].favorites).map(key => state[state_name].favorites[key]).forEach(condition => {
+            let conditionSTR = (!condition.duration) ? condition.name : condition.name + ' ' + condition.duration + ' ' + condition.direction + ' ' + condition.message;
+            addButton = makeButton(condition.name, '!'+state[state_name].config.command + ' add ' + conditionSTR, styles.textButton)
+            editButton = makeButton('Edit', '!'+state[state_name].config.command + ' editfav ' + condition.name, styles.button + styles.float.right)
+            listItems.push('<span style="'+styles.float.left+'">'+addButton+'</span> '+editButton)
+        });
+
+        let newButton = makeButton('Add New', '!'+state[state_name].config.command + ' addfav ?{Name} ?{Duration} ?{Direction} ?{Message}', styles.button + styles.fullWidth)
+
+        makeAndSendMenu(makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow) + '<hr>' + newButton, 'Favorite Conditions', 'gm')
+    },
+
+    sendEditFavoriteConditionButton = (condition) => {
+        if(!state[state_name].favorites[strip(condition.name).toLowerCase()]){
+            makeAndSendMenu('Condition does not exist.', '', 'gm');
+            return;
+        }
+
+        let nameButton = makeButton(condition.name, '!'+state[state_name].config.command + ' editfav ' + condition.name + ' name|?{Name|'+condition.name+'}', styles.button + styles.float.right);
+        let durationButton = makeButton(condition.duration, '!'+state[state_name].config.command + ' editfav ' + condition.name + ' duration|?{Duration|'+condition.duration+'}', styles.button + styles.float.right);
+        let directionButton = makeButton(condition.direction, '!'+state[state_name].config.command + ' editfav ' + condition.name + ' direction|?{Direction|'+condition.direction+'}', styles.button + styles.float.right);
+
+        let listItems = [
+            '<span style="'+styles.float.left+'">Name</span> '+nameButton,
+            '<span style="'+styles.float.left+'">Duration</span> '+durationButton,
+            '<span style="'+styles.float.left+'">Direction</span> '+directionButton,
+        ];
+
+        let removeButton = makeButton('Remove', '!'+state[state_name].config.command + ' removefav ' + condition.name, styles.button + styles.fullWidth);
+        let backButton = makeButton('Back', '!'+state[state_name].config.command + ' favorites', styles.button + styles.fullWidth);
+        let messageButton = makeButton((condition.message) ? 'Change Message' : 'Set Message', '!'+state[state_name].config.command + ' editfav ' + condition.name + ' message|?{Message|'+condition.message+'}', styles.button);
+
+        let message = (condition.message) ? condition.message : '<i>None</i>';
+
+        makeAndSendMenu(makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow) + '<hr><b>Message</b><p>' + message + '</p>' + messageButton + '<hr>' + removeButton + '<hr>' + backButton, 'Edit - ' + condition.name, 'gm')
+    },
+
     sendConfigMenu = (first, message) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
         let markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right);
@@ -652,7 +794,8 @@ var CombatTracker = CombatTracker || (function() {
         let announceTurnButton = makeButton(state[state_name].config.announcements.announce_turn, '!' + state[state_name].config.command + ' config announcements announce_turn|'+!state[state_name].config.announcements.announce_turn, styles.button + styles.float.right);
         let announceRoundButton = makeButton(state[state_name].config.announcements.announce_round, '!' + state[state_name].config.command + ' config announcements announce_round|'+!state[state_name].config.announcements.announce_round, styles.button + styles.float.right);
         let announceConditionsButton = makeButton(state[state_name].config.announcements.announce_conditions, '!' + state[state_name].config.command + ' config announcements announce_conditions|'+!state[state_name].config.announcements.announce_conditions, styles.button + styles.float.right);
-    
+        let handleLongNameButton = makeButton(state[state_name].config.announcements.handleLongName, '!' + state[state_name].config.command + ' config announcements handleLongName|'+!state[state_name].config.announcements.handleLongName, styles.button + styles.float.right);
+        
         let listItems = [
             '<span style="'+styles.float.left+'">Announce Turn:</span> ' + announceTurnButton,
             '<span style="'+styles.float.left+'">Announce Round:</span> ' + announceRoundButton,
@@ -660,6 +803,9 @@ var CombatTracker = CombatTracker || (function() {
     
         if(!state[state_name].config.announcements.announce_turn){
             listItems.push('<span style="'+styles.float.left+'">Announce Conditions:</span> ' + announceConditionsButton)
+        }
+        if(state[state_name].config.announcements.announce_turn){
+            listItems.push('<span style="'+styles.float.left+'">Shorten Long Name:</span> ' + handleLongNameButton)
         }
 
         let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
@@ -692,12 +838,16 @@ var CombatTracker = CombatTracker || (function() {
     sendMenu = () => {
         let nextButton = makeButton('Next Turn', '!' + state[state_name].config.command + ' next b', styles.button);
         let startCombatButton = makeButton('Start Combat', '!' + state[state_name].config.command + ' start b', styles.button);
-        let stopCombatButton = makeButton('Stop Combat', '!' + state[state_name].config.command + ' stop', styles.button);
-        let stopTimerButton = makeButton('Stop Timer', '!' + state[state_name].config.command + ' st', styles.button);
+        let stopCombatButton = makeButton('Stop Combat', '!' + state[state_name].config.command + ' stop b', styles.button);
+        let pauseTimerTitle = (paused) ? 'Start Timer' : 'Pause Timer';
+        let pauseTimerButton = makeButton(pauseTimerTitle, '!' + state[state_name].config.command + ' pt b', styles.button);
+        let stopTimerButton = makeButton('Stop Timer', '!' + state[state_name].config.command + ' st b', styles.button);
         let addConditionButton = makeButton('Add Condition', '!' + state[state_name].config.command + ' add ?{Condition} ?{Duration}', styles.button);
         let removeConditionButton = makeButton('Remove Condition', '!' + state[state_name].config.command + ' remove ?{Condition}', styles.button);
+        let resetConditionsButton = makeButton('Reset Conditions', '!'+state[state_name].config.command + ' reset conditions', styles.button);
 
-        let contents = (inFight()) ? nextButton+'<br>'+stopTimerButton+'<hr> <b>With Selected:</b> <br>'+addConditionButton+'<br>'+removeConditionButton+'<hr>'+stopCombatButton : startCombatButton;
+        let contents = (inFight()) ? nextButton+'<br>'+pauseTimerButton+'<br>'+stopTimerButton+'<hr> <b>With Selected:</b> <br>'+addConditionButton+'<br>'+removeConditionButton+'<hr>'+stopCombatButton : startCombatButton;
+        contents += '<hr>'+resetConditionsButton;
         makeAndSendMenu(contents, script_name + ' Menu', 'gm');
     },
 
@@ -811,9 +961,11 @@ var CombatTracker = CombatTracker || (function() {
                     announce_conditions: false,
                     announce_turn: true,
                     announce_round: true,
+                    handleLongName: true,
                 }
             },
-            conditions: {}
+            conditions: {},
+            favorites: {}
         };
 
         if(!state[state_name].config){
@@ -871,11 +1023,18 @@ var CombatTracker = CombatTracker || (function() {
                 if(!state[state_name].config.announcements.hasOwnProperty('announce_conditions')){
                     state[state_name].config.announcements.announce_conditions = defaults.config.announcements.announce_conditions;
                 }
+                if(!state[state_name].config.announcements.hasOwnProperty('handleLongName')){
+                    state[state_name].config.announcements.handleLongName = defaults.config.announcements.handleLongName;
+                }
             }
         }
 
         if(!state[state_name].hasOwnProperty('conditions')){
             state[state_name].conditions = defaults.conditions;
+        }
+
+        if(!state[state_name].hasOwnProperty('favorites')){
+            state[state_name].favorites = defaults.favorites;
         }
 
         if(!state[state_name].config.hasOwnProperty('firsttime') && !reset){
