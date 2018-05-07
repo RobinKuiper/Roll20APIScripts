@@ -769,7 +769,7 @@ var CombatTracker = CombatTracker || (function() {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
         let markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right);
         let throwIniButton = makeButton(state[state_name].config.throw_initiative, '!' + state[state_name].config.command + ' config throw_initiative|'+!state[state_name].config.throw_initiative, styles.button + styles.float.right);
-        let iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|'+state[state_name].config.initiative_attribute_name, styles.button + styles.float.right);
+        let iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right);
         let closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right);
 
         let listItems = [

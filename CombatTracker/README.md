@@ -72,6 +72,7 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 * Possiblity to add a direction to the duration of a condition, eg. `+1`, `+3`, `-1`, `-3`.
 * Possibility to pause the timer, `!ct pt` will toggle the pause. There also is a button in the menu, `!ct menu` or `!ct`.
 * Possibility to shorten a long name in the chat announcements.
+* Fixed initiative attribute config option.
 
 **v0.1.10**
 * Fixed a bug were conditions with StatusInfo support didn't get the duration provided (needs StatusInfo update to).
