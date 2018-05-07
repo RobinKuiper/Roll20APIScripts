@@ -1042,7 +1042,7 @@ var Treasure = Treasure || (function() {
                     sendTreasureToChat(what, true);
                 break;
 
-                case 'selected':
+                case 's':
                     if(!msg.selected || !msg.selected.length){
                         makeAndSendMenu('No tokens are selected.', '', 'gm');
                         return;
@@ -1079,8 +1079,6 @@ var Treasure = Treasure || (function() {
                                 for(var currency in treasure.currency){
                                     full_treasure.currency[currency] += treasure.currency[currency];
                                 }
-
-                                //treasure.objects.concat(new_treasure.objects);
                             }
                         }
                         treasure = full_treasure;
