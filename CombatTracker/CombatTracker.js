@@ -135,6 +135,10 @@ var CombatTracker = CombatTracker || (function() {
                 }                 
             break;
 
+            case 'prev':
+                PrevTurn();
+            break;
+
             case 'start':
                 startCombat(msg.selected);
 
@@ -463,14 +467,15 @@ var CombatTracker = CombatTracker || (function() {
         });
     },
 
-    doTurnorderChange = () => {
+    doTurnorderChange = (prev=false) => {
         if(!Campaign().get('initiativepage')) return;
 
         let turn = getCurrentTurn();
 
         if(turn.id === '-1') return;
         if(turn.id === getOrCreateMarker().get('id')){
-            NextRound();
+            if(prev) PrevRound();
+            else NextRound();
             return;
         }
 
@@ -607,6 +612,15 @@ var CombatTracker = CombatTracker || (function() {
         doTurnorderChange();
     },
 
+    PrevTurn = () => {
+        let turnorder = getTurnorder(),
+            last_turn = turnorder.pop();        
+        turnorder.unshift(last_turn);
+
+        setTurnorder(turnorder);
+        doTurnorderChange(true);
+    },
+
     NextRound = () => {
         let marker = getOrCreateMarker();
         round++;
@@ -618,6 +632,19 @@ var CombatTracker = CombatTracker || (function() {
         }
 
         NextTurn();
+    },
+
+    PrevRound = () => {
+        let marker = getOrCreateMarker();
+        round--;
+        marker.set({ name: 'Round ' + round});
+
+        if(state[state_name].config.announcements.announce_round){
+            let text = '<span style="font-size: 16pt; font-weight: bold;">'+marker.get('name')+'</span>';
+            makeAndSendMenu(text);
+        }
+
+        PrevTurn();
     },
 
     changeMarker = (token) => {
@@ -836,18 +863,33 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     sendMenu = () => {
-        let nextButton = makeButton('Next Turn', '!' + state[state_name].config.command + ' next b', styles.button);
-        let startCombatButton = makeButton('Start Combat', '!' + state[state_name].config.command + ' start b', styles.button);
-        let stopCombatButton = makeButton('Stop Combat', '!' + state[state_name].config.command + ' stop b', styles.button);
-        let pauseTimerTitle = (paused) ? 'Start Timer' : 'Pause Timer';
-        let pauseTimerButton = makeButton(pauseTimerTitle, '!' + state[state_name].config.command + ' pt b', styles.button);
-        let stopTimerButton = makeButton('Stop Timer', '!' + state[state_name].config.command + ' st b', styles.button);
-        let addConditionButton = makeButton('Add Condition', '!' + state[state_name].config.command + ' add ?{Condition} ?{Duration}', styles.button);
-        let removeConditionButton = makeButton('Remove Condition', '!' + state[state_name].config.command + ' remove ?{Condition}', styles.button);
-        let resetConditionsButton = makeButton('Reset Conditions', '!'+state[state_name].config.command + ' reset conditions', styles.button);
+        let nextButton = makeButton('Next Turn', '!' + state[state_name].config.command + ' next b', styles.button),
+            prevButton = makeButton('Prev. Turn', '!' + state[state_name].config.command + ' prev b', styles.button),
+            startCombatButton = makeButton('Start Combat', '!' + state[state_name].config.command + ' start b', styles.button),
+            stopCombatButton = makeButton('Stop Combat', '!' + state[state_name].config.command + ' stop b', styles.button),
+            pauseTimerTitle = (paused) ? 'Start Timer' : 'Pause Timer',
+            pauseTimerButton = makeButton(pauseTimerTitle, '!' + state[state_name].config.command + ' pt b', styles.button),
+            stopTimerButton = makeButton('Stop Timer', '!' + state[state_name].config.command + ' st b', styles.button),
+            addConditionButton = makeButton('Add Condition', '!' + state[state_name].config.command + ' add ?{Condition} ?{Duration}', styles.button),
+            removeConditionButton = makeButton('Remove Condition', '!' + state[state_name].config.command + ' remove ?{Condition}', styles.button),
+            resetConditionsButton = makeButton('Reset Conditions', '!'+state[state_name].config.command + ' reset conditions', styles.button),
+            contents;
+        
+        if(inFight()){
+            contents = ' \
+            '+nextButton+prevButton+'<br> \
+            '+pauseTimerButton+stopTimerButton+' \
+            <hr> \
+            <b>With Selected:</b><br> \
+            '+addConditionButton+'<br> \
+            '+removeConditionButton+' \
+            <hr> \
+            '+stopCombatButton+'<br> \
+            '+resetConditionsButton
+        }else{
+            contents = startCombatButton
+        }
 
-        let contents = (inFight()) ? nextButton+'<br>'+pauseTimerButton+'<br>'+stopTimerButton+'<hr> <b>With Selected:</b> <br>'+addConditionButton+'<br>'+removeConditionButton+'<hr>'+stopCombatButton : startCombatButton;
-        contents += '<hr>'+resetConditionsButton;
         makeAndSendMenu(contents, script_name + ' Menu', 'gm');
     },
 
