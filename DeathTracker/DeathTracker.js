@@ -34,7 +34,7 @@ var DeathTracker = DeathTracker || (function () {
         },
         script_name = 'DeathTracker',
         state_name = 'DEATHTRACKER',
-        markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner', 'stopwatch', 'strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
+        markers = ['none', 'blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner', 'stopwatch', 'strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
 
         handleInput = (msg) => {
             if (msg.type != 'api' || !playerIsGM(msg.playerid)) return;
@@ -99,9 +99,6 @@ var DeathTracker = DeathTracker || (function () {
             }
 
             let attributes = {};
-            let set_death_statusmarker = state[state_name].config.set_death_statusmarker;
-            let set_half_statusmarker = state[state_name].config.set_half_statusmarker;
-            let pc_unconscious = state[state_name].config.pc_unconscious;
 
             let deathMarker = state[state_name].config.death_statusmarker;
             let halfMarker = state[state_name].config.half_statusmarker;
@@ -110,14 +107,14 @@ var DeathTracker = DeathTracker || (function () {
             let playerid = (obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : (getObj('character', obj.get('represents'))) ? getObj('character', obj.get('represents')).get('controlledby') : false;
             let isPlayer = (playerid && !playerIsGM(playerid));
 
-            if (set_death_statusmarker && obj.get(bar + '_value') <= 0) {
-                let marker = (pc_unconscious && isPlayer) ? unconsciousMarker : deathMarker;
+            if (deathMarker !== 'none' && obj.get(bar + '_value') <= 0) {
+                let marker = (unconsciousMarker !== 'none' && isPlayer) ? unconsciousMarker : deathMarker;
                 attributes['status_' + marker] = true;
                 attributes['status_' + halfMarker] = false;
             } else {
                 attributes['status_' + deathMarker] = false;
                 attributes['status_' + unconsciousMarker] = false;
-                attributes['status_' + halfMarker] = (set_half_statusmarker && obj.get(bar + '_max') !== '' && obj.get(bar + '_value') <= obj.get(bar + '_max') / 2);
+                attributes['status_' + halfMarker] = (halfMarker !== 'none' && obj.get(bar + '_max') !== '' && obj.get(bar + '_value') <= obj.get(bar + '_max') / 2);
             }
 
             if(state[state_name].config.change_tint){
@@ -180,49 +177,34 @@ var DeathTracker = DeathTracker || (function () {
             })
             markerDropdown += '}';
 
-            let death_markerButton = makeButton(state[state_name].config.death_statusmarker, '!' + state[state_name].config.command + ' config death_statusmarker|' + markerDropdown, styles.button + styles.float.right);
-            let half_markerButton = makeButton(state[state_name].config.half_statusmarker, '!' + state[state_name].config.command + ' config half_statusmarker|' + markerDropdown, styles.button + styles.float.right);
-            let set_death_statusmarkerButton = makeButton(state[state_name].config.set_death_statusmarker, '!' + state[state_name].config.command + ' config set_death_statusmarker|' + !state[state_name].config.set_death_statusmarker, styles.button + styles.float.right)
-            let set_half_statusmarkerButton = makeButton(state[state_name].config.set_half_statusmarker, '!' + state[state_name].config.command + ' config set_half_statusmarker|' + !state[state_name].config.set_death_statusmarker, styles.button + styles.float.right)
-            let commandButton = makeButton('!' + state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
-            let barButton = makeButton('bar ' + state[state_name].config.bar, '!' + state[state_name].config.command + ' config bar|?{Bar|Bar 1 (green),1|Bar 2 (blue),2|Bar 3 (red),3}', styles.button + styles.float.right);
-            let pc_unconsciousButton = makeButton(state[state_name].config.pc_unconscious, '!' + state[state_name].config.command + ' config pc_unconscious|' + !state[state_name].config.pc_unconscious, styles.button + styles.float.right);
-            let pc_unconscious_markerButton = makeButton(state[state_name].config.pc_unconscious_statusmarker, '!' + state[state_name].config.command + ' config pc_unconscious_statusmarker|' + markerDropdown, styles.button + styles.float.right);
-            let change_tintButton = makeButton(state[state_name].config.change_tint, '!' + state[state_name].config.command + ' config change_tint|' + !state[state_name].config.change_tint, styles.button + styles.float.right);
-            let fxButton = makeButton(state[state_name].config.fx, '!' + state[state_name].config.command + ' config fx|' + !state[state_name].config.fx, styles.button + styles.float.right);
-            let fx_typeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type|'+state[state_name].config.fx_type+'}', styles.button + styles.float.right)
+            let death_markerButton = makeButton(state[state_name].config.death_statusmarker, '!' + state[state_name].config.command + ' config death_statusmarker|' + markerDropdown, styles.button + styles.float.right),
+                half_markerButton = makeButton(state[state_name].config.half_statusmarker, '!' + state[state_name].config.command + ' config half_statusmarker|' + markerDropdown, styles.button + styles.float.right),
+                commandButton = makeButton('!' + state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
+                barButton = makeButton('bar ' + state[state_name].config.bar, '!' + state[state_name].config.command + ' config bar|?{Bar|Bar 1 (green),1|Bar 2 (blue),2|Bar 3 (red),3}', styles.button + styles.float.right),
+                pc_unconscious_markerButton = makeButton(state[state_name].config.pc_unconscious_statusmarker, '!' + state[state_name].config.command + ' config pc_unconscious_statusmarker|' + markerDropdown, styles.button + styles.float.right),
+                change_tintButton = makeButton(state[state_name].config.change_tint, '!' + state[state_name].config.command + ' config change_tint|' + !state[state_name].config.change_tint, styles.button + styles.float.right),
+                fxButton = makeButton(state[state_name].config.fx, '!' + state[state_name].config.command + ' config fx|' + !state[state_name].config.fx, styles.button + styles.float.right),
+                fx_typeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type|'+state[state_name].config.fx_type+'}', styles.button + styles.float.right);
 
-            let buttons = '<div style="' + styles.overflow + '">';
-            buttons += '<div style="' + styles.overflow + ' clear: both;"><span style="' + styles.float.left + '">Command:</span> ' + commandButton + '</div>';
-            buttons += '<div style="' + styles.overflow + ' clear: both;"><span style="' + styles.float.left + '">HP Bar:</span> ' + barButton + '</div>';
-            buttons += '<hr>';
-            buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Set Dead:</span> ' + set_death_statusmarkerButton + '</div>';
-            if (state[state_name].config.set_death_statusmarker) {
-                buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Dead Marker:</span> ' + death_markerButton + '</div>';
-            }
-            buttons += '<br>';
-            buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Set Half HP:</span> ' + set_half_statusmarkerButton + '</div>';
-            if (state[state_name].config.set_half_statusmarker) {
-                buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Half HP Marker:</span> ' + half_markerButton + '</div>';
-            }
-            buttons += '<br>';
-            buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Set Unconscious: <p style="font-size: 8pt">Unconscious if PC.</p></span> ' + pc_unconsciousButton + '</div>';
-            if (state[state_name].config.pc_unconscious) {
-                buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Unconscious Marker:</span> ' + pc_unconscious_markerButton + '</div>';
-            }
-            buttons += '<hr>';
-            buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Change Tint:</span> ' + change_tintButton + '</div>';
-            buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Use FX:</span> ' + fxButton + '</div>';
+            let listItems = [
+                '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+                '<span style="'+styles.float.left+'">HP Bar:</span> ' + barButton,
+                '<span style="'+styles.float.left+'">Dead Statusmarker:</span> ' + death_markerButton,
+                '<span style="'+styles.float.left+'">Uncon. Statusmarker:<div style="font-size: 8pt">Unconscious marker if PC.</div></span> ' + pc_unconscious_markerButton,
+                '<span style="'+styles.float.left+'">Half Dead Statusmarker:</span> ' + half_markerButton,
+                '<span style="'+styles.float.left+'">Change Tint Color:</span> ' + change_tintButton,
+                '<span style="'+styles.float.left+'">Use FX:<div style="font-size: 8pt">When getting damage.</div></span> ' + fxButton,
+            ]
+
             if(state[state_name].config.fx){
-                buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">FX Type:</span> ' + fx_typeButton + '</div>';
+                listItems.push('<span style="'+styles.float.left+'">FX Type:</span> ' + fx_typeButton);
             }
-            buttons += '</div>';
 
             let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
             let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
             message = (message) ? '<p>' + message + '</p>' : '';
-            let contents = message + buttons + '<hr><p style="font-size: 80%">You can always come back to this config by typing `!' + state[state_name].config.command + ' config`.</p><hr>' + resetButton;
+            let contents = message + makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow) + '<hr><p style="font-size: 80%">You can always come back to this config by typing `!' + state[state_name].config.command + ' config`.</p><hr>' + resetButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
 
@@ -292,11 +274,8 @@ var DeathTracker = DeathTracker || (function () {
                     command: 'dead',
                     death_statusmarker: 'dead',
                     half_statusmarker: 'red',
-                    set_death_statusmarker: true,
-                    set_half_statusmarker: true,
                     bar: 1,
                     firsttime: (reset) ? false : true,
-                    pc_unconscious: true,
                     pc_unconscious_statusmarker: 'sleepy',
                     change_tint: true,
                     fx: true,
@@ -316,17 +295,8 @@ var DeathTracker = DeathTracker || (function () {
                 if (!state[state_name].config.hasOwnProperty('half_statusmarker')) {
                     state[state_name].config.half_statusmarker = defaults.config.half_statusmarker;
                 }
-                if (!state[state_name].config.hasOwnProperty('set_death_statusmarker')) {
-                    state[state_name].config.set_death_statusmarker = defaults.config.set_death_statusmarker;
-                }
-                if (!state[state_name].config.hasOwnProperty('set_half_statusmarker')) {
-                    state[state_name].config.set_half_statusmarker = defaults.config.set_half_statusmarker;
-                }
                 if (!state[state_name].config.hasOwnProperty('bar')) {
                     state[state_name].config.bar = defaults.config.bar;
-                }
-                if (!state[state_name].config.hasOwnProperty('pc_unconscious')) {
-                    state[state_name].config.pc_unconscious = defaults.config.pc_unconscious;
                 }
                 if (!state[state_name].config.hasOwnProperty('pc_unconscious_statusmarker')) {
                     state[state_name].config.pc_unconscious_statusmarker = defaults.config.pc_unconscious_statusmarker;
