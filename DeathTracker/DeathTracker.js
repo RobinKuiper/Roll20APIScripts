@@ -125,12 +125,19 @@ var DeathTracker = DeathTracker || (function () {
                 attributes.tint_color = (obj.get(bar + '_max') == obj.get(bar + '_value')) ? 'transparent' : color;
             }
 
+            if(state[state_name].config.fx && parseInt(obj.get(bar + '_value')) < parseInt(prev[bar + '_value'])){
+                let x = parseInt(obj.get('left')),
+                    y = parseInt(obj.get('top'));
+
+                spawnFxBetweenPoints({ x, y }, { x, y }, state[state_name].config.fx_type, obj.get('pageid'))
+            }
+
             obj.set(attributes);
             notifyObservers('tokenChange', obj, prev);
         },
 
         getColor = (value) => {
-            return hslToHex(((1-value)*120), 50, 50);
+            return hslToHex(((1-value)*120), 75, 50);
         },
 
         hslToHex = (h, s, l) => {
@@ -182,6 +189,8 @@ var DeathTracker = DeathTracker || (function () {
             let pc_unconsciousButton = makeButton(state[state_name].config.pc_unconscious, '!' + state[state_name].config.command + ' config pc_unconscious|' + !state[state_name].config.pc_unconscious, styles.button + styles.float.right);
             let pc_unconscious_markerButton = makeButton(state[state_name].config.pc_unconscious_statusmarker, '!' + state[state_name].config.command + ' config pc_unconscious_statusmarker|' + markerDropdown, styles.button + styles.float.right);
             let change_tintButton = makeButton(state[state_name].config.change_tint, '!' + state[state_name].config.command + ' config change_tint|' + !state[state_name].config.change_tint, styles.button + styles.float.right);
+            let fxButton = makeButton(state[state_name].config.fx, '!' + state[state_name].config.command + ' config fx|' + !state[state_name].config.fx, styles.button + styles.float.right);
+            let fx_typeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type|'+state[state_name].config.fx_type+'}', styles.button + styles.float.right)
 
             let buttons = '<div style="' + styles.overflow + '">';
             buttons += '<div style="' + styles.overflow + ' clear: both;"><span style="' + styles.float.left + '">Command:</span> ' + commandButton + '</div>';
@@ -203,6 +212,10 @@ var DeathTracker = DeathTracker || (function () {
             }
             buttons += '<hr>';
             buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Change Tint:</span> ' + change_tintButton + '</div>';
+            buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">Use FX:</span> ' + fxButton + '</div>';
+            if(state[state_name].config.fx){
+                buttons += '<div style="' + styles.overflow + '"><span style="' + styles.float.left + '">FX Type:</span> ' + fx_typeButton + '</div>';
+            }
             buttons += '</div>';
 
             let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
@@ -285,7 +298,9 @@ var DeathTracker = DeathTracker || (function () {
                     firsttime: (reset) ? false : true,
                     pc_unconscious: true,
                     pc_unconscious_statusmarker: 'sleepy',
-                    change_tint: true
+                    change_tint: true,
+                    fx: true,
+                    fx_type: 'splatter-blood'
                 }
             };
 
@@ -318,6 +333,12 @@ var DeathTracker = DeathTracker || (function () {
                 }
                 if (!state[state_name].config.hasOwnProperty('change_tint')) {
                     state[state_name].config.change_tint = defaults.config.change_tint;
+                }
+                if (!state[state_name].config.hasOwnProperty('fx')) {
+                    state[state_name].config.fx = defaults.config.fx;
+                }
+                if (!state[state_name].config.hasOwnProperty('fx_type')) {
+                    state[state_name].config.fx_type = defaults.config.fx_type;
                 }
             }
 

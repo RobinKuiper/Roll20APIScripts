@@ -27,3 +27,4 @@ __Optionally__: Set an **Unconscious** statusmarker on **Player Characters**. Th
 #### Changelog
 **0.1.5**
 * Optionally adjust tint color on HP loss/gain.
+* Optionally FX on HP Loss.
