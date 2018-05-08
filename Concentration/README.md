@@ -17,16 +17,30 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 
 ![Concentration Reminder](https://i.imgur.com/zEVJpOH.png "Concentration Reminder")
 ![Spell Cast](https://i.imgur.com/HucNIDc.png "Spell Cast")
+![Auto Roll](https://i.imgur.com/J4nABJN.png "Auto Roll")
 
 ### Commands
 
 * **!concentration** - Shows the config menu.
 
-![Config Menu](https://i.imgur.com/1rB3ezY.png "Config Menu")
+### Config
+
+![Config Menu](https://i.imgur.com/P2Siu61.png "Config Menu")
+
+* **Command** - Which command you want to use for this script.
+* **Statusmarker** - Which statusmarker you want to use for concentration.
+* **HP Bar** - Which bar do you use as the HP bar?
+* **Send Reminder To** - To who you want to send the reminder.
+* **Auto Add Con. Marker** - Automatically add the concentration marker when a concentration spell is cast (works only for the 5e OGL sheet at the moment).
+* **Auto Roll Save** - If you want to Automatically roll the saving throw.
+* **Bonus Attribute** - Which attribute to use for the bonus modifier (defaulted to the constitution saving throw for the 5e OGL sheet).
 
 ---
 
 #### Changelog:
+**0.1.9**
+* Auto Roll Saves (Optional)
+
 **01-05-2018 - 0.1.8**
 * Bugfix.
 
