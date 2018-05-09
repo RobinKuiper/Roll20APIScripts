@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.11
+ * Version 0.1.12
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -167,6 +167,17 @@ var CombatTracker = CombatTracker || (function() {
                 sendConditionsMenu();
             break;
 
+            case 'show':
+                if(!msg.selected || !msg.selected.length){
+                    makeAndSendMenu('No tokens are selected.', '', 'gm');
+                    return;
+                }
+
+                let tokens = msg.selected.map(s => getObj('graphic', s._id))
+
+                sendTokenConditionMenu(tokens);
+            break;
+
             case 'add':
                 name = args.shift();
                 duration = args.shift();
@@ -175,8 +186,16 @@ var CombatTracker = CombatTracker || (function() {
                 message = args.join(' ');
                 condition = { name, duration, direction, message };
 
-                if(!msg.selected || !msg.selected.length || !name){
-                    makeAndSendMenu('No tokens were selected.', '', 'gm');
+                if(!msg.selected || !msg.selected.length){
+                    let tokenid = args.shift();
+                    let token = getObj('graphic', tokenid);
+                    if(!tokenid || !token){
+                        makeAndSendMenu('No tokens were selected.', '', 'gm');
+                        return;
+                    }
+
+                    addCondition(token, condition, true);
+                    
                     return;
                 }
 
@@ -244,11 +263,30 @@ var CombatTracker = CombatTracker || (function() {
 
             case 'remove':
                 let cname = args.shift();
+                let tokenid = args.shift();
+                let token;
 
-                if(!msg.selected || !msg.selected.length || !cname) return;
+                if(!cname){
+                    makeAndSendMenu('No condition was given.', '', 'gm');
+                    return;
+                }
+
+                if(tokenid){
+                    token = getObj('graphic', tokenid);
+                    if(token){
+                        removeCondition(token, cname);
+                        sendTokenConditionMenu([token])
+                        return;
+                    }
+                }
+
+                if(!msg.selected || !msg.selected.length){
+                    makeAndSendMenu('No tokens were selected.', '', 'gm');
+                    return;
+                }
 
                 msg.selected.forEach(s => {
-                    let token = getObj(s._type, s._id);
+                    token = getObj(s._type, s._id);
                     if(!token) return;
 
                     removeCondition(token, cname);
@@ -288,16 +326,16 @@ var CombatTracker = CombatTracker || (function() {
 
         if(!condition.duration || condition.duration === 0 || condition.duration === '0' || condition.duration === '' || condition.duration === 'none') condition.duration = undefined;
 
-        if(state[state_name].conditions[strip(token.get('name'))]){
+        if(state[state_name].conditions[strip(token.get('name')).toLowerCase()]){
             let hasCondition = false;
-            state[state_name].conditions[strip(token.get('name'))].forEach(c => {
+            state[state_name].conditions[strip(token.get('name')).toLowerCase()].forEach(c => {
                 if(c.name.toLowerCase() === condition.name.toLowerCase()) hasCondition = true;
             })
             if(hasCondition) return;
 
-            state[state_name].conditions[strip(token.get('name'))].push(condition);
+            state[state_name].conditions[strip(token.get('name')).toLowerCase()].push(condition);
         }else{
-            state[state_name].conditions[strip(token.get('name'))] = [condition];
+            state[state_name].conditions[strip(token.get('name')).toLowerCase()] = [condition];
         }
 
         if(condition.icon){
@@ -310,17 +348,17 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     removeCondition = (token, condition_name, auto=false) => {
-        if(!state[state_name].conditions[strip(token.get('name'))]) return;
+        if(!state[state_name].conditions[strip(token.get('name')).toLowerCase()]) return;
 
         let si_condition = false;
         if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
             si_condition = StatusInfo.getConditionByName(condition_name) || false;
         }
 
-        state[state_name].conditions[strip(token.get('name'))].forEach((condition, i) => {
+        state[state_name].conditions[strip(token.get('name')).toLowerCase()].forEach((condition, i) => {
             if(condition.name.toLowerCase() !== condition_name.toLowerCase()) return;
 
-            state[state_name].conditions[strip(token.get('name'))].splice(i, 1);
+            state[state_name].conditions[strip(token.get('name')).toLowerCase()].splice(i, 1);
 
             if(si_condition){
                 //StatusInfo.Conditions([condition_name], [token], 'remove', false);
@@ -756,12 +794,49 @@ var CombatTracker = CombatTracker || (function() {
         return Math.floor(Math.random()*(max-min+1)+min);
     },
 
+    sendTokenConditionMenu = (tokens) => {
+        let contents = '<table style="width: 100%;">';
+
+        let i = 0;
+        tokens.forEach(token => {
+            if(!token) return;
+
+            let conditions = state[state_name].conditions[strip(token.get('name')).toLowerCase()];
+
+            if(i) contents += '<tr><td colspan="2"><hr></td></tr>';
+            i++;
+
+            contents += ' \
+                <tr> \
+                    <td colspan="2" style="font-size: 12pt; font-weight: bold;"> \
+                        <img src='+token.get('imgsrc')+' style="width: 32px; height: 32px; vertical-align: middle;" /> \
+                        <span style="vertical-align: middle;">'+token.get('name')+'</span> \
+                    </td> \
+                </tr>'
+
+            if(!conditions.length) contents += '<tr><td colspan="2" style="text-align: center;"><i>None</i></td></tr>'
+
+            conditions.forEach(condition => {
+                let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!'+state[state_name].config.command + ' remove ' + condition.name + ' ' + token.get('id'), styles.button + styles.float.right + 'width: 16px; height: 16px;');
+                contents += ' \
+                <tr> \
+                    <td style="text-align: center">'+condition.name+'</td> \
+                    <td>'+removeButton+'</td> \
+                </tr>';
+            });
+        });
+
+        contents += '</table>';
+
+        makeAndSendMenu(contents, '', 'gm');
+    },
+
     sendConditionsMenu = () => {
         let addButton, removeButton;
 
         let SI_listItems = []
         Object.keys(StatusInfo.getConditions()).map(key => StatusInfo.getConditions()[key]).forEach(condition => {
-            let conditionSTR = '?{Duration} ?{Direction|-1} ?{Message}';
+            let conditionSTR = condition.name + ' ?{Duration} ?{Direction|-1} ?{Message}';
             addButton = makeButton(StatusInfo.getIcon(condition.icon, 'margin-right: 5px; margin-top: 5px; display: inline-block;') + condition.name, '!'+state[state_name].config.command + ' add ' + conditionSTR, styles.textButton)
             SI_listItems.push('<span style="'+styles.float.left+'">'+addButton+'</span>')
         });

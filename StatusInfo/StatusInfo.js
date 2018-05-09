@@ -1,5 +1,5 @@
 /*
- * Version: 0.3.6
+ * Version: 0.3.7
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -35,10 +35,13 @@ var StatusInfo = StatusInfo || (function() {
     let whisper, handled = [],
         observers = {
             tokenChange: []
-        }
+        };
 
+    
+    const version = "0.3.7",
+    
     // Styling for the chat responses.
-    const style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
+    style = "overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
     buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;",
     conditionStyle = "background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;",
     conditionButtonStyle = "text-decoration: underline; background-color: #fff; color: #000; padding: 0",
@@ -710,7 +713,9 @@ var StatusInfo = StatusInfo || (function() {
         getConditions,
         getConditionByName,
         handleConditions,
-        sendConditionToChat
+        sendConditionToChat,
+        getIcon,
+        version
     };
 })();
 
