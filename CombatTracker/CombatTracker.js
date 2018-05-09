@@ -163,6 +163,10 @@ var CombatTracker = CombatTracker || (function() {
                 if(args.shift() === 'b') sendMenu();
             break;
 
+            case 'conditions':
+                sendConditionsMenu();
+            break;
+
             case 'add':
                 name = args.shift();
                 duration = args.shift();
@@ -752,8 +756,48 @@ var CombatTracker = CombatTracker || (function() {
         return Math.floor(Math.random()*(max-min+1)+min);
     },
 
+    sendConditionsMenu = () => {
+        let addButton, removeButton;
+
+        let SI_listItems = []
+        Object.keys(StatusInfo.getConditions()).map(key => StatusInfo.getConditions()[key]).forEach(condition => {
+            let conditionSTR = '?{Duration} ?{Direction|-1} ?{Message}';
+            addButton = makeButton(StatusInfo.getIcon(condition.icon, 'margin-right: 5px; margin-top: 5px; display: inline-block;') + condition.name, '!'+state[state_name].config.command + ' add ' + conditionSTR, styles.textButton)
+            SI_listItems.push('<span style="'+styles.float.left+'">'+addButton+'</span>')
+        });
+
+        let F_listItems = []
+        Object.keys(state[state_name].favorites).map(key => state[state_name].favorites[key]).forEach(condition => {
+            let conditionSTR = (!condition.duration) ? condition.name : condition.name + ' ' + condition.duration + ' ' + condition.direction + ' ' + condition.message;
+            addButton = makeButton(condition.name, '!'+state[state_name].config.command + ' add ' + conditionSTR, styles.textButton)
+            F_listItems.push('<span style="'+styles.float.left+'">'+addButton+' - <span style="font-size: 8pt">'+condition.duration+':'+condition.direction+':'+condition.message+'</span></span>')
+        });
+
+        let contents = '';
+
+        contents += '<h4>StatusInfo Conditions</h4>';
+        if(SI_listItems.length){
+            contents += makeList(SI_listItems, styles.reset + styles.list + styles.overflow, styles.overflow);
+        }else{
+            contents += 'Your StatusInfo doesn\'t have any conditions or StatusInfo is not installed.';
+        }
+
+        contents += '<hr>';
+
+        contents += '<h4>Favorite Conditions</h4>';
+        if(F_listItems.length){
+            contents += makeList(F_listItems, styles.reset + styles.list + styles.overflow, styles.overflow);
+        }else{
+            contents += 'You don\'t have any favorite conditions yet.';
+        }
+
+        contents += '<br><br>' + makeButton('Edit Favorites', '!'+state[state_name].config.command + ' favorites', styles.button + styles.fullWidth);
+
+        makeAndSendMenu(contents, 'Conditions', 'gm');
+    },
+
     sendFavoritesMenu = () => {
-        let addButton, editButton, removeButton;
+        let addButton, editButton, removeButton, list;
 
         let listItems = []
         Object.keys(state[state_name].favorites).map(key => state[state_name].favorites[key]).forEach(condition => {
@@ -765,7 +809,9 @@ var CombatTracker = CombatTracker || (function() {
 
         let newButton = makeButton('Add New', '!'+state[state_name].config.command + ' addfav ?{Name} ?{Duration} ?{Direction} ?{Message}', styles.button + styles.fullWidth)
 
-        makeAndSendMenu(makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow) + '<hr>' + newButton, 'Favorite Conditions', 'gm')
+        list = (listItems.length) ? makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow) : 'No favorites yet.';
+
+        makeAndSendMenu(list + '<hr>' + newButton, 'Favorite Conditions', 'gm')
     },
 
     sendEditFavoriteConditionMenu = (condition) => {

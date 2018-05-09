@@ -27,6 +27,7 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **!ct** - Shows the CombatTracker menu.
 * **!ct config** - Shows the config menu.
 * **!ct favorites** - Shows the favorites menu.
+* **!ct conditions** - Shows a list of known conditions from StatusInfo and favorites.
 * **!ct start** - Starts the combat, if you have tokens selected it will try to roll initiative for them and add them to the tracker.
 * **!ct stop** - Stops the combat (closes the turntracker, removes the marker, clears the turnorder list, etc.).
 * **!ct next** - Goes to the next turn (a player can also use this if it is his turn).
@@ -84,6 +85,9 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.1.12**
+* Show a list of known conditions (from StatusInfo and favorites), `!ct conditions`
+
 **v0.1.11**
 * !ct menu expanded.
 * Players can see Round number now.
