@@ -608,7 +608,6 @@ var CombatTracker = CombatTracker || (function() {
         }
 
         let conditions = getConditionString(token);
-        log(conditions)
 
         let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px"  />' : '';
         name = (state[state_name].config.announcements.handleLongName) ? handleLongString(name) : name;
