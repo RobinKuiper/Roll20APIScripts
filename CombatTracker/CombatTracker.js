@@ -29,6 +29,9 @@ var CombatTracker = CombatTracker || (function() {
         paused = false,
         observers = {
             tokenChange: []
+        },
+        extensions = {
+            StatusInfo: false
         };
 
     // Styling for the chat responses.
@@ -314,7 +317,7 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     addCondition = (token, condition, announce=false) => {
-        if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
+        if(extensions.StatusInfo){
             const duration = condition.duration;
             const direction = condition.direction;
             const message = condition.message;
@@ -341,7 +344,7 @@ var CombatTracker = CombatTracker || (function() {
         if(condition.icon){
             let prevSM = token.get('statusmarkers');
             token.set('status_'+condition.icon, true);
-            if(announce && 'undefined' !== typeof StatusInfo && StatusInfo.sendConditionToChat){
+            if(announce && extensions.StatusInfo){
                 StatusInfo.sendConditionToChat(condition);
             }
         }else makeAndSendMenu('Condition ' + condition.name + ' added to ' + token.get('name'));
@@ -351,7 +354,7 @@ var CombatTracker = CombatTracker || (function() {
         if(!state[state_name].conditions[strip(token.get('name')).toLowerCase()]) return;
 
         let si_condition = false;
-        if('undefined' !== typeof StatusInfo && StatusInfo.getConditionByName){
+        if(extensions.StatusInfo){
             si_condition = StatusInfo.getConditionByName(condition_name) || false;
         }
 
@@ -361,7 +364,6 @@ var CombatTracker = CombatTracker || (function() {
             state[state_name].conditions[strip(token.get('name')).toLowerCase()].splice(i, 1);
 
             if(si_condition){
-                //StatusInfo.Conditions([condition_name], [token], 'remove', false);
                 token.set('status_'+condition.icon, false);
             }else if(!auto){
                 makeAndSendMenu('Condition ' + condition.name + ' removed from ' + token.get('name'));
@@ -397,7 +399,7 @@ var CombatTracker = CombatTracker || (function() {
             changeMarker(obj);
         }
 
-        if('undefined' !== typeof StatusInfo && StatusInfo.getConditions){
+        if(extensions.StatusInfo){
 
             prev.statusmarkers = (typeof prev.get === 'function') ? prev.get('statusmarkers') : prev.statusmarkers;
 
@@ -835,11 +837,13 @@ var CombatTracker = CombatTracker || (function() {
         let addButton, removeButton;
 
         let SI_listItems = []
-        Object.keys(StatusInfo.getConditions()).map(key => StatusInfo.getConditions()[key]).forEach(condition => {
-            let conditionSTR = condition.name + ' ?{Duration} ?{Direction|-1} ?{Message}';
-            addButton = makeButton(StatusInfo.getIcon(condition.icon, 'margin-right: 5px; margin-top: 5px; display: inline-block;') + condition.name, '!'+state[state_name].config.command + ' add ' + conditionSTR, styles.textButton)
-            SI_listItems.push('<span style="'+styles.float.left+'">'+addButton+'</span>')
-        });
+        if(extensions.StatusInfo){
+            Object.keys(StatusInfo.getConditions()).map(key => StatusInfo.getConditions()[key]).forEach(condition => {
+                let conditionSTR = condition.name + ' ?{Duration} ?{Direction|-1} ?{Message}';
+                addButton = makeButton(StatusInfo.getIcon(condition.icon, 'margin-right: 5px; margin-top: 5px; display: inline-block;') + condition.name, '!'+state[state_name].config.command + ' add ' + conditionSTR, styles.textButton)
+                SI_listItems.push('<span style="'+styles.float.left+'">'+addButton+'</span>')
+            });
+        }
 
         let F_listItems = []
         Object.keys(state[state_name].favorites).map(key => state[state_name].favorites[key]).forEach(condition => {
@@ -854,7 +858,7 @@ var CombatTracker = CombatTracker || (function() {
         if(SI_listItems.length){
             contents += makeList(SI_listItems, styles.reset + styles.list + styles.overflow, styles.overflow);
         }else{
-            contents += 'Your StatusInfo doesn\'t have any conditions or StatusInfo is not installed.';
+            contents += (extensions.StatusInfo) ? 'Your StatusInfo doesn\'t have any conditions.' : makeButton('StatusInfo', 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo', styles.textButton) + ' is not installed.';
         }
 
         contents += '<hr>';
@@ -1066,11 +1070,26 @@ var CombatTracker = CombatTracker || (function() {
         log('---------------------------------------------------------------------------------------------');
     },
 
+    checkStatusInfo = () => {
+        if(typeof StatusInfo === 'undefined'){
+            makeAndSendMenu('Consider installing '+makeButton('StatusInfo', 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo', styles.textButton)+' it works great with this script.', '', 'gm');
+            return;
+        }
+
+        if(!StatusInfo.version || StatusInfo.version !== "0.3.7"){
+            makeAndSendMenu('Please update '+makeButton('StatusInfo', 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo', styles.textButton)+' to the latest version.', '', 'gm');
+            return;
+        }
+
+        extensions.StatusInfo = true;
+    },
+
     checkInstall = () => {
         if(!_.has(state, state_name)){
             state[state_name] = state[state_name] || {};
         }
         setDefaults();
+        checkStatusInfo();
 
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
         if(state[state_name].config.debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
@@ -1100,7 +1119,7 @@ var CombatTracker = CombatTracker || (function() {
         on('change:graphic', handleGraphicChange);
         on('change:campaign:initiativepage', handeIniativePageChange);
 
-        if('undefined' !== typeof StatusInfo && StatusInfo.ObserveTokenChange){
+        if(extensions.StatusInfo){
             StatusInfo.ObserveTokenChange(function(obj,prev){
                 handleGraphicChange(obj,prev);
             });
