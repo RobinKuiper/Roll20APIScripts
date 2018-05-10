@@ -1,5 +1,5 @@
 /*
- * Version 0.0.7
+ * Version 0.0.8
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -362,7 +362,7 @@
             });
 
             let background = character.features.background.definition;
-            if(background.featureName && background.featureDescription){
+            if(background && background.featureName && background.featureDescription){
                 let fields = {
                     name: background.featureName,
                     content: background.featureDescription,
