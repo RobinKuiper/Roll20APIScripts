@@ -42,6 +42,22 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **!ct st** - Stops the timer for this turn.
 * **!ct pt** - Pause timer toggle for this turn.
 
+### Conditions
+
+[Show](https://i.imgur.com/DaPFDhK.png "Show")
+
+#### Commands
+* **!ct conditions** - Shows a list of known conditions from StatusInfo and favorites.
+* **!ct show** - Shows a list of conditions on selected tokens.
+* **!ct add [condition name] [?duration] [?direction] [?message]** - Adds a condition to the selected token(s) (duration is optionally (how much rounds.)).
+    * **[?duration]** - Optional duration, set `0` for no duration.
+    * **[?direction]** - The direction per turn, eg. `-1`, `-3`, `+1`, `+3`.
+    * **[?message]** - A message that will be visible.
+* **!ct remove [condition name]** - Removes a condition from the selected token(s).
+* **!ct reset conditions** - Resets all conditions.
+
+[Known Conditions](https://i.imgur.com/2lJxMOi.png "Known Conditions")
+
 ### Favorites
 ![Favorites](https://i.imgur.com/nQqPpNJ.png "Favorites")
 
