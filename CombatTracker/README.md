@@ -44,7 +44,7 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 
 ### Conditions
 
-[Show](https://i.imgur.com/DaPFDhK.png "Show")
+![Show](https://i.imgur.com/DaPFDhK.png "Show")
 
 #### Commands
 * **!ct conditions** - Shows a list of known conditions from StatusInfo and favorites.
@@ -56,7 +56,7 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **!ct remove [condition name]** - Removes a condition from the selected token(s).
 * **!ct reset conditions** - Resets all conditions.
 
-[Known Conditions](https://i.imgur.com/2lJxMOi.png "Known Conditions")
+![Known Conditions](https://i.imgur.com/2lJxMOi.png "Known Conditions")
 
 ### Favorites
 ![Favorites](https://i.imgur.com/nQqPpNJ.png "Favorites")
