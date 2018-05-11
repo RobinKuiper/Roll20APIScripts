@@ -1,5 +1,5 @@
 /*
- * Version 0.1.5
+ * Version 0.1.6
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -129,6 +129,13 @@ var DeathTracker = DeathTracker || (function () {
                 spawnFxBetweenPoints({ x, y }, { x, y }, state[state_name].config.fx_type, obj.get('pageid'))
             }
 
+            if(state[state_name].config.heal_fx && parseInt(obj.get(bar + '_value')) > parseInt(prev[bar + '_value'])){
+                let x = parseInt(obj.get('left')),
+                    y = parseInt(obj.get('top'));
+
+                spawnFxBetweenPoints({ x, y }, { x, y }, state[state_name].config.heal_fx_type, obj.get('pageid'))
+            }
+
             obj.set(attributes);
             notifyObservers('tokenChange', obj, prev);
         },
@@ -184,20 +191,28 @@ var DeathTracker = DeathTracker || (function () {
                 pc_unconscious_markerButton = makeButton(state[state_name].config.pc_unconscious_statusmarker, '!' + state[state_name].config.command + ' config pc_unconscious_statusmarker|' + markerDropdown, styles.button + styles.float.right),
                 change_tintButton = makeButton(state[state_name].config.change_tint, '!' + state[state_name].config.command + ' config change_tint|' + !state[state_name].config.change_tint, styles.button + styles.float.right),
                 fxButton = makeButton(state[state_name].config.fx, '!' + state[state_name].config.command + ' config fx|' + !state[state_name].config.fx, styles.button + styles.float.right),
-                fx_typeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type|'+state[state_name].config.fx_type+'}', styles.button + styles.float.right);
+                fx_typeButton = makeButton(state[state_name].config.fx_type, '!' + state[state_name].config.command + ' config fx_type|?{FX Type|'+state[state_name].config.fx_type+'}', styles.button + styles.float.right),
+                heal_fxButton = makeButton(state[state_name].config.heal_fx, '!' + state[state_name].config.command + ' config heal_fx|' + !state[state_name].config.heal_fx, styles.button + styles.float.right),
+                heal_fx_typeButton = makeButton(state[state_name].config.heal_fx_type, '!' + state[state_name].config.command + ' config heal_fx_type|?{Heal FX Type|'+state[state_name].config.heal_fx_type+'}', styles.button + styles.float.right),
 
-            let listItems = [
-                '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
-                '<span style="'+styles.float.left+'">HP Bar:</span> ' + barButton,
-                '<span style="'+styles.float.left+'">Dead Statusmarker:</span> ' + death_markerButton,
-                '<span style="'+styles.float.left+'">Uncon. Statusmarker:<div style="font-size: 8pt">Unconscious marker if PC.</div></span> ' + pc_unconscious_markerButton,
-                '<span style="'+styles.float.left+'">Half Dead Statusmarker:</span> ' + half_markerButton,
-                '<span style="'+styles.float.left+'">Change Tint Color:</span> ' + change_tintButton,
-                '<span style="'+styles.float.left+'">Use FX:<div style="font-size: 8pt">When getting damage.</div></span> ' + fxButton,
-            ]
+                listItems = [
+                    '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+                    '<span style="'+styles.float.left+'">HP Bar:</span> ' + barButton,
+                    '<span style="'+styles.float.left+'">Dead Statusmarker:</span> ' + death_markerButton,
+                    '<span style="'+styles.float.left+'">Uncon. Statusmarker:<div style="font-size: 8pt">Unconscious marker if PC.</div></span> ' + pc_unconscious_markerButton,
+                    '<span style="'+styles.float.left+'">Half Dead Statusmarker:</span> ' + half_markerButton,
+                    '<span style="'+styles.float.left+'">Change Tint Color:</span> ' + change_tintButton,
+                    '<span style="'+styles.float.left+'">Use FX:<div style="font-size: 8pt">When getting damage.</div></span> ' + fxButton,
+                ]
 
             if(state[state_name].config.fx){
                 listItems.push('<span style="'+styles.float.left+'">FX Type:</span> ' + fx_typeButton);
+            }
+
+            listItems.push('<span style="'+styles.float.left+'">Use Heal FX:</span> ' + heal_fxButton);
+
+            if(state[state_name].config.heal_fx){
+                listItems.push('<span style="'+styles.float.left+'">Heal FX Type:</span> ' + heal_fx_typeButton);
             }
 
             let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
@@ -279,7 +294,9 @@ var DeathTracker = DeathTracker || (function () {
                     pc_unconscious_statusmarker: 'sleepy',
                     change_tint: true,
                     fx: true,
-                    fx_type: 'splatter-blood'
+                    fx_type: 'splatter-blood',
+                    heal_fx: false,
+                    heal_fx_type: 'glow-holy'
                 }
             };
 
@@ -309,6 +326,12 @@ var DeathTracker = DeathTracker || (function () {
                 }
                 if (!state[state_name].config.hasOwnProperty('fx_type')) {
                     state[state_name].config.fx_type = defaults.config.fx_type;
+                }
+                if (!state[state_name].config.hasOwnProperty('heal_fx')) {
+                    state[state_name].config.heal_fx = defaults.config.heal_fx;
+                }
+                if (!state[state_name].config.hasOwnProperty('heal_fx_type')) {
+                    state[state_name].config.heal_fx_type = defaults.config.heal_fx_type;
                 }
             }
 
