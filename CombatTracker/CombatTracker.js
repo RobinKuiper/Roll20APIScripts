@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.13
+ * Version 0.2.0
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -26,6 +26,7 @@ var CombatTracker = CombatTracker || (function() {
     let round = 1,
         timerObj,
         intervalHandle,
+        rotationInterval,
         paused = false,
         observers = {
             tokenChange: []
@@ -183,6 +184,10 @@ var CombatTracker = CombatTracker || (function() {
 
             case 'add':
                 name = args.shift();
+                if(!name){
+                    makeAndSendMenu('No condition name was given.', '', 'gm');
+                    return;
+                }
                 duration = args.shift();
                 duration = (!duration || duration === 0) ? 'none' : duration;
                 direction = args.shift() || -1;
@@ -489,8 +494,8 @@ var CombatTracker = CombatTracker || (function() {
 
     stopCombat = () => {
         if(timerObj) timerObj.remove();
-        clearInterval(intervalHandle);
         removeMarker();
+        stopTimer();
         paused = false;
         Campaign().set({
             initiativepage: false,
@@ -501,6 +506,7 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     removeMarker = () => {
+        stopRotate();
         getOrCreateMarker().remove();
     },
 
@@ -760,7 +766,29 @@ var CombatTracker = CombatTracker || (function() {
         }
         checkMarkerturn(marker);
         toBack(marker);
+
+        //startRotate(marker);
+
         return marker;
+    },
+
+    startRotate = (token) => {
+        clearInterval(rotationInterval);
+
+        let i = 0;
+        rotationInterval = setInterval(() => {
+            i += 2;
+
+            log(i)
+
+            if(i >= 360) i = 0;
+
+            token.set('rotation', i);
+        }, 50)
+    },
+
+    stopRotate = () => {
+        clearInterval(rotationInterval);
     },
 
     checkMarkerturn = (marker) => {
