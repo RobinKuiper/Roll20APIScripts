@@ -421,7 +421,7 @@ var CombatTracker = CombatTracker || (function() {
         }
     },
 
-    handleGraphicChange = (obj, prev) => {
+    handleGraphicMovement = (obj, prev) => {
         if(!inFight()) return;
 
         if(getCurrentTurn().id === obj.get('id')){
@@ -608,6 +608,7 @@ var CombatTracker = CombatTracker || (function() {
         }
 
         let conditions = getConditionString(token);
+        log(conditions)
 
         let image = (imgurl) ? '<img src="'+imgurl+'" width="50px" height="50px"  />' : '';
         name = (state[state_name].config.announcements.handleLongName) ? handleLongString(name) : name;
@@ -1123,15 +1124,11 @@ var CombatTracker = CombatTracker || (function() {
     registerEventHandlers = () => {
         on('chat:message', handleInput);
         on('change:campaign:turnorder', handleTurnorderChange);
-        on('change:graphic', handleGraphicChange);
         on('change:campaign:initiativepage', handeIniativePageChange);
+        on('change:graphic:top', handleGraphicMovement);
+        on('change:graphic:left', handleGraphicMovement);
+        on('change:graphic:layer', handleGraphicMovement);
         on('change:graphic:statusmarkers', handleStatusMarkerChange);
-
-        if(extensions.StatusInfo){
-            StatusInfo.ObserveTokenChange(function(obj,prev){
-                handleGraphicChange(obj,prev);
-            });
-        }
 
         if('undefined' !== typeof TokenMod && TokenMod.ObserveTokenChange){
             TokenMod.ObserveTokenChange(function(obj,prev){
