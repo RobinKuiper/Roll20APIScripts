@@ -102,6 +102,10 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.1.14**
+* Fixed condition round counter.
+* Backend shit.
+
 **v0.1.13**
 * Bugfixes
 
