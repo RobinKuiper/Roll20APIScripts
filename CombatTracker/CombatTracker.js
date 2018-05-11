@@ -545,6 +545,7 @@ var CombatTracker = CombatTracker || (function() {
             if(conditions && conditions !== '') makeAndSendMenu(conditions, 'Conditions - ' + name, (token.get('layer') === 'objects') ? '' : 'gm');
         }
 
+        Pull(token);
         doFX(token);
     },
 
@@ -553,6 +554,12 @@ var CombatTracker = CombatTracker || (function() {
 
         let pos = {x: token.get('left'), y: token.get('top')};
         spawnFxBetweenPoints(pos, pos, state[state_name].config.announcements.fx_type, token.get('pageid'))
+    },
+
+    Pull = (token) => {
+        if(!state[state_name].config.pull) return;
+
+        sendPing(token.get('left'), token.get('top'), token.get('pageid'), null, true);
     },
 
     startTimer = (token) => {
@@ -939,25 +946,28 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     sendConfigMenu = (first, message) => {
-        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
-        let markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right);
-        let throwIniButton = makeButton(state[state_name].config.throw_initiative, '!' + state[state_name].config.command + ' config throw_initiative|'+!state[state_name].config.throw_initiative, styles.button + styles.float.right);
-        let iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right);
-        let closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right);
+        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
+            markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right),
+            throwIniButton = makeButton(state[state_name].config.throw_initiative, '!' + state[state_name].config.command + ' config throw_initiative|'+!state[state_name].config.throw_initiative, styles.button + styles.float.right),
+            iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right),
+            closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right),
+            pullButton = makeButton(state[state_name].config.pull, '!' + state[state_name].config.command + ' config pull|'+!state[state_name].config.pull, styles.button + styles.float.right),
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
-            '<span style="'+styles.float.left+'">Ini. Attribute:</span> ' + iniAttrButton,
-            '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
-            '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
-            '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
-        ];
+            listItems = [
+                '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+                '<span style="'+styles.float.left+'">Ini. Attribute:</span> ' + iniAttrButton,
+                '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
+                '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
+                '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
+                '<span style="'+styles.float.left+'">Auto Pull Map:</span> ' + pullButton,
+            ],
 
-        let configTimerButton = makeButton('Timer Config', '!'+state[state_name].config.command + ' config timer', styles.button);
-        let configAnnouncementsButton = makeButton('Announcement Config', '!'+state[state_name].config.command + ' config announcements', styles.button);
-        let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
+            configTimerButton = makeButton('Timer Config', '!'+state[state_name].config.command + ' config timer', styles.button),
+            configAnnouncementsButton = makeButton('Announcement Config', '!'+state[state_name].config.command + ' config announcements', styles.button),
+            resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth),
 
-        let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
+            title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
+
         message = (message) ? '<p>'+message+'</p>' : '';
         let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+configTimerButton+configAnnouncementsButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
@@ -1157,6 +1167,7 @@ var CombatTracker = CombatTracker || (function() {
                 throw_initiative: true,
                 initiative_attribute_name: 'initiative_bonus',
                 close_stop: true,
+                pull: true,
                 timer: {
                     use_timer: true,
                     time: 120,
@@ -1196,6 +1207,9 @@ var CombatTracker = CombatTracker || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('close_stop')){
                 state[state_name].config.close_stop = defaults.config.close_stop;
+            }
+            if(!state[state_name].config.hasOwnProperty('pull')){
+                state[state_name].config.pull = defaults.config.pull;
             }
             if(!state[state_name].config.hasOwnProperty('timer')){
                 state[state_name].config.timer = defaults.config.timer;
