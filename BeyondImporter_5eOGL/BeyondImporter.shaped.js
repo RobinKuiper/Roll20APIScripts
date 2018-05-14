@@ -1,5 +1,5 @@
 /*
- * Version 0.0.7
+ * Version 0.0.8
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -166,24 +166,35 @@
         if(state[state_name].config.imports.inventory){
             const weapons = character.inventory.weapons;
             weapons.forEach((weapon) => {
-                const ability = (weapon.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'DEX' : (weapon.definition.statModifier.str) ? 'STR' : 'DEX';
+                if(weapon.definition.type === 'Ammunition'){
+                    let fields = {
+                        name: weapon.definition.name,
+                        uses: weapon.quantity,
+                        weight: weapon.definition.weight / weapon.definition.bundleSize,
+                        toggle_details: '0'
+                    }
 
-                let fields = {
-                    name: weapon.definition.name,
-                    attack_toggle: '1',
-                    attack_type: (weapon.definition.attackType === 'Melee') ? 'MELEE_WEAPON_ATTACK' : 'RANGED_WEAPON_ATTACK',
-                    attack_ability: ability,
-                    attack_damage_dice: weapon.definition.damage.diceCount,
-                    attack_damage_die: 'd' + weapon.definition.damage.diceValue,
-                    attack_damage_ability: ability,
-                    attack_damage_type: weapon.definition.damageType,
-                    content: replaceChars(weapon.definition.description),
-                    weight: weapon.definition.weight / weapon.definition.bundleSize,
-                    carried: 'on',
-                    toggle_details: '0'
+                    attributes = Object.assign(attributes, createRepeating('ammo', weapon.definition.name, fields, object));
+                }else{
+                    const ability = (weapon.definition.statModifier.dex && getTotalAbilityScore(character, 'dexterity', 'dex') > getTotalAbilityScore(character, 'strength', 'str')) ? 'DEX' : (weapon.definition.statModifier.str) ? 'STR' : 'DEX';
+
+                    let fields = {
+                        name: weapon.definition.name,
+                        attack_toggle: '1',
+                        attack_type: (weapon.definition.attackType === 'Melee') ? 'MELEE_WEAPON_ATTACK' : 'RANGED_WEAPON_ATTACK',
+                        attack_ability: ability,
+                        attack_damage_dice: (weapon.definition.damage) ? weapon.definition.damage.diceCount : 0,
+                        attack_damage_die: (weapon.definition.damage) ? 'd' + weapon.definition.damage.diceValue : 'd0',
+                        attack_damage_ability: ability,
+                        attack_damage_type: weapon.definition.damageType,
+                        content: replaceChars(weapon.definition.description),
+                        weight: weapon.definition.weight / weapon.definition.bundleSize,
+                        carried: 'on',
+                        toggle_details: '0'
+                    }
+
+                    attributes = Object.assign(attributes, createRepeating('offense', weapon.definition.name, fields, object));
                 }
-
-                attributes = Object.assign(attributes, createRepeating('offense', weapon.definition.name, fields, object));
             });
 
             const armors = character.inventory.armor;
@@ -362,7 +373,7 @@
             });
 
             let background = character.features.background.definition;
-            if(background.featureName && background.featureDescription){
+            if(background && background.featureName && background.featureDescription){
                 let fields = {
                     name: background.featureName,
                     content: background.featureDescription,
@@ -407,7 +418,7 @@
             attributes['miscellaneous_notes'] += (character.lifestyle) ? 'LIFESTYLE: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.\n' : '';
             backstory = '';
             backstory += (character.notes.backstory) ? character.notes.backstory + '\n\n' : '';
-            backstory += '---- Background: '+character.features.background.definition.name+' ---- \n\n'+character.features.background.definition.description;
+            backstory += (character.features.background && character.features.background.definition) ? '---- Background: '+character.features.background.definition.name+' ---- \n\n'+character.features.background.definition.description : '';
         }
 
         attributes = Object.assign(attributes, { 

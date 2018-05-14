@@ -1,5 +1,5 @@
 /*
- * Version 0.1.11
+ * Version 0.1.12
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -138,7 +138,7 @@
                                 if(item.definition.hasOwnProperty('armorClass')){
                                     _itemmodifiers += ', AC: ' + item.definition.armorClass;
                                 }
-                                if(item.definition.hasOwnProperty('damage')){
+                                if(typeof item.definition.damage === 'object' && item.definition.type !== 'Ammunition'){
                                     let properties = '';
                                     let finesse = false;
                                     for(var j = 0; j < item.definition.properties.length; j++){
