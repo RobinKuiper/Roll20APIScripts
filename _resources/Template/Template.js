@@ -33,7 +33,6 @@ var Template = Template || (function() {
 
     handleInput = (msg) => {
         if (msg.type != 'api') return;
-        if(!playerIsGM(msg.playerid)) return;
 
         // Split the message into command and argument(s)
         let args = msg.content.split(' ');
@@ -41,30 +40,39 @@ var Template = Template || (function() {
         let extracommand = args.shift();
 
         if (command == state[state_name].config.command) {
-            switch(extracommand){
-                case 'reset':
-                    state[state_name] = {};
-                    setDefaults(true);
-                    sendConfigMenu();
-                break;
+            if(!playerIsGM(msg.playerid)){
+                // Player Commands
+                switch(extracommand){
+                    default:
 
-                case 'config':
-                    if(args.length > 0){
-                        let setting = args.shift().split('|');
-                        let key = setting.shift();
-                        let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+                    break;
+                }
+            }else{
+                // GM Commands
+                switch(extracommand){
+                    case 'reset':
+                        state[state_name] = {};
+                        setDefaults(true);
+                        sendConfigMenu();
+                    break;
 
-                        state[state_name].config[key] = value;
-                    }
+                    case 'config':
+                        if(args.length > 0){
+                            let setting = args.shift().split('|');
+                            let key = setting.shift();
+                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                    sendConfigMenu();
-                break;
+                            state[state_name].config[key] = value;
+                        }
 
-                default:
-                    
-                break;
+                        sendConfigMenu();
+                    break;
+
+                    default:
+                        sendConfigMenu();
+                    break;
+                }
             }
-        }
     },
 
     sendConfigMenu = (first, message) => {
@@ -82,10 +90,14 @@ var Template = Template || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    makeAndSendMenu = (contents, title, whisper) => {
+    sendError = (error, whisper='gm') => {
+        makeAndSendMenu(error, '', whisper, 'border-color: red; color: red;');
+    },
+
+    makeAndSendMenu = (contents, title, whisper, style='') => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
-        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+'">'+title+contents+'</div>', null, {noarchive:true});
+        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+style'">'+title+contents+'</div>', null, {noarchive:true});
     },
 
     makeTitle = (title) => {
@@ -103,13 +115,6 @@ var Template = Template || (function() {
         });
         list += '</ul>';
         return list;
-    },
-
-    pre_log = (message) => {
-        log('---------------------------------------------------------------------------------------------');
-        if(!message){ return; }
-        log(message);
-        log('---------------------------------------------------------------------------------------------');
     },
 
     checkInstall = () => {

@@ -74,7 +74,7 @@ var CombatTracker = CombatTracker || (function() {
             if(token = getObj('graphic', turn.id)){
                 let character = getObj('character', token.get('represents'));
                 if((token.get('controlledby').split(',').includes(msg.playerid) || token.get('controlledby').split(',').includes('all')) ||
-                    (character && (character.get('controlledby').split(',').includes(msg.playerid) || character.get('controlledby').split(',').includes(msg.playerid)))){
+                    (character && (character.get('controlledby').split(',').includes(msg.playerid) || character.get('controlledby').split(',').includes('all')))){
                         NextTurn();
                         // SHOW MENU
                     }
