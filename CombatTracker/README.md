@@ -106,6 +106,9 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.2.1** NEW
+* Bugfixes
+
 **v0.2.0**
 * Optionally auto Pull
 * Optionally use FX on turn change.

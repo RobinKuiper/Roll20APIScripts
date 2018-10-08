@@ -1,5 +1,5 @@
 /* 
- * Version 0.2.0
+ * Version 0.2.1
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -429,7 +429,7 @@ var CombatTracker = CombatTracker || (function() {
     handleGraphicMovement = (obj, prev) => {
         if(!inFight()) return;
 
-        if(getCurrentTurn().id === obj.get('id')){
+        if((getCurrentTurn()||{id:null}).id === obj.get('id')){
             changeMarker(obj);
         }
     },
@@ -795,7 +795,7 @@ var CombatTracker = CombatTracker || (function() {
         let turnorder = getTurnorder(),
             hasTurn = false;
         turnorder.forEach(turn => {
-            if(turn.id === marker.get('id')) hasTurn = true;
+            if(turn && turn.id === marker.get('id')) hasTurn = true; // TODO: Look into this
         });
 
         if(!hasTurn){
