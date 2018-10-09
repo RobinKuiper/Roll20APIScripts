@@ -39,13 +39,14 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 * **Bonus Attribute** - Which attribute to use for the bonus modifier (defaulted to the constitution saving throw for the 5e OGL sheet).
 
 ![Auto Roll](https://i.imgur.com/WHUV5iw.png "Auto Roll")
+![Advantage](https://i.imgur.com/ciSttkH.png "Advantage")
 
 ---
 
 #### Changelog:
 **0.1.13**
-* Optionally roll with advantage.
-* Optionally roll button when not using autorolling.
+* Optionally autoroll with advantage.
+* Optionally show roll button when not using autorolling.
 
 **0.1.12**
 * `!concentration` can now have another argument to name the spell, eg. `!concentration Bless`.
