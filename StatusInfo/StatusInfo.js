@@ -1,5 +1,5 @@
 /*
- * Version: 0.3.9
+ * Version: 0.3.10
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -193,7 +193,7 @@ var StatusInfo = StatusInfo || (function() {
                 break;
 
                 case 'add': case 'remove': case 'toggle':
-                    if(!playerIsGM(msg.playerid)) return;
+                    if(!state[state_name].config.userToggle && !playerIsGM(msg.playerid)) return;
 
                     if(!msg.selected || !msg.selected.length){
                         makeAndSendMenu('No tokens are selected.');
@@ -513,6 +513,7 @@ var StatusInfo = StatusInfo || (function() {
     sendConfigMenu = (first) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', buttonStyle);
         let userAllowedButton = makeButton(state[state_name].config.userAllowed, '!' + state[state_name].config.command + ' config userAllowed|'+!state[state_name].config.userAllowed, buttonStyle);
+        let userToggleButton = makeButton(state[state_name].config.userToggle, '!' + state[state_name].config.command + ' config userToggle|'+!state[state_name].config.userToggle, buttonStyle);
         let toGMButton = makeButton(state[state_name].config.sendOnlyToGM, '!' + state[state_name].config.command + ' config sendOnlyToGM|'+!state[state_name].config.sendOnlyToGM, buttonStyle);
         let statusChangeButton = makeButton(state[state_name].config.showDescOnStatusChange, '!' + state[state_name].config.command + ' config showDescOnStatusChange|'+!state[state_name].config.showDescOnStatusChange, buttonStyle);
         let showIconButton = makeButton(state[state_name].config.showIconInDescription, '!' + state[state_name].config.command + ' config showIconInDescription|'+!state[state_name].config.showIconInDescription, buttonStyle);
@@ -520,7 +521,8 @@ var StatusInfo = StatusInfo || (function() {
         let listItems = [
             '<span style="float: left">Command:</span> ' + commandButton,
             '<span style="float: left">Only to GM:</span> '+toGMButton,
-            '<span style="float: left">User Allowed:</span> '+userAllowedButton,
+            '<span style="float: left">Player Show:</span> '+userAllowedButton,
+            '<span style="float: left">Player Toggle:</span> '+userToggleButton,
             '<span style="float: left">Show on Status Change:</span> '+statusChangeButton,
             '<span style="float: left">Display icon in chat:</span> '+showIconButton
         ];
@@ -644,6 +646,7 @@ var StatusInfo = StatusInfo || (function() {
             config: {
                 command: 'condition',
                 userAllowed: false,
+                userToggle: false,
                 sendOnlyToGM: false,
                 showDescOnStatusChange: true,
                 showIconInDescription: true
@@ -735,6 +738,9 @@ var StatusInfo = StatusInfo || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('userAllowed')){
                 state[state_name].config.userAllowed = defaults.config.userAllowed;
+            }
+            if(!state[state_name].config.hasOwnProperty('userToggle')){
+                state[state_name].config.userToggle = defaults.config.userToggle;
             }
             if(!state[state_name].config.hasOwnProperty('sendOnlyToGM')){
                 state[state_name].config.sendOnlyToGM = defaults.config.sendOnlyToGM;
