@@ -41,6 +41,7 @@ It shows condition descriptions whenever a statusmarker is set or when the comma
 ![Config](https://i.imgur.com/y9DlZB6.png "Config")
 
 * **Command** - The command used by this script, eg. `!condition`.
+* **User Allowed** - Let players show conditions with `!condition prone`.
 * **Only to GM** - Send the condition info only to the gm.
 * **Show on Status Change** - Send the condition info when the statusmarkers change.
 * **Display icon in chat** - Shows the icon next to the condition title in the chat condition descriptions.
@@ -83,6 +84,9 @@ Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
 ---
 
 #### Changelog
+**v0.3.9**
+* Added userAllowed config option.
+
 **v0.3.8**
 * Shaped sheet conditions compatible.
 
