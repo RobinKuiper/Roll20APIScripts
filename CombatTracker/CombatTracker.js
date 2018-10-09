@@ -1,5 +1,5 @@
 /* 
- * Version 0.2.1
+ * Version 0.2.2
  * Made By Robin Kuiper
  * Changes in Version 0.2.1 by The Aaron
  * Skype: RobinKuiper.eu
@@ -305,6 +305,25 @@ var CombatTracker = CombatTracker || (function() {
 			}
             break;
 
+            case 'showcondition': {
+                let cname = args.shift();
+                let tokenid = args.shift();
+                let token;
+
+                if(!cname){
+                    makeAndSendMenu('No condition was given.', '', 'gm');
+                    return;
+                }
+
+                if(tokenid){
+                    token = getObj('graphic', tokenid);
+                    if(token){
+                        showCondition(token, cname);
+                    }
+                }
+            }
+            break;
+
             default:
                 sendMenu();
             break;
@@ -377,6 +396,24 @@ var CombatTracker = CombatTracker || (function() {
             }else if(!auto){
                 makeAndSendMenu('Condition ' + condition.name + ' removed from ' + token.get('name'));
             }
+        });
+    },
+
+    showCondition = (token, condition_name) => {
+        if(!state[state_name].conditions[strip(token.get('name')).toLowerCase()]) return;
+
+        let si_condition = false;
+        if(extensions.StatusInfo){
+            si_condition = StatusInfo.getConditionByName(condition_name) || false;
+        }
+
+        state[state_name].conditions[strip(token.get('name')).toLowerCase()].forEach((condition, i) => {
+            if(condition.name.toLowerCase() !== condition_name.toLowerCase()) return;
+
+            if(si_condition){
+                StatusInfo.sendConditionToChat(si_condition);
+            }
+            if(condition.message) makeAndSendMenu(condition.message, condition.name, '');
         });
     },
 
@@ -523,6 +560,8 @@ var CombatTracker = CombatTracker || (function() {
             left: 35, top: 35,
             width: 70, height: 70
         });
+
+        return marker;
     },
 
     doTurnorderChange = (prev=false) => {
@@ -531,7 +570,8 @@ var CombatTracker = CombatTracker || (function() {
         let turn = getCurrentTurn();
 
         if(turn.id === '-1'){
-            resetMarker();
+            if(!state[state_name].config.skip_custom) resetMarker();
+            else NextTurn();
             return;
         }
         if(turn.id === getOrCreateMarker().get('id')){
@@ -887,11 +927,19 @@ var CombatTracker = CombatTracker || (function() {
                 contents += '<tr><td colspan="2" style="text-align: center;"><i>None</i></td></tr>';
             }else{
                 conditions.forEach(condition => {
+                    let si_condition = false;
+                    if(extensions.StatusInfo){
+                        si_condition = StatusInfo.getConditionByName(condition.name) || false;
+                    }
+
                     let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!'+state[state_name].config.command + ' remove ' + condition.name + ' ' + token.get('id'), styles.button + styles.float.right + 'width: 16px; height: 16px;');
+                    let showButton = (condition.message || si_condition) ? makeButton('<img src="https://cdn1.iconfinder.com/data/icons/hawcons/32/699008-icon-22-eye-128.png" />', '!'+state[state_name].config.command + ' showcondition ' + condition.name + ' ' + token.get('id'), styles.button + styles.float.right + 'width: 16px; height: 16px;') : '';
+                    let name = condition.name;
+                    name += (condition.duration) ? ' (' + condition.duration + ')' : '';
                     contents += ' \
                     <tr> \
-                        <td style="text-align: center">'+condition.name+'</td> \
-                        <td>'+removeButton+'</td> \
+                        <td style="text-align: center">'+name+'</td> \
+                        <td>'+removeButton+showButton+'</td> \
                     </tr>';
                 });
             }
@@ -997,6 +1045,7 @@ var CombatTracker = CombatTracker || (function() {
             iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right),
             closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right),
             pullButton = makeButton(state[state_name].config.pull, '!' + state[state_name].config.command + ' config pull|'+!state[state_name].config.pull, styles.button + styles.float.right),
+            skipCustomButton = makeButton(state[state_name].config.skip_custom, '!' + state[state_name].config.command + ' config skip_custom|'+!state[state_name].config.skip_custom, styles.button + styles.float.right),
 
             listItems = [
                 '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
@@ -1004,7 +1053,8 @@ var CombatTracker = CombatTracker || (function() {
                 '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
                 '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
                 '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
-                '<span style="'+styles.float.left+'">Auto Pull Map:</span> ' + pullButton
+                '<span style="'+styles.float.left+'">Auto Pull Map:</span> ' + pullButton,
+                '<span style="'+styles.float.left+'">Skip Custom Item:</span> ' + skipCustomButton
             ],
 
             configTimerButton = makeButton('Timer Config', '!'+state[state_name].config.command + ' config timer', styles.button),
@@ -1214,6 +1264,7 @@ var CombatTracker = CombatTracker || (function() {
                 throw_initiative: true,
                 initiative_attribute_name: 'initiative_bonus',
                 close_stop: true,
+                skip_custom: true,
                 pull: true,
                 timer: {
                     use_timer: true,
@@ -1245,6 +1296,9 @@ var CombatTracker = CombatTracker || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('marker_img')){
                 state[state_name].config.marker_img = defaults.config.marker_img;
+            }
+            if(!state[state_name].config.hasOwnProperty('skip_custom')){
+                state[state_name].config.skip_custom = defaults.config.skip_custom;
             }
             if(!state[state_name].config.hasOwnProperty('throw_initiative')){
                 state[state_name].config.throw_initiative = defaults.config.throw_initiative;
