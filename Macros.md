@@ -13,6 +13,17 @@ Initiative [[1d20 + @{selected|dexterity_mod}&{tracker}]]
 **It will take [[ ?{How far in miles?|24} / (?{Travel Pace?|Fast, 30|Normal, 24|Slow, 18|Normal Jungle, 20} * ?{Travel Mode?|On Foot, 1|Horseback, 1.25|Wyvern - 9 hours, 3|Broom - 13 hours, 3|Flying Speed 30 - 4 MPH, 4} * ?{Terrain?|Road/Trails, 1|Off Road, 0.5|Air, 1|Jungle, 0.5})  ]] day(s) to travel [[ ?{How far in miles?} ]] miles.** 
 ```
 
+**Ability Scores**
+```
+/me is rolling stats
+&{template:default} {{name= Ability Scores}} {{Ability Score 1 = [[4d6d1]]}} {{Ability Score 2 = [[4d6d1]]}} {{Ability Score 3 = [[4d6d1]]}} {{Ability Score 4 = [[4d6d1]]}} {{Ability Score 5 = [[4d6d1]]}} {{Ability Score 6 = [[4d6d1]]}}
+```
+
+**Health Check** - *Replace names with your player character names.*
+```
+&{template:default} {{name=Health Check}} {{Ganza= AC @{Ganza Nuans|ac} - HP @{Ganza Nuans|hp} / @{Ganza Nuans|hp|max}}} {{Griswold= AC @{Griswold Zenevar|ac} - HP @{Griswold Zenevar|hp} / @{Griswold Zenevar|hp|max}}} {{Halcyon= AC @{Halcyon Lockhart|ac} - HP @{Halcyon Lockhart|hp} / @{Halcyon Lockhart|hp|max}}} {{Rytlock= AC @{Rytlock Nightshade|ac} - HP @{Rytlock Nightshade|hp} / @{Rytlock Nightshade|hp|max}}} 
+```
+
 ### [LazyExperience](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/LazyExperience)
 **Add Session XP**
 ``` 
@@ -27,22 +38,6 @@ Initiative [[1d20 + @{selected|dexterity_mod}&{tracker}]]
 **Give experience to selected character**
 ``` 
 !xp add @{selected|character_id} ?{Experience} 
-```
-
-### [TurnMarker1](https://app.roll20.net/forum/post/931415/script-turnmarker1-turn-token-highlight-round-counter-player-advance-command-turn-announce-plus-spiny-graphics-if-you-want-them/?pageforid=931415#post-931415) & [GroupInitiative](https://wiki.roll20.net/Script:Group_Initiative)
-
-I don't use them anymore, instead I use my own [CombatTracker](https://github.com/RobinKuiper/Roll20APIScripts/tree/master/CombatTracker)
-
-**Start Combat**
-```
-!group-init
-!group-init --sort
-```
-
-**End Combat**
-```
-!group-init --clear
-!tm reset
 ```
 
 ### [TokenMod](https://app.roll20.net/forum/post/4225825/script-update-tokenmod-an-interface-to-adjusting-properties-of-a-token-from-a-macro-or-the-chat-area/?pageforid=4225825#post-4225825)
