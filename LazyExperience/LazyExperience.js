@@ -1,5 +1,5 @@
 /* 
- * Version 0.1.12
+ * Version 0.1.13
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -285,11 +285,16 @@ var LazyExperience = LazyExperience || (function() {
         let playerid;
         if(characterid){
             playerid = findObjs({ _id: characterid, _type: 'character' }).shift().get('controlledby');
-            state[state_name].players[playerid].characters.forEach((character, i) =>{
-                if(character.id === characterid){
-                    state[state_name].players[playerid].characters[i].experience += experience;
-                }
-            })
+            if(playerid !== ""){
+                state[state_name].players[playerid].characters.forEach((character, i) =>{
+                    if(character.id === characterid){
+                        state[state_name].players[playerid].characters[i].experience += experience;
+                    }
+                })
+            }else{
+                makeAndSendMenu('Selected token is not controlled by a player.', '', 'gm');
+                return;
+            }
         }else{
             state[state_name].session_experience += experience;
         }
