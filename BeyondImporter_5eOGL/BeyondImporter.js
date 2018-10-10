@@ -1129,7 +1129,9 @@
     const loadHitPoints = (character, total_level) => {
         let hp = Math.floor(character.baseHitPoints + ( total_level * Math.floor( ( ( getTotalAbilityScore(character, 3) - 10 ) / 2 ) ) ) );
 
-        let hpLevelBons = getObjects(character, 'subType', 'hit-points-per-level').forEach((bons) => {
+        // scan for modifiers except those in items, because we will get those bonuses from the items once they are imported
+        // NOTE: this also handles the problem that Beyond includes modifiers from items that are not currently equipped/attuned
+        let hpLevelBons = getObjects(character.modifiers, 'subType', 'hit-points-per-level', ['item']).forEach((bons) => {
             hp += total_level * bons.value;
         });
 
