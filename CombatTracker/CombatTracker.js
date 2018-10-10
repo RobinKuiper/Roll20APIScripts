@@ -1399,7 +1399,7 @@ on('ready',function() {
 
 /*
 conditions = {
-    xandir: [
+    54235346534564: [
         { name: 'prone', duration: '1' }
     ]
 }
