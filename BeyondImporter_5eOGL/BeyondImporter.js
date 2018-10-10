@@ -989,7 +989,8 @@
                     // Base Info
                     'level': character.classes[0].level + multiclass_level,
                     'experience': character.currentXp,
-                    'race': character.race.fullName,
+                    'race': (character.race.baseName || character.race.fullName),
+                    'subrace': character.race.subRaceShortName,
                     'background': background,
                     'speed': speed,
                     'hp_temp': character.temporaryHitPoints || '',
