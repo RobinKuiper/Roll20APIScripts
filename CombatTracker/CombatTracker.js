@@ -1,5 +1,5 @@
 /* 
- * Version 0.2.3
+ * Version 0.2.4
  * Made By Robin Kuiper
  * Changes in Version 0.2.1 by The Aaron
  * Skype: RobinKuiper.eu
@@ -506,7 +506,7 @@ var CombatTracker = CombatTracker || (function() {
         Campaign().set('initiativepage', Campaign().get('playerpageid'));
 
         if(selected && state[state_name].config.throw_initiative){
-            rollInitiative(selected, true);
+            rollInitiative(selected, state[state_name].config.auto_sort);
         }
     },
 
@@ -1044,6 +1044,7 @@ var CombatTracker = CombatTracker || (function() {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
             markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right),
             throwIniButton = makeButton(state[state_name].config.throw_initiative, '!' + state[state_name].config.command + ' config throw_initiative|'+!state[state_name].config.throw_initiative, styles.button + styles.float.right),
+            autoSortButton = makeButton(state[state_name].config.auto_sort, '!' + state[state_name].config.command + ' config auto_sort|'+!state[state_name].config.auto_sort, styles.button + styles.float.right),
             iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right),
             closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right),
             pullButton = makeButton(state[state_name].config.pull, '!' + state[state_name].config.command + ' config pull|'+!state[state_name].config.pull, styles.button + styles.float.right),
@@ -1055,6 +1056,7 @@ var CombatTracker = CombatTracker || (function() {
                 '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
                 '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
                 '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
+                '<span style="'+styles.float.left+'">Auto Sort:</span> ' + autoSortButton,
                 '<span style="'+styles.float.left+'">Auto Pull Map:</span> ' + pullButton,
                 '<span style="'+styles.float.left+'">Skip Custom Item:</span> ' + skipCustomButton
             ],
@@ -1268,6 +1270,7 @@ var CombatTracker = CombatTracker || (function() {
                 command: 'ct',
                 marker_img: 'https://s3.amazonaws.com/files.d20.io/images/52550079/U-3U950B3wk_KRtspSPyuw/thumb.png?1524507826',
                 throw_initiative: true,
+                auto_sort: true,
                 initiative_attribute_name: 'initiative_bonus',
                 close_stop: true,
                 skip_custom: true,
@@ -1309,6 +1312,9 @@ var CombatTracker = CombatTracker || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('throw_initiative')){
                 state[state_name].config.throw_initiative = defaults.config.throw_initiative;
+            }
+            if(!state[state_name].config.hasOwnProperty('auto_sort')){
+                state[state_name].config.auto_sort = defaults.config.auto_sort;
             }
             if(!state[state_name].config.hasOwnProperty('initiative_attribute_name')){
                 state[state_name].config.initiative_attribute_name = defaults.config.initiative_attribute_name;
