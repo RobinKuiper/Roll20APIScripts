@@ -109,6 +109,7 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 #### Changelog
 **v0.2.3**
 * Optionally whisper turns to gm.
+* Bugfix where StatusInfo conditions got the same duration.
 
 **v0.2.2**
 * Optionally skip custom items.
