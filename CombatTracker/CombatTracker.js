@@ -1224,8 +1224,6 @@ var CombatTracker = CombatTracker || (function() {
         if(state[state_name].config.debug){
 			makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm');
         }
-        
-        log(StatusInfo.getConditionByName('Stunned'))
     },
 
     handeIniativePageChange = (obj,prev) => {

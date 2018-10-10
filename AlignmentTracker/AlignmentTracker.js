@@ -369,8 +369,6 @@ var AlignmentTracker = AlignmentTracker || (function() {
 
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
         if(state[state_name].config.debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
-
-        log(state[state_name].config.alignment_attribute)
     },
 
     registerEventHandlers = () => {
