@@ -2,7 +2,8 @@
  * Version 0.1.0
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
- * Discord: Atheos#1014
+ * Discord: Atheos#1095
+ * My Discord Server: https://discord.gg/xwCDnH
  * Roll20: https://app.roll20.net/users/1226016/robin
  * Github: https://github.com/RobinKuiper/Roll20APIScripts
  * Reddit: https://www.reddit.com/user/robinkuiper/

@@ -3,7 +3,6 @@
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
- * My Discord Server: https://discord.gg/xwCDnH
  * Roll20: https://app.roll20.net/users/1226016/robin
  * Roll20 Thread: 
  * Github: https://github.com/RobinKuiper/Roll20APIScripts

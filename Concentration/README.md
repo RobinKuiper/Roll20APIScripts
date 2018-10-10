@@ -2,6 +2,7 @@
 
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
+* My Discord Server: https://discord.gg/xwCDnH
 * Roll20: https://app.roll20.net/users/1226016/robin
 * Roll20 Wiki: https://wiki.roll20.net/Script:Concentration
 * Roll20 Thread: https://app.roll20.net/forum/post/6364317/script-concentration/?pageforid=6364317#post-6364317
