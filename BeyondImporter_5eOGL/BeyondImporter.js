@@ -1,5 +1,5 @@
 /*
- * Version 0.1.12
+ * Version 0.1.13
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -31,7 +31,7 @@
 
     on('ready',()=>{ 
         checkInstall();
-        log(script_name + ' Ready! Command: !'+state[state_name].config.command);
+        log(script_name + ' Ready! Command: !beyond help');
         if(state[state_name].config.debug){ sendChat('', script_name + ' Ready!', null, {noarchive:true}); }
     });
 
@@ -83,7 +83,11 @@
 
                 case 'import':
                     var json = msg.content.substring(14);
-                    var character = JSON.parse(json).character;
+                    try {
+                        var character = JSON.parse(json).character;
+                    } catch (e) {
+                        sendChat('', '[D&D Beyond Import] Error: Invalid character JSON.', null, {noarchive:true});
+                    }
 
                     class_spells = [];
 
@@ -100,7 +104,11 @@
                     }
 
                     // Create character object
-                    object = createObj("character", { name: character.name + state[state_name].config.prefix });
+                    object = createObj('character', {
+                        name: character.name + state[state_name].config.prefix,
+                        inplayerjournals: 'all',
+                        controlledby: msg.playerid
+                    });
 
                     // Make Speed String
                     let speed = character.weightSpeeds.normal.walk + 'ft.';
