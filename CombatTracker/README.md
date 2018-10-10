@@ -107,6 +107,9 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.2.3**
+* Optionally whisper turns to gm.
+
 **v0.2.2**
 * Optionally skip custom items.
 * Improved condition show menu, with button to show custom messages or StatusInfo descriptions.

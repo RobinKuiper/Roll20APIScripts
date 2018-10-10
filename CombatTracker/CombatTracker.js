@@ -1,5 +1,5 @@
 /* 
- * Version 0.2.2
+ * Version 0.2.3
  * Made By Robin Kuiper
  * Changes in Version 0.2.1 by The Aaron
  * Skype: RobinKuiper.eu
@@ -673,6 +673,8 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     announceTurn = (token, target) => {
+        target = (state[state_name].config.announcements.whisper_turn_gm) ? 'gm' : target;
+
         let name, imgurl;
         if(typeof token === 'object'){
             name = token.get('name');
@@ -1075,6 +1077,7 @@ var CombatTracker = CombatTracker || (function() {
             handleLongNameButton = makeButton(state[state_name].config.announcements.handleLongName, '!' + state[state_name].config.command + ' config announcements handleLongName|'+!state[state_name].config.announcements.handleLongName, styles.button + styles.float.right),
             useFXButton = makeButton(state[state_name].config.announcements.use_fx, '!' + state[state_name].config.command + ' config announcements use_fx|'+!state[state_name].config.announcements.use_fx, styles.button + styles.float.right),
             FXTypeButton = makeButton(state[state_name].config.announcements.fx_type, '!' + state[state_name].config.command + ' config announcements fx_type|?{Type|'+state[state_name].config.announcements.fx_type+'}', styles.button + styles.float.right),
+            whisperTurnGMButton = makeButton(state[state_name].config.announcements.whisper_turn_gm, '!' + state[state_name].config.command + ' config announcements whisper_turn_gm|'+!state[state_name].config.announcements.whisper_turn_gm, styles.button + styles.float.right),
 
             backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth),
 
@@ -1087,6 +1090,7 @@ var CombatTracker = CombatTracker || (function() {
             listItems.push('<span style="'+styles.float.left+'">Announce Conditions:</span> ' + announceConditionsButton);
         }
         if(state[state_name].config.announcements.announce_turn){
+            listItems.push('<span style="'+styles.float.left+'">Whisper GM Only:</span> ' + whisperTurnGMButton);
             listItems.push('<span style="'+styles.float.left+'">Shorten Long Name:</span> ' + handleLongNameButton);
         }
 
@@ -1278,6 +1282,7 @@ var CombatTracker = CombatTracker || (function() {
                 announcements: {
                     announce_conditions: false,
                     announce_turn: true,
+                    whisper_turn_gm: false,
                     announce_round: true,
                     handleLongName: true,
                     use_fx: false,
@@ -1342,6 +1347,9 @@ var CombatTracker = CombatTracker || (function() {
             }else{
                 if(!state[state_name].config.announcements.hasOwnProperty('announce_turn')){
                     state[state_name].config.announcements.announce_turn = defaults.config.announcements.announce_turn;
+                }
+                if(!state[state_name].config.announcements.hasOwnProperty('whisper_turn_gm')){
+                    state[state_name].config.announcements.whisper_turn_gm = defaults.config.announcements.whisper_turn_gm;
                 }
                 if(!state[state_name].config.announcements.hasOwnProperty('announce_round')){
                     state[state_name].config.announcements.announce_round = defaults.config.announcements.announce_round;
