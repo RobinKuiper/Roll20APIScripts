@@ -123,7 +123,37 @@
                 let character = JSON.parse(json).character;
 
                 class_spells = [];
-                all_attributes = {};
+
+                // these are written first and individually, since they trigger a lot of changes
+                // 'class' is written first, the rest alphabetically
+                let class_attributes = {
+                    'class': character.classes[0].definition.name,
+                    'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
+                    'base_level': character.classes[0].level,
+
+                    // prevent upgrades, because they recalculate the class (saves etc.)
+                    'version': '2.5',
+
+                    // prevent character mancer from doing anything
+                    'l1mancer_status': 'complete',
+                    'mancer_cancel': 'on'
+
+                    // multiclass attributes are added here by the code
+                }
+
+                // these are written individually after all the class attributes, in alphabetical order
+                // we don't expect these to trigger many dramatic changes to other attributes
+                let single_attributes = {};
+
+                // these are written individually after all the single attributes, in alphabetical order
+                // these have to be written after the last time that update_class is called in the 5e OGL sheet, so 
+                // we wait until we have written all the other individual attributes that might trigger it
+                let save_proficiency_attributes = {}
+
+                // these are written in one large write once everything else is written
+                // NOTE: changing any stats after all these are imported would create a lot of updates, so it is
+                // good that we write these when all the stats are done 
+                let repeating_attributes = {};
 
                 object = null;
                 // Remove characters with the same name if overwrite is enabled.
@@ -257,7 +287,7 @@
                         attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
                         attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
-                        Object.assign(all_attributes, attributes);
+                        Object.assign(repeating_attributes, attributes);
                     }
                     else {
                         if(languages != null) {
@@ -268,7 +298,7 @@
                                 attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
                                 attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
-                                Object.assign(all_attributes, attributes);
+                                Object.assign(repeating_attributes, attributes);
                             });
                         }
                     }
@@ -284,7 +314,7 @@
                         if(skills.includes(skill)){
                             let attributes = {}
                             attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
-                            Object.assign(all_attributes, attributes);
+                            Object.assign(single_attributes, attributes);
                         }
                         else if(state[state_name][beyond_caller.id].config.imports.proficiencies) {
                             if(profs.indexOf(prof.friendlySubtypeName) !== -1) return;
@@ -297,7 +327,7 @@
                             attributes["repeating_proficiencies_" + row + "_prof_type"] = (prof.subType.includes('weapon') || weapons.includes(prof.friendlySubtypeName)) ? 'WEAPON' : (prof.subType.includes('armor') || prof.subType.includes('shield')) ? 'ARMOR' : 'OTHER';
                             attributes["repeating_proficiencies_" + row + "_options-flag"] = '0';
 
-                            Object.assign(all_attributes, attributes);
+                            Object.assign(repeating_attributes, attributes);
                         }
                     });
                 }
@@ -313,7 +343,7 @@
                         }
 
                         let attrs = createRepeatingTrait(object, btrait);
-                        Object.assign(all_attributes, attrs);
+                        Object.assign(repeating_attributes, attrs);
                     }
                     // Custom Background Feature
                     if(character.background.customBackground.name != null) {
@@ -325,7 +355,7 @@
                         };
 
                         let attrs = createRepeatingTrait(object, btrait);
-                        Object.assign(all_attributes, attrs);
+                        Object.assign(repeating_attributes, attrs);
                     }
                     // Feats
                     character.feats.forEach((feat, fi) => {
@@ -337,7 +367,7 @@
                         };
 
                         let attrs = createRepeatingTrait(object, t, fi);
-                        Object.assign(all_attributes, attrs);
+                        Object.assign(repeating_attributes, attrs);
                     });
                     // Race Features
                     if(character.race.racialTraits != null) {
@@ -365,7 +395,7 @@
                             };
 
                             let attrs = createRepeatingTrait(object, t, ti);
-                            Object.assign(all_attributes, attrs);
+                            Object.assign(repeating_attributes, attrs);
 
                             let spells = getFeatureSpells(character, trait.id, 'race');
                             spells.forEach((spell) => {
@@ -382,17 +412,15 @@
                 let multiclass_level = 0;
                 let total_level = 0;
                 if(state[state_name][beyond_caller.id].config.imports.classes) {
+                    let multiclasses = {};
                     character.classes.forEach((current_class, i) => {
                         total_level += current_class.level;
 
                         if(!current_class.isStartingClass){
-                            let multiclasses = {};
                             multiclasses['multiclass'+i+'_flag'] = '1';
                             multiclasses['multiclass'+i+'_lvl'] = current_class.level;
                             multiclasses['multiclass'+i] = current_class.definition.name.toLowerCase();
                             multiclasses['multiclass'+i+'_subclass'] = current_class.subclassDefinition == null ? '' : current_class.subclassDefinition.name;
-                            Object.assign(all_attributes, multiclasses);
-
                             multiclass_level += current_class.level;
                         }
 
@@ -402,7 +430,7 @@
                             attributes['other_resource_name'] = 'Pact Magic';
                             attributes['other_resource_max'] = getPactMagicSlots(current_class.level);
                             attributes['other_resource'] = getPactMagicSlots(current_class.level);
-                            Object.assign(all_attributes, attributes);
+                            Object.assign(class_attributes, attributes);
                         }
 
                         if(current_class.definition.name.toLowerCase() === 'fighter' && current_class.subclassDefinition != null) {
@@ -441,7 +469,7 @@
                                     source_type: current_class.definition.name
                                 };
 
-                                Object.assign(all_attributes, createRepeatingTrait(object, t, ti));
+                                Object.assign(repeating_attributes, createRepeatingTrait(object, t, ti));
 
                                 let spells = getFeatureSpells(character, trait.id, 'class');
                                 spells.forEach((spell) => {
@@ -463,7 +491,7 @@
                                                     source_type: current_class.definition.name
                                                 };
 
-                                                Object.assign(all_attributes, createRepeatingTrait(object, o));
+                                                Object.assign(repeating_attributes, createRepeatingTrait(object, o));
                                             }
                                         }
                                     });
@@ -495,7 +523,7 @@
                                         source_type: current_class.definition.name
                                     }
 
-                                    Object.assign(all_attributes, createRepeatingTrait(object, t, ti));
+                                    Object.assign(repeating_attributes, createRepeatingTrait(object, t, ti));
 
                                     let spells = getFeatureSpells(character, trait.id, 'class');
                                     spells.forEach((spell) => {
@@ -521,6 +549,7 @@
                             }
                         }
                     });
+                    Object.assign(class_attributes, multiclasses);
                 }
 
                 // Import Character Inventory
@@ -544,6 +573,7 @@
                     const inventory = character.inventory;
                     let prevAdded = [];
                     if(inventory != null) inventory.forEach((item, i) => {
+                        log('beyond: found inventory item ' + item.definition.name);
                         let paIndex = prevAdded.filter((pAdded) => { return pAdded == item.definition.name; }).length;
                         let row = getRepeatingRowIds('inventory', 'itemname', item.definition.name, paIndex);
                         prevAdded.push(item.definition.name);
@@ -669,7 +699,7 @@
                             });
 
                             let repAttack = createRepeatingAttack(object, attack, {index: paIndex, itemid: row});
-                            Object.assign(all_attributes, repAttack);
+                            Object.assign(repeating_attributes, repAttack);
                             // /CREATE ATTACK
                         }
                         item.definition.grantedModifiers.forEach((grantedMod) => {
@@ -714,7 +744,7 @@
                             hasArmor = true;
                         }
                         attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
-                        Object.assign(all_attributes, attributes);
+                        Object.assign(repeating_attributes, attributes);
                     });
                 }
 
@@ -755,7 +785,7 @@
                     attributes["repeating_inventory_"+row+"_equipped"] = !hasArmor ? '1' : '0';
                     attributes["repeating_inventory_"+row+"_itemcount"] = 1;
                     attributes["repeating_inventory_"+row+"_itemmodifiers"] = modifiers;
-                    Object.assign(all_attributes, attributes);
+                    Object.assign(repeating_attributes, attributes);
 
                     if(ua.componentTypeId == 306912077) { hasArmor = true; }
 
@@ -787,7 +817,7 @@
                                 ) {
                                     let attributes = {};
                                     attributes[skill + "_flat"] = Math.ceil((Math.floor((total_level - 1) / 4) + 2) / 2);
-                                    Object.assign(all_attributes, attributes);
+                                    Object.assign(single_attributes, attributes);
                                 }
                             });
                         }
@@ -803,7 +833,7 @@
                                 ) {
                                     let attributes = {};
                                     attributes[skill + "_flat"] = Math.floor((Math.floor((total_level - 1) / 4) + 2) / 2);
-                                    Object.assign(all_attributes, attributes);
+                                    Object.assign(single_attributes, attributes);
                                 }
                             });
                         }
@@ -818,7 +848,7 @@
                         if(modifier.subType == 'initiative') {
                             let attributes = {};
                             attributes["initmod"] = Math.ceil((Math.floor((total_level - 1) / 4) + 2) / 2);
-                            Object.assign(all_attributes, attributes);
+                            Object.assign(single_attributes, attributes);
                         }
                     });
                 }
@@ -827,7 +857,7 @@
                         if(modifier.subType == 'initiative') {
                             let attributes = {};
                             attributes["initmod"] = Math.floor((Math.floor((total_level - 1) / 4) + 2) / 2);
-                            Object.assign(all_attributes, attributes);
+                            Object.assign(single_attributes, attributes);
                         }
                     });
                 }
@@ -836,10 +866,11 @@
                 let exp = getObjects(character, 'type', 'expertise');
                 for(let i in exp) {
                     let expertise = exp[i];
-                    let attributes = {};
                     let type = expertise.subType.replace(/-/g, '_');
                     if(skills.includes(type)){
+                        let attributes = {};
                         attributes[type + '_type'] = "2";
+                        Object.assign(single_attributes, attributes);
                     }
 
                     if(expertise.subType === 'thieves-tools') {
@@ -849,9 +880,8 @@
                         attributes["repeating_proficiencies_"+row+"_name"] = expertise.friendlySubtypeName;
                         attributes["repeating_proficiencies_"+row+"_prof_type"] = 'OTHER';
                         attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
+                        Object.assign(repeating_attributes, attributes);
                     }
-
-                    Object.assign(all_attributes, attributes);
                 }
 
                 // Adhoc Expertise
@@ -869,10 +899,11 @@
                             }
                         });
                     }
-                    Object.assign(all_attributes, attributes);
+                    Object.assign(single_attributes, attributes);
                 });
 
                 // Other Bonuses
+                // XXX what are these?  should they really scan the ENTIRE character?
                 let bonuses = getObjects(character, 'type', 'bonus');
                 let bonus_attributes = {};
                 if(state[state_name][beyond_caller.id].config.imports.bonuses){
@@ -907,7 +938,6 @@
                 if(!initadv && initdis) init_style = '{@{d20},@{d20}}kl1';
 
                 // Saving Throw Bonuses and proficiencies
-                let save_proficiency_attributes = {}
                 let stBonuses = getObjects(character.modifiers, 'subType', 'saving-throws', ['item']);
                 let stBonTotals = [0,0,0,0,0,0,0];
                 stBonuses.forEach((bonus) => {
@@ -976,11 +1006,6 @@
                     'skin': (character.skin || ''),
                     'character_appearance': (character.traits.appearance || ''),
 
-                    // Class(es)
-                    'class': character.classes[0].definition.name,
-                    'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
-                    'base_level': character.classes[0].level,
-
                     // Ability Scores
                     'strength_base': getTotalAbilityScore(character, 1),
                     'dexterity_base': getTotalAbilityScore(character, 2),
@@ -1031,46 +1056,96 @@
                     // 'jack_of_all_trades': jack
                 };
 
-                Object.assign(all_attributes, other_attributes);
-                // Object.assign(all_attributes, bonus_attributes);
-                Object.assign(all_attributes, save_proficiency_attributes);
+                Object.assign(single_attributes, other_attributes);
+                
+                // XXX what is the status of these?
+                // Object.assign(single_attributes, bonus_attributes);
 
-                setAttrs(object.id, all_attributes);
+                // take class name out of attributes, so we can place it first
+                let className = class_attributes['class'];
+                delete class_attributes['class'];
 
-                if(state[state_name][beyond_caller.id].config.imports.class_spells) {
-                    onSheetWorkerCompleted(() => {
-                        importSpells(character, class_spells)
-                    });
-                }
+                // make work queue
+                // set class first, everything else is alphabetical within each group of attributes
+                let items = [ ['class', className] ];
+                items = items.concat(
+                    sortedAttributeItems(class_attributes),
+                    sortedAttributeItems(single_attributes), 
+                    sortedAttributeItems(save_proficiency_attributes));
 
-                let hp = Math.floor(character.baseHitPoints + ( total_level * Math.floor( ( ( getTotalAbilityScore(character, 3) - 10 ) / 2 ) ) ) );
-
-                let hpLevelBons = getObjects(character, 'subType', 'hit-points-per-level').forEach((bons) => {
-                    hp += total_level * bons.value;
-                });
-
-                let hpAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'hp' })[0];
-                if(hpAttr == null) {
-                    createObj('attribute', {
-                        characterid: object.id,
-                        name: 'hp',
-                        current: hp,
-                        max: hp
-                    });
-                }
-                else {
-                    hpAttr.set('current', hp);
-                    hpAttr.set('max', hp);
-                }
-
-                if(class_spells.length > 0 && state[state_name][beyond_caller.id].config.imports.class_spells) {
-                    sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>Class spells are being imported over time.</p></div>', null, {noarchive:true});
-                } else {
-                    reportReady(character)
-                }
+                processItem(character, items, repeating_attributes, total_level)
             }
         }
     });
+
+    const sortedAttributeItems = (attributesDictionary) => {
+        items = Object.keys(attributesDictionary).map(function(key) {
+            return [key, attributesDictionary[key]];
+        });
+        items.sort(function(left, right) {
+            return ('' + left[0]).localeCompare(right[0]);
+        });
+        return items;
+    }
+
+    const processItem = (character, items, repeating_attributes, total_level) => {
+        let nextItem = items.shift()
+
+        if (!nextItem) {
+            // do one giant write for all the repeating attributes
+            setAttrs(object.id, repeating_attributes);
+
+            // configure HP, because we now know our CON score 
+            loadHitPoints(character, total_level);
+
+            // do async follow up work?
+            if(state[state_name][beyond_caller.id].config.imports.class_spells) {
+                // this is really just artificially asynchronous, we are not currently using a worker, so it will happen as soon as we return
+                onSheetWorkerCompleted(() => {
+                    importSpells(character, class_spells)
+                });
+            }
+  
+            if(class_spells.length > 0 && state[state_name][beyond_caller.id].config.imports.class_spells) {
+                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>Class spells are being imported over time.</p></div>', null, {noarchive:true});
+            } else {
+                reportReady(character)
+            }
+            return
+        }
+
+         // create empty attribute if not already there
+        let nextAttribute = findObjs({ type: 'attribute', characterid: object.id, name: nextItem[0] })[0];
+        nextAttribute = nextAttribute || createObj('attribute', { name: nextItem[0], characterid: object.id});
+
+        // async load next item
+        onSheetWorkerCompleted(function() {
+            processItem(character, items, repeating_attributes, total_level)
+        });
+        log('beyond: ' + nextItem[0] + " = " + String(nextItem[1]));
+        nextAttribute.setWithWorker({ current: nextItem[1] });
+    }
+
+    const loadHitPoints = (character, total_level) => {
+        let hp = Math.floor(character.baseHitPoints + ( total_level * Math.floor( ( ( getTotalAbilityScore(character, 3) - 10 ) / 2 ) ) ) );
+
+        let hpLevelBons = getObjects(character, 'subType', 'hit-points-per-level').forEach((bons) => {
+            hp += total_level * bons.value;
+        });
+
+        let hpAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'hp' })[0];
+        if(hpAttr == null) {
+            createObj('attribute', {
+                characterid: object.id,
+                name: 'hp',
+                current: hp,
+                max: hp
+            });
+        } else {
+            hpAttr.set('current', hp);
+            hpAttr.set('max', hp);
+        }       
+    }
 
     const getPactMagicSlots = (level) => {
         switch(level){
@@ -1381,7 +1456,7 @@
     };
 
     const replaceChars = (text) => {
-        text = text.replace('\&rsquo\;', '\'').replace('\&mdash\;','—').replace('\ \;',' ').replace('\&hellip\;','…');
+        text = text.replace('\&rsquo\;', '\'').replace('\&mdash\;','—').replace('\ \;',' ').replace('\&hellip\;','…');
         text = text.replace('\û\;','û').replace('’', '\'').replace(' ', ' ');
         text = text.replace(/\<li[^\>]+\>/gi,'• ').replace('\<\/li\>','');
 
