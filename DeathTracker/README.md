@@ -2,7 +2,7 @@
 
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
-* My Discord Server: https://discord.gg/xwCDnH
+* My Discord Server: https://discord.gg/AcC9VME
 * Roll20: https://app.roll20.net/users/1226016/robin
 * Reddit: https://www.reddit.com/user/robinkuiper/
 * Patreon: https://www.patreon.com/robinkuiper
