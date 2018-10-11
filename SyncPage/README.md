@@ -54,6 +54,12 @@ Now you can drag specific players to one of the synced maps to show them only th
 * **!sync show others** - Sets the `show others` flag to the selected token(s).
 * **!sync hide others** - Sets the `hide others` flag to the selected token(s).
 
+---
+
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
+
+---
+
 #### Changelog
 **28-04-2018 - 0.1.9**
 * Added a "true copy" feature. Pages can be really duplicated now.

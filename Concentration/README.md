@@ -44,6 +44,10 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 
 ---
 
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
+
+---
+
 #### Changelog:
 **0.1.14**
 * Changed advantage system on autoroll.

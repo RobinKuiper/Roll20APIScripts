@@ -27,6 +27,10 @@ __Optionally__: Set an **Unconscious** statusmarker on **Player Characters**. Th
 
 ---
 
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
+
+---
+
 #### Changelog
 **0.1.8**
 * Tint config expanded.

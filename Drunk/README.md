@@ -25,3 +25,7 @@ Drunk keeps track of the level of inebration a character has and also adds a sta
 ![Config Menu](https://i.imgur.com/cbU9NbG.png "Config Menu")
 ![Level](https://i.imgur.com/CnHHqAo.png "Level")
 ![Drunk Menu](https://i.imgur.com/Kge9P8J.png "Drunk Menu")
+
+---
+
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)

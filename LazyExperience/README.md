@@ -62,6 +62,10 @@ Roll20 Thread: https://app.roll20.net/forum/post/6275681/script-lazyexperience/?
 
 ---
 
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
+
+---
+
 #### Changelog
 **v0.1.13**
 * Bugfixes

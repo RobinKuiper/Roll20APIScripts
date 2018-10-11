@@ -40,6 +40,12 @@ Where "color" in the above is one of: acid, blood, charm, death, fire, frost, ho
 
 For custom effects, type should be the ID of the custfx object for the custom effect. ```
 
+---
+
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
+
+---
+
 #### Changelog
 **v0.1.4 - 29-04-2018**
 * Adding the selected statusmarker manually or through TokenMod will now also add an inspiration to the sheet.
