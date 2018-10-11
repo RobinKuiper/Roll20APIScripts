@@ -17,7 +17,7 @@
 * Name: Matt DeKok
 * Discord: Sillvva#2532
 * Roll20: https://app.roll20.net/users/494585/sillvva
-* Github: https://github.com/sillvva/Roll20-API-Scripts
+* Github: https://github.com/sillvva/Roll20APIScripts
 
 ---
 
@@ -26,7 +26,7 @@ NOTICE: The commands are changed since the last update, read the description bel
 ```
 
 Beyond Importer let's you import a character sheet from DNDBeyond into Roll20.
-There are 2 versions of the Beyond Importer, one for the [5e Shaped Sheet](https://bitbucket.org/mlenser/5eshaped/wiki/Home) *(I, Sillvva, do not currently support this sheet)* and one for the [5e OGL sheet](https://wiki.roll20.net/5th_Edition_OGL_by_Roll20).
+There are 2 versions of the Beyond Importer, one for the [5e Shaped Sheet](https://bitbucket.org/mlenser/5eshaped/wiki/Home) and one for the [5e OGL sheet](https://wiki.roll20.net/5th_Edition_OGL_by_Roll20).
 
 **Both version work the same.**
 
