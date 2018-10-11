@@ -411,6 +411,7 @@
                 // Handle (Multi)Class Features
                 let multiclass_level = 0;
                 let total_level = 0;
+                let monk_level = 0;
                 if(state[state_name][beyond_caller.id].config.imports.classes) {
                     let multiclasses = {};
                     character.classes.forEach((current_class, i) => {
@@ -432,6 +433,8 @@
                             attributes['other_resource'] = getPactMagicSlots(current_class.level);
                             Object.assign(class_attributes, attributes);
                         }
+
+                        if(current_class.definition.name == 'Monk') monk_level = current_class.level;
 
                         if(current_class.definition.name.toLowerCase() === 'fighter' && current_class.subclassDefinition != null) {
                             if(current_class.subclassDefinition.name.toLowerCase() == 'champion') {
@@ -572,180 +575,219 @@
 
                     const inventory = character.inventory;
                     let prevAdded = [];
-                    if(inventory != null) inventory.forEach((item, i) => {
-                        log('beyond: found inventory item ' + item.definition.name);
-                        let paIndex = prevAdded.filter((pAdded) => { return pAdded == item.definition.name; }).length;
-                        let row = getRepeatingRowIds('inventory', 'itemname', item.definition.name, paIndex);
-                        prevAdded.push(item.definition.name);
-
-                        let attributes = {};
-                        attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
-                        attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
-                        attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
-                        attributes["repeating_inventory_"+row+"_itemweight"] = (item.definition.bundleSize != 0 ? item.definition.weight / item.definition.bundleSize : item.definition.weight);
-                        attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
-                        let _itemmodifiers = 'Item Type: ' + item.definition.type;
-                        if(typeof item.definition.damage === 'object' && item.definition.type !== 'Ammunition') {
-                            let properties = '';
-                            let finesse = false;
-                            let twohanded = false;
-                            let ranged = false;
-                            let hasOffhand = false;
-                            let isOffhand = false;
-                            item.definition.properties.forEach((prop) => {
-                                if(prop.name == 'Two-Handed') {
-                                    twohanded = true;
-                                }
-                                if(prop.name == 'Range') {
-                                    ranged = true;
-                                }
-                                if(prop.name == 'Finesse') {
-                                    finesse = true;
-                                }
-
-                                properties += prop.name + ', ';
-                            });
-
-                            let cv = getObjects(character.characterValues, 'valueTypeId', item.entityTypeId);
-                            cv.forEach((v) => {
-                                if(v.typeId == 18 && v.value === true) {
-                                    hasOffhand = true;
-                                    if(v.valueId == item.id) {
-                                        isOffhand = true;
-                                    }
-                                }
-                            });
-
-                            attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
-                            attributes["repeating_inventory_"+row+"_hasattack"] = '0';
-                            _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + (item.definition.damage != null ? ', Damage: ' + item.definition.damage.diceString : '') + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
-
-                            let magic = 0;
-                            item.definition.grantedModifiers.forEach((grantedMod) => {
-                                if(grantedMod.type == 'bonus' && grantedMod.subType == 'magic') {
-                                    magic += grantedMod.value;
-                                }
-                            });
-
-                            // Finesse Weapon
-                            let isFinesse = item.definition.properties.filter((property) => { return property.name == 'Finesse'; }).length > 0;
-                            if(isFinesse && getTotalAbilityScore(character, 2) > getTotalAbilityScore(character, item.definition.attackType)) {
-                                item.definition.attackType = 2;
-                            }
-
-                            // Hexblade's Weapon
-                            let characterValues = getObjects(character.characterValues, 'valueId', item.id);
-                            characterValues.forEach((cv) => {
-                                if(cv.typeId == 29 && getTotalAbilityScore(character, 6) >= getTotalAbilityScore(character, item.definition.attackType)) {
-                                    item.definition.attackType = 6;
-                                }
-                            });
-
-                            let gwf = false;
-                            let atkmod = 0;
-                            let dmgmod = 0;
-                            let hasTWFS = false;
-
-                            // process each fighting style only once 
-                            fightingStylesSelected.forEach((fightingStyle) => {
-                                if(fightingStyle == 'Great Weapon Fighting' && twohanded) {
-                                    gwf = true;
-                                }
-                                if(fightingStyle == 'Archery' && ranged) {
-                                    atkmod += 2;
-                                }
-                                if(fightingStyle== 'Dueling' && !(hasOffhand || ranged || twohanded)) {
-                                    log('applying Dueling +2 to ' + item.definition.name)
-                                    dmgmod += 2;
-                                    log('damage mod now ' + dmgmod)
-                                }
-                                if(fightingStyle == 'Two-Weapon Fighting') {
-                                    hasTWFS = true;
-                                }
-                            });
-
-                            let dmgattr = _ABILITY[_ABILITIES[item.definition.attackType]];
-                            if(!hasTWFS && isOffhand) dmgattr = '0';
-
-                            // CREATE ATTACK
-                            let attack = {
-                                name: item.definition.name,
-                                range: item.definition.range + (item.definition.range != item.definition.longRange ? '/' + item.definition.longRange : '') + 'ft.',
-                                attack: {
-                                    attribute: _ABILITY[_ABILITIES[item.definition.attackType]],
-                                    mod: atkmod
-                                },
-                                damage: {
-                                    diceString: item.definition.damage != null ? item.definition.damage.diceString + (gwf ? 'ro<2' : '') : '',
-                                    type: item.definition.damageType,
-                                    attribute: dmgattr,
-                                    mod: dmgmod
-                                },
-                                description: replaceChars(item.definition.description),
-                                magic: magic,
-                                critrange: Math.min(weapon_critical_range, critical_range)
-                            };
-
-                            item.definition.grantedModifiers.forEach((grantedMod) => {
-                                if(grantedMod.type == 'damage') {
-                                    if(grantedMod.dice != null) {
-                                        attack.damage2 = {
-                                            diceString: grantedMod.dice.diceString,
-                                            type: grantedMod.friendlySubtypeName,
-                                            attribute: grantedMod.statId == null ? '0' : _ABILITY[_ABILITIES[grantedMod.statId]]
-                                        };
-                                    }
-                                }
-                            });
-
-                            let repAttack = createRepeatingAttack(object, attack, {index: paIndex, itemid: row});
-                            Object.assign(repeating_attributes, repAttack);
-                            // /CREATE ATTACK
-                        }
-                        item.definition.grantedModifiers.forEach((grantedMod) => {
-                            for(let abilityId in _ABILITIES) {
-                                let ABL = _ABILITIES[abilityId];
-                                if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
-                                    _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
-                                }
-                            }
-                            if(grantedMod.type == 'bonus' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
-                                if(grantedMod.subType == 'armor-class') {
-                                    hasArmor = true;
-                                }
-                                if(item.definition.hasOwnProperty('armorClass')) {
-                                    item.definition.armorClass += grantedMod.value;
-                                }
-                                else {
-                                    _itemmodifiers += ', AC +' + grantedMod.value;
-                                }
-                            }
-                            if(grantedMod.type == 'set' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
-                                if(grantedMod.subType == 'armor-class') {
-                                    hasArmor = true;
-                                    let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                    aac.forEach((aacb) => {
-                                        grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
-                                    });
-                                }
-                                _itemmodifiers += ', AC: ' + grantedMod.value;
-                            }
-                            if(grantedMod.type == 'bonus' && (grantedMod.subType == 'saving-throws')) {
-                                _itemmodifiers += ', Saving Throws +' + grantedMod.value;
-                            }
+                    if(inventory != null) {
+                        let shieldEquipped = false;
+                        inventory.forEach((item, i) => {
+                            if(item.definition.type == 'Shield' && item.equipped) shieldEquipped = true;
                         });
-                        if(item.definition.hasOwnProperty('armorClass')){
-                            let aac = getObjects(character, 'subType', 'armored-armor-class');
-                            let ac = item.definition.armorClass;
-                            aac.forEach((aacb) => {
-                                ac = parseInt(ac) + parseInt(aacb.value);
+                        inventory.forEach((item, i) => {
+                            log('beyond: found inventory item ' + item.definition.name);
+                            let paIndex = prevAdded.filter((pAdded) => { return pAdded == item.definition.name; }).length;
+                            let row = getRepeatingRowIds('inventory', 'itemname', item.definition.name, paIndex);
+                            prevAdded.push(item.definition.name);
+
+                            let attributes = {};
+                            attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
+                            attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
+                            attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
+                            attributes["repeating_inventory_"+row+"_itemweight"] = (item.definition.bundleSize != 0 ? item.definition.weight / item.definition.bundleSize : item.definition.weight);
+                            attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
+                            let _itemmodifiers = 'Item Type: ' + item.definition.type;
+                            if(typeof item.definition.damage === 'object' && item.definition.type !== 'Ammunition') {
+                                let properties = '';
+                                let finesse = false;
+                                let twohanded = false;
+                                let ranged = false;
+                                let hasOffhand = false;
+                                let isOffhand = false;
+                                let versatile = false;
+                                let versatileDice = '';
+                                item.definition.properties.forEach((prop) => {
+                                    if(prop.name == 'Two-Handed') {
+                                        twohanded = true;
+                                    }
+                                    if(prop.name == 'Range') {
+                                        ranged = true;
+                                    }
+                                    if(prop.name == 'Finesse') {
+                                        finesse = true;
+                                    }
+                                    if(prop.name == 'Versatile') {
+                                        versatile = true;
+                                        versatileDice = prop.notes;
+                                    }
+
+                                    properties += prop.name + ', ';
+                                });
+
+                                let cv = getObjects(character.characterValues, 'valueTypeId', item.entityTypeId);
+                                cv.forEach((v) => {
+                                    if(v.typeId == 18 && v.value === true) {
+                                        hasOffhand = true;
+                                        if(v.valueId == item.id) {
+                                            isOffhand = true;
+                                        }
+                                    }
+                                });
+
+                                attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
+                                attributes["repeating_inventory_"+row+"_hasattack"] = '0';
+                                _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + (item.definition.damage != null ? ', Damage: ' + item.definition.damage.diceString : '') + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
+
+                                let magic = 0;
+                                item.definition.grantedModifiers.forEach((grantedMod) => {
+                                    if(grantedMod.type == 'bonus' && grantedMod.subType == 'magic') {
+                                        magic += grantedMod.value;
+                                    }
+                                });
+
+                                // Finesse Weapon
+                                let isFinesse = item.definition.properties.filter((property) => { return property.name == 'Finesse'; }).length > 0;
+                                if(isFinesse && getTotalAbilityScore(character, 2) > getTotalAbilityScore(character, item.definition.attackType)) {
+                                    item.definition.attackType = 2;
+                                }
+
+                                // Hexblade's Weapon
+                                let characterValues = getObjects(character.characterValues, 'valueId', item.id);
+                                characterValues.forEach((cv) => {
+                                    if(cv.typeId == 29 && getTotalAbilityScore(character, 6) >= getTotalAbilityScore(character, item.definition.attackType)) {
+                                        item.definition.attackType = 6;
+                                    }
+                                });
+
+                                let gwf = false;
+                                let atkmod = 0;
+                                let dmgmod = 0;
+                                let hasTWFS = false;
+
+                                // process each fighting style only once
+                                fightingStylesSelected.forEach((fightingStyle) => {
+                                    if(fightingStyle == 'Great Weapon Fighting' && twohanded) {
+                                        gwf = true;
+                                    }
+                                    if(fightingStyle == 'Archery' && ranged) {
+                                        atkmod += 2;
+                                    }
+                                    if(fightingStyle== 'Dueling' && !(hasOffhand || ranged || twohanded)) {
+                                        log('applying Dueling +2 to ' + item.definition.name)
+                                        dmgmod += 2;
+                                        log('damage mod now ' + dmgmod)
+                                    }
+                                    if(fightingStyle == 'Two-Weapon Fighting') {
+                                        hasTWFS = true;
+                                    }
+                                });
+
+                                if(versatile && !(hasOffhand || shieldEquipped)) {
+                                    item.definition.damage.diceString = versatileDice;
+                                }
+
+                                if(item.definition.isMonkWeapon && monk_level > 0) {
+                                    let itemAvgDmg = 0;
+                                    if(item.definition.damage != null) {
+                                        let dS = item.definition.damage.diceString;
+                                        let itemDieCount = parseInt(dS.substr(0, dS.indexOf('d')));
+                                        let itemDieSize = parseInt(dS.substr(dS.indexOf('d')+1));
+                                        itemAvgDmg = (itemDieCount * (itemDieSize + 1)) / 2;
+                                    }
+
+                                    let monkDieSize = Math.floor((monk_level - 1) / 4) * 2 + 4;
+                                    let monkAvgDmg = monkDieSize = (1 + monkDieSize) / 2;
+
+                                    if(monkAvgDmg > itemAvgDmg) {
+                                        item.definition.damage.diceString = '1d'+monkDieSize;
+                                    }
+
+                                    let str = getTotalAbilityScore(character, 1);
+                                    let dex = getTotalAbilityScore(character, 2);
+                                    if(dex > str) {
+                                        item.definition.attackType = 2;
+                                    }
+                                }
+
+                                let dmgattr = _ABILITY[_ABILITIES[item.definition.attackType]];
+                                if(!hasTWFS && isOffhand) dmgattr = '0';
+
+                                // CREATE ATTACK
+                                let attack = {
+                                    name: item.definition.name,
+                                    range: item.definition.range + (item.definition.range != item.definition.longRange ? '/' + item.definition.longRange : '') + 'ft.',
+                                    attack: {
+                                        attribute: _ABILITY[_ABILITIES[item.definition.attackType]],
+                                        mod: atkmod
+                                    },
+                                    damage: {
+                                        diceString: item.definition.damage != null ? item.definition.damage.diceString + (gwf ? 'ro<2' : '') : '',
+                                        type: item.definition.damageType,
+                                        attribute: dmgattr,
+                                        mod: dmgmod
+                                    },
+                                    description: replaceChars(item.definition.description),
+                                    magic: magic,
+                                    critrange: Math.min(weapon_critical_range, critical_range)
+                                };
+
+                                item.definition.grantedModifiers.forEach((grantedMod) => {
+                                    if(grantedMod.type == 'damage') {
+                                        if(grantedMod.dice != null) {
+                                            attack.damage2 = {
+                                                diceString: grantedMod.dice.diceString,
+                                                type: grantedMod.friendlySubtypeName,
+                                                attribute: grantedMod.statId == null ? '0' : _ABILITY[_ABILITIES[grantedMod.statId]]
+                                            };
+                                        }
+                                    }
+                                });
+
+                                let repAttack = createRepeatingAttack(object, attack, {index: paIndex, itemid: row});
+                                Object.assign(repeating_attributes, repAttack);
+                                // /CREATE ATTACK
+                            }
+                            item.definition.grantedModifiers.forEach((grantedMod) => {
+                                for(let abilityId in _ABILITIES) {
+                                    let ABL = _ABILITIES[abilityId];
+                                    if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
+                                        _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
+                                    }
+                                }
+                                if(grantedMod.type == 'bonus' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
+                                    if(grantedMod.subType == 'armor-class') {
+                                        hasArmor = true;
+                                    }
+                                    if(item.definition.hasOwnProperty('armorClass')) {
+                                        item.definition.armorClass += grantedMod.value;
+                                    }
+                                    else {
+                                        _itemmodifiers += ', AC +' + grantedMod.value;
+                                    }
+                                }
+                                if(grantedMod.type == 'set' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
+                                    if(grantedMod.subType == 'armor-class') {
+                                        hasArmor = true;
+                                        let aac = getObjects(character, 'subType', 'armored-armor-class');
+                                        aac.forEach((aacb) => {
+                                            grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
+                                        });
+                                    }
+                                    _itemmodifiers += ', AC: ' + grantedMod.value;
+                                }
+                                if(grantedMod.type == 'bonus' && (grantedMod.subType == 'saving-throws')) {
+                                    _itemmodifiers += ', Saving Throws +' + grantedMod.value;
+                                }
                             });
-                            _itemmodifiers += ', AC: ' + ac;
-                            hasArmor = true;
-                        }
-                        attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
-                        Object.assign(repeating_attributes, attributes);
-                    });
+                            if(item.definition.hasOwnProperty('armorClass')){
+                                let aac = getObjects(character, 'subType', 'armored-armor-class');
+                                let ac = item.definition.armorClass;
+                                aac.forEach((aacb) => {
+                                    ac = parseInt(ac) + parseInt(aacb.value);
+                                });
+                                _itemmodifiers += ', AC: ' + ac;
+                                hasArmor = true;
+                            }
+                            attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
+                            Object.assign(repeating_attributes, attributes);
+                        });
+                    }
                 }
 
                 // If character has unarmored defense, add it to the inventory, so a player can enable/disable it.
@@ -1058,7 +1100,7 @@
                 };
 
                 Object.assign(single_attributes, other_attributes);
-                
+
                 // XXX what is the status of these?
                 // Object.assign(single_attributes, bonus_attributes);
 
@@ -1071,7 +1113,7 @@
                 let items = [ ['class', className] ];
                 items = items.concat(
                     sortedAttributeItems(class_attributes),
-                    sortedAttributeItems(single_attributes), 
+                    sortedAttributeItems(single_attributes),
                     sortedAttributeItems(save_proficiency_attributes));
 
                 processItem(character, items, repeating_attributes, total_level)
@@ -1090,38 +1132,35 @@
     }
 
     const processItem = (character, items, repeating_attributes, total_level) => {
-        let nextItem = items.shift()
+        let nextItem = items.shift();
 
         if (!nextItem) {
             // do one giant write for all the repeating attributes
             setAttrs(object.id, repeating_attributes);
 
-            // configure HP, because we now know our CON score 
+            // configure HP, because we now know our CON score
             loadHitPoints(character, total_level);
 
-            // do async follow up work?
-            if(state[state_name][beyond_caller.id].config.imports.class_spells) {
-                // this is really just artificially asynchronous, we are not currently using a worker, so it will happen as soon as we return
-                onSheetWorkerCompleted(() => {
-                    importSpells(character, class_spells)
-                });
-            }
-  
             if(class_spells.length > 0 && state[state_name][beyond_caller.id].config.imports.class_spells) {
                 sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>Class spells are being imported over time.</p></div>', null, {noarchive:true});
+
+                // this is really just artificially asynchronous, we are not currently using a worker, so it will happen as soon as we return
+                onSheetWorkerCompleted(() => {
+                    importSpells(character, class_spells);
+                })
             } else {
-                reportReady(character)
+                reportReady(character);
             }
             return
         }
 
-         // create empty attribute if not already there
+        // create empty attribute if not already there
         let nextAttribute = findObjs({ type: 'attribute', characterid: object.id, name: nextItem[0] })[0];
         nextAttribute = nextAttribute || createObj('attribute', { name: nextItem[0], characterid: object.id});
 
         // async load next item
         onSheetWorkerCompleted(function() {
-            processItem(character, items, repeating_attributes, total_level)
+            processItem(character, items, repeating_attributes, total_level);
         });
         log('beyond: ' + nextItem[0] + " = " + String(nextItem[1]));
         nextAttribute.setWithWorker({ current: nextItem[1] });
@@ -1147,7 +1186,7 @@
         } else {
             hpAttr.set('current', hp);
             hpAttr.set('max', hp);
-        }       
+        }
     }
 
     const getPactMagicSlots = (level) => {
@@ -1177,7 +1216,7 @@
         // on which we can wait.
         sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is ready at https://journal.roll20.net/character/' + object.id +'</div>', null, {noarchive:true});
     }
-    
+
     const getFeatureSpells = (character, traitId, featureType) => {
         let spellsArr = [];
         if(character.spells[featureType] == null) return spellsArr;
