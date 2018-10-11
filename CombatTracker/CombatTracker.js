@@ -129,6 +129,16 @@ var CombatTracker = CombatTracker || (function() {
                     }
 
                     sendConfigAnnounceMenu();
+                }else if (args[0] === 'macro'){
+                    if(args[1]){
+                        let setting = args[1].split('|');
+                        let key = setting.shift();
+                        let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+
+                        state[state_name].config.macro[key] = value;
+                    }
+
+                    sendConfigMacroMenu();
                 }else{
                     if(args[0]){
                         let setting = args.shift().split('|');
@@ -600,6 +610,13 @@ var CombatTracker = CombatTracker || (function() {
 
         changeMarker(token || false);
 
+        if(state[state_name].config.macro.run_macro){
+            let ability = findObjs({ _characterid: token.get('represents'), _type: 'ability', name: state[state_name].config.macro.macro_name })
+            if(ability && ability.length){
+                sendChat(token.get('name'), ability[0].get('action'), null, {noarchive:true} );
+            }
+        }
+
         if(state[state_name].config.announcements.announce_turn){
             announceTurn(token || turn.custom, (token.get('layer') === 'objects') ? '' : 'gm');
         }else if(state[state_name].config.announcements.announce_conditions){
@@ -613,7 +630,7 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     doFX = (token) => {
-        if(!state[state_name].config.announcements.use_fx) return;
+        if(!state[state_name].config.announcements.use_fx || token.get('layer') === 'gmlayer') return;
 
         let pos = {x: token.get('left'), y: token.get('top')};
         spawnFxBetweenPoints(pos, pos, state[state_name].config.announcements.fx_type, token.get('pageid'));
@@ -1078,12 +1095,13 @@ var CombatTracker = CombatTracker || (function() {
 
             configTimerButton = makeButton('Timer Config', '!'+state[state_name].config.command + ' config timer', styles.button),
             configAnnouncementsButton = makeButton('Announcement Config', '!'+state[state_name].config.command + ' config announcements', styles.button),
+            configMacroButton = makeButton('Macro Config', '!'+state[state_name].config.command + ' config macro', styles.button),
             resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth),
 
             title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
 
         message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+configTimerButton+configAnnouncementsButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
+        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+configTimerButton+configAnnouncementsButton+configMacroButton+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
@@ -1142,6 +1160,21 @@ var CombatTracker = CombatTracker || (function() {
 
         let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
         makeAndSendMenu(contents, script_name + ' Timer Config', 'gm');
+    },
+
+    sendConfigMacroMenu = () => {
+        let runMacroButton = makeButton(state[state_name].config.macro.run_macro, '!' + state[state_name].config.command + ' config macro run_macro|'+!state[state_name].config.macro.run_macro, styles.button + styles.float.right),
+            macroNameButton = makeButton(state[state_name].config.macro.macro_name, '!' + state[state_name].config.command + ' config macro macro_name|?{Macro Name|'+state[state_name].config.macro.macro_name+'}', styles.button + styles.float.right),
+
+            backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth),
+
+            listItems = [
+                '<span style="'+styles.float.left+'">Run Macro:</span> ' + runMacroButton,
+                '<span style="'+styles.float.left+'">Macro Name:</span> ' + macroNameButton,
+            ];
+
+        let contents = '<p>A macro with the right name should be in the characters ability list.</p>'+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+        makeAndSendMenu(contents, script_name + ' Macro Config', 'gm');
     },
 
     sendMenu = () => {
@@ -1308,6 +1341,10 @@ var CombatTracker = CombatTracker || (function() {
                     handleLongName: true,
                     use_fx: false,
                     fx_type: 'nova-holy'
+                },
+                macro: {
+                    run_macro: true,
+                    macro_name: 'CT_TURN'
                 }
             },
             conditions: {},
@@ -1392,6 +1429,16 @@ var CombatTracker = CombatTracker || (function() {
                 }
                 if(!state[state_name].config.announcements.hasOwnProperty('fx_type')){
                     state[state_name].config.announcements.fx_type = defaults.config.announcements.fx_type;
+                }
+            }
+            if(!state[state_name].config.hasOwnProperty('macro')){
+                state[state_name].config.macro = defaults.config.macro;
+            }else{
+                if(!state[state_name].config.macro.hasOwnProperty('run_macro')){
+                    state[state_name].config.macro.run_macro = defaults.config.macro.run_macro;
+                }
+                if(!state[state_name].config.macro.hasOwnProperty('macro_name')){
+                    state[state_name].config.macro.macro_name = defaults.config.macro.macro_name;
                 }
             }
         }
