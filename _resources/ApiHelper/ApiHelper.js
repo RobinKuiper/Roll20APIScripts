@@ -62,6 +62,10 @@ var ApiHelper = ApiHelper || (function() {
                     });
                 break;
 
+                case 'turnorder':
+                    log((Campaign().get('turnorder') === '') ? [] : Array.from(JSON.parse(Campaign().get('turnorder'))))
+                break;
+
                 case 'state':
                     log(state[args.shift()]);
                 break;

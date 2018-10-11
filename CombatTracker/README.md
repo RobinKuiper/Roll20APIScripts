@@ -72,13 +72,15 @@ Here you can create, add and edit favorite conditions. By clicking on the name i
 ![Edit Condition2](https://i.imgur.com/u2HYbtz.png "Edit Condition2")
 
 ### Config
-![Config](https://i.imgur.com/YCDPz24.png "Config")
+![Config](https://i.imgur.com/3TAzuDI.png "Config")
 
 * **Command** - The command used for this script, eg. !ct.
 * **Ini. Attribute** - The initiative bonus attribute used in the character sheet that you are using, defaults to `initiative_bonus` used in the 5e OGL sheet.
 * **Marker Img.** - Image (url) you want to use as a marker.
 * **Stop on Close** - Stop the combat on turnorder close (removes the marker, clears the turnorder list, etc.).
 * **Auto Roll Ini.** - If you want to autoroll (and add) the selected tokens' initiative when you start combat.
+* **Reroll Ini. p. Round** - Reroll initiative on every round.
+* **Auto Sort** - Toggle the auto sorting of the turnorder.
 * **Auto Pull Map** - If you want to pull the page to the token (same as `shift + hold left click`). Works only for the GM due to API limitations.
 * **Skip Custom Items** - Automatically skip custom items in the tracker.
 
@@ -110,6 +112,7 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 #### Changelog
 **v0.2.4**
 * Optionally turn off auto sorting turnorder.
+* Optionally reroll initiative every round.
 
 **v0.2.3**
 * Optionally whisper turns to gm.

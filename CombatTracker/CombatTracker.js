@@ -545,6 +545,11 @@ var CombatTracker = CombatTracker || (function() {
         round = 1;
     },
 
+    clearTurnorder = () => {
+        Campaign().set({ turnorder: '' });
+        state[state_name].turnorder = {};
+    },
+
     removeMarker = () => {
         stopRotate();
         getOrCreateMarker().remove();
@@ -733,6 +738,7 @@ var CombatTracker = CombatTracker || (function() {
     NextTurn = () => {
         let turnorder = getTurnorder(),
             current_turn = turnorder.shift();
+
         turnorder.push(current_turn);
 
         setTurnorder(turnorder);
@@ -758,7 +764,14 @@ var CombatTracker = CombatTracker || (function() {
             makeAndSendMenu(text);
         }
 
-        NextTurn();
+        if(state[state_name].config.reroll_ini_round){
+            let turnorder = getTurnorder();
+            clearTurnorder();
+            rollInitiative(turnorder.map(t => { return (t.id !== -1 && t.id !== marker.get('id')) ? { _type: 'graphic', _id: t.id } : false }), state[state_name].config.auto_sort);
+            sortTurnorder();
+        }else{
+            NextTurn();
+        }
     },
 
     PrevRound = () => {
@@ -1045,17 +1058,19 @@ var CombatTracker = CombatTracker || (function() {
             markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right),
             throwIniButton = makeButton(state[state_name].config.throw_initiative, '!' + state[state_name].config.command + ' config throw_initiative|'+!state[state_name].config.throw_initiative, styles.button + styles.float.right),
             autoSortButton = makeButton(state[state_name].config.auto_sort, '!' + state[state_name].config.command + ' config auto_sort|'+!state[state_name].config.auto_sort, styles.button + styles.float.right),
+            rerollIniButton = makeButton(state[state_name].config.reroll_ini_round, '!' + state[state_name].config.command + ' config reroll_ini_round|'+!state[state_name].config.reroll_ini_round, styles.button + styles.float.right),
             iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right),
             closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right),
             pullButton = makeButton(state[state_name].config.pull, '!' + state[state_name].config.command + ' config pull|'+!state[state_name].config.pull, styles.button + styles.float.right),
             skipCustomButton = makeButton(state[state_name].config.skip_custom, '!' + state[state_name].config.command + ' config skip_custom|'+!state[state_name].config.skip_custom, styles.button + styles.float.right),
-
+            
             listItems = [
                 '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
                 '<span style="'+styles.float.left+'">Ini. Attribute:</span> ' + iniAttrButton,
                 '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
                 '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
                 '<span style="'+styles.float.left+'">Auto Roll Ini.:</span> ' + throwIniButton,
+                '<span style="'+styles.float.left+'">Reroll Ini. p. Round:</span> ' + rerollIniButton,
                 '<span style="'+styles.float.left+'">Auto Sort:</span> ' + autoSortButton,
                 '<span style="'+styles.float.left+'">Auto Pull Map:</span> ' + pullButton,
                 '<span style="'+styles.float.left+'">Skip Custom Item:</span> ' + skipCustomButton
@@ -1271,6 +1286,7 @@ var CombatTracker = CombatTracker || (function() {
                 marker_img: 'https://s3.amazonaws.com/files.d20.io/images/52550079/U-3U950B3wk_KRtspSPyuw/thumb.png?1524507826',
                 throw_initiative: true,
                 auto_sort: true,
+                reroll_ini_round: false,
                 initiative_attribute_name: 'initiative_bonus',
                 close_stop: true,
                 skip_custom: true,
@@ -1315,6 +1331,9 @@ var CombatTracker = CombatTracker || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('auto_sort')){
                 state[state_name].config.auto_sort = defaults.config.auto_sort;
+            }
+            if(!state[state_name].config.hasOwnProperty('reroll_ini_round')){
+                state[state_name].config.reroll_ini_round = defaults.config.reroll_ini_round;
             }
             if(!state[state_name].config.hasOwnProperty('initiative_attribute_name')){
                 state[state_name].config.initiative_attribute_name = defaults.config.initiative_attribute_name;
