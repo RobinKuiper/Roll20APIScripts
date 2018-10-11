@@ -28,7 +28,7 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 
 ### Config
 
-![Config Menu](https://i.imgur.com/J0zwJj0.png "Config Menu")
+![Config Menu](https://i.imgur.com/SExckX7.png "Config Menu")
 
 * **Command** - Which command you want to use for this script.
 * **Statusmarker** - Which statusmarker you want to use for concentration.
@@ -36,8 +36,8 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 * **Send Reminder To** - To who you want to send the reminder.
 * **Auto Add Con. Marker** - Automatically add the concentration marker when a concentration spell is cast (works only for the 5e OGL sheet at the moment).
 * **Auto Roll Save** - If you want to Automatically roll the saving throw.
-* **Advantage** - Roll the autoroll with advantage.
 * **Bonus Attribute** - Which attribute to use for the bonus modifier (defaulted to the constitution saving throw for the 5e OGL sheet).
+* **Advantage Menu** - Shows a list of characters, where you can toggle which characters have advantage when autorolling the concentration save.
 
 ![Auto Roll](https://i.imgur.com/WHUV5iw.png "Auto Roll")
 ![Advantage](https://i.imgur.com/ciSttkH.png "Advantage")
@@ -45,6 +45,10 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 ---
 
 #### Changelog:
+**0.1.14**
+* Changed advantage system on autoroll.
+* Fix where huge damage would crash the api.
+
 **0.1.13**
 * Optionally autoroll with advantage.
 * Optionally show roll button when not using autorolling.
