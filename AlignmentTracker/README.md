@@ -36,4 +36,12 @@ With AlignmentTracker you can keep track of a players alignment. It makes a new 
 * **Attribute** - The alignment attribute, depends on which sheet you use.
 * **Show Players** - Show the alignment handout to the corresponding player.
 
-Roll20 Thread: 
+---
+
+[![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
+
+---
+
+#### Changelog
+**v0.1.1**
+* Fixed a bug where a character with no alignment crashed the API.
