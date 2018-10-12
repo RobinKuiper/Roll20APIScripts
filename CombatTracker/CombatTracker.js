@@ -55,7 +55,7 @@ var CombatTracker = CombatTracker || (function() {
         strikethrough: 'text-decoration: strikethrough'
     },
     script_name = 'CombatTracker',
-    state_name = 'COMBATTRACKER',
+    state_name = 'COMBATTRACKER2',
 
     handleInput = (msg) => {
         if (msg.type != 'api') return;
@@ -1341,10 +1341,10 @@ var CombatTracker = CombatTracker || (function() {
                 close_stop: true,
                 pull: true,
                 turnorder: {
-                    throw_initiative: state[state_name].config.throw_initiative || true,
-                    auto_sort: state[state_name].config.auto_sort || true,
-                    reroll_ini_round: state[state_name].config.reroll_ini_round || false,
-                    skip_custom: state[state_name].config.skip_custom || true,
+                    throw_initiative: true,
+                    auto_sort: true,
+                    reroll_ini_round: false,
+                    skip_custom: true,
                 },
                 timer: {
                     use_timer: true,
