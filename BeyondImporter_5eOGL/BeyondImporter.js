@@ -1334,48 +1334,56 @@
         }
 
         // Damage/Attack
-        let damage = getObjects(spell, 'type', 'damage');
-        if(damage.length !== 0 && (spell.definition.attackType !== "" || spell.definition.saveDcStat !== null)) {
-            damage = damage[0];
-            if(damage.die.diceString != null) {
-                if(spell.definition.attackType == 0) spell.definition.attackType = 'none';
-                if(spell.definition.attackType == 1) spell.definition.attackType = 'melee';
-                if(spell.definition.attackType == 2) spell.definition.attackType = 'ranged';
-                attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.attackType === '') ? 'None' : spell.definition.attackType;
-                attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId === null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
-                attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = damage.die.diceString;
-                attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = damage.friendlySubtypeName;
+        let damages = getObjects(spell, 'type', 'damage');
+        if(damages.length !== 0 && (spell.definition.attackType !== "" || spell.definition.saveDcStat !== null)) {
+            let doDamage = false;
+            damages.forEach((damage, i) => {
+                if(damage.die.diceString != null){
+                    let damageNumber = (i === 0) ? '' : 2;
+                    attributes["repeating_spell-"+level+"_"+row+"_spelldamage"+damageNumber] = damage.die.diceString;
+                    attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"+damageNumber] = damage.friendlySubtypeName;
 
-                let hlDiceCount = '';
-                let hlDiceValue = '';
+                    if(!doDamage){
+                        doDamage = true;
 
-                if(damage.hasOwnProperty('atHigherLevels')) {
-                    let ahl = spell.definition.atHigherLevels.higherLevelDefinitions;
-                    if(spell.definition.level == 0 && ahl.length == 0) {
-                        if(spell.definition.atHigherLevels.scaleType == 'characterlevel') {
-                            attributes["repeating_spell-"+level+"_"+row+"_spell_damage_progression"] = 'Cantrip Dice';
-                        }
-                    }
-                    else if(spell.definition.level > 0) {
-                        for(let i in ahl) {
-                            if(ahl[i].dice == null) continue;
-                            attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = ahl[i].dice.diceCount;
-                            attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+ahl[i].dice.diceValue;
-                            hlDiceCount = ahl[i].dice.diceCount;
-                            hlDiceValue = ahl[i].dice.diceValue;
-                        }
+                        if(spell.definition.attackType == 0) spell.definition.attackType = 'none';
+                        if(spell.definition.attackType == 1) spell.definition.attackType = 'melee';
+                        if(spell.definition.attackType == 2) spell.definition.attackType = 'ranged';
+                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.attackType === '') ? 'None' : spell.definition.attackType;
+                        attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId === null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
 
-                        if(damage.atHigherLevels.scaleType === 'spellscale'){
-                            attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
-                            attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+damage.die.diceValue;
-                            hlDiceCount = '1';
-                            hlDiceValue = damage.die.diceValue;
+                        let hlDiceCount = '';
+                        let hlDiceValue = '';
+
+                        if(damage.hasOwnProperty('atHigherLevels')) {
+                            let ahl = spell.definition.atHigherLevels.higherLevelDefinitions;
+                            if(spell.definition.level == 0 && ahl.length == 0) {
+                                if(spell.definition.atHigherLevels.scaleType == 'characterlevel') {
+                                    attributes["repeating_spell-"+level+"_"+row+"_spell_damage_progression"] = 'Cantrip Dice';
+                                }
+                            }
+                            else if(spell.definition.level > 0) {
+                                for(let i in ahl) {
+                                    if(ahl[i].dice == null) continue;
+                                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = ahl[i].dice.diceCount;
+                                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+ahl[i].dice.diceValue;
+                                    hlDiceCount = ahl[i].dice.diceCount;
+                                    hlDiceValue = ahl[i].dice.diceValue;
+                                }
+
+                                if(damage.atHigherLevels.scaleType === 'spellscale'){
+                                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
+                                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+damage.die.diceValue;
+                                    hlDiceCount = '1';
+                                    hlDiceValue = damage.die.diceValue;
+                                }
+                            }
                         }
                     }
                 }
+            });
 
-                if(addAttack) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
-            }
+            if(addAttack && doDamage) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
         }
 
         return attributes;
