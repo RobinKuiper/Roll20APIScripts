@@ -55,7 +55,7 @@ var CombatTracker = CombatTracker || (function() {
         strikethrough: 'text-decoration: strikethrough'
     },
     script_name = 'CombatTracker',
-    state_name = 'COMBATTRACKER2',
+    state_name = 'COMBATTRACKER',
 
     handleInput = (msg) => {
         if (msg.type != 'api') return;
