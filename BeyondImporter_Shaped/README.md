@@ -13,7 +13,7 @@
 ---
 
 ```
-NOTICE: The commands are changed since the last update, read the description below.
+NOTICE: I will not update this for now. Probably going to update it when we have a good and steady version for 5eOGL.
 ```
 
 Beyond Importer let's you import a character sheet from DNDBeyond into Roll20.
