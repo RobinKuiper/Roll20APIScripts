@@ -73,10 +73,11 @@ var Template = Template || (function() {
                     break;
                 }
             }
+        }
     },
 
     sendConfigMenu = (first, message) => {
-        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right)
+        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
@@ -97,7 +98,7 @@ var Template = Template || (function() {
     makeAndSendMenu = (contents, title, whisper, style='') => {
         title = (title && title != '') ? makeTitle(title) : '';
         whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
-        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+style'">'+title+contents+'</div>', null, {noarchive:true});
+        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+style+'">'+title+contents+'</div>', null, {noarchive:true});
     },
 
     makeTitle = (title) => {
@@ -124,7 +125,7 @@ var Template = Template || (function() {
         setDefaults();
 
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].config.debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
+        if(state[state_name].debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
     },
 
     registerEventHandlers = () => {
@@ -135,8 +136,13 @@ var Template = Template || (function() {
         const defaults = {
             config: {
                 command: 'template'
-            }
+            },
+            debug: false
         };
+
+        if(!state[state_name].debug){
+            state[state_name].debug = defaults.debug;
+        }
 
         if(!state[state_name].config){
             state[state_name].config = defaults.config;
