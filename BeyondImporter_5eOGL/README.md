@@ -19,7 +19,8 @@
 * Roll20: https://app.roll20.net/users/494585/sillvva
 * Github: https://github.com/sillvva/Roll20APIScripts
 
-* Name: Ammo
+* Name: Ammo Goettsch
+* Discord: ammo#7063 
 * Roll20: https://app.roll20.net/users/2990964/ammo
 
 ---

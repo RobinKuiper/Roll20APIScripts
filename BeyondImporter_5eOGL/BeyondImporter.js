@@ -197,6 +197,8 @@
                 let speedMods = getObjects(character, 'subType', 'speed');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
+                        // REVISIT: what item is this for?  boots of striding and springing use set: innate-speed-walking and Loadstone uses bonus: speed
+                        // so maybe this is for some feat or class feature? we could scope the search to not the whole character to clarify this
                         if(speedMod.type == 'set') {
                             weightSpeeds.normal.walk = (speedMod.value > weightSpeeds.normal.walk ? speedMod.value : weightSpeeds.normal.walk);
                         }
@@ -750,29 +752,57 @@
                                         _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
                                     }
                                 }
-                                if(grantedMod.type == 'bonus' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
-                                    if(grantedMod.subType == 'armor-class') {
-                                        hasArmor = true;
-                                    }
-                                    if(item.definition.hasOwnProperty('armorClass')) {
-                                        item.definition.armorClass += grantedMod.value;
-                                    }
-                                    else {
-                                        _itemmodifiers += ', AC +' + grantedMod.value;
+                                if(grantedMod.type == 'bonus') {
+                                    switch (grantedMod.subType) {
+                                        case 'armor-class':
+                                            hasArmor = true;
+                                            // fall through
+                                        case 'unarmored-armor-class':
+                                            if(item.definition.hasOwnProperty('armorClass')) {
+                                                // XXX let's not modify the input data, it will eventually lead to problems
+                                                item.definition.armorClass += grantedMod.value;
+                                            }
+                                            else {
+                                                _itemmodifiers += ', AC +' + grantedMod.value;
+                                            }
+                                            break;
+                                        case 'saving-throws':
+                                            _itemmodifiers += ', Saving Throws +' + grantedMod.value;
+                                            break;
+                                        case 'ability-checks':
+                                            _itemmodifiers += ', Ability Checks +' + grantedMod.value;
+                                            break;
+                                        case 'speed':
+                                            // REVISIT there does not seem to be any way to implement these items in Roll20? 
+                                            break;
+                                        case 'magic':
+                                            // these are picked up in the weapons code above
+                                            break;
+                                        default:
+                                            // these may indicate an unimplemented conversion
+                                            log('ignoring item ' + item.definition.name + ' bonus modifier for ' + grantedMod.subType);
                                     }
                                 }
-                                if(grantedMod.type == 'set' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
-                                    if(grantedMod.subType == 'armor-class') {
-                                        hasArmor = true;
-                                        let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                        aac.forEach((aacb) => {
-                                            grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
-                                        });
+                                if(grantedMod.type == 'set') {
+                                    switch (grantedMod.subType) {
+                                        case 'armor-class':
+                                            hasArmor = true;
+                                            // XXX should this really search the entire character?  is this for feats or class features?
+                                            let aac = getObjects(character, 'subType', 'armored-armor-class');
+                                            aac.forEach((aacb) => {
+                                                grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
+                                            });
+                                            // fall through
+                                        case 'unarmored-armor-class':
+                                            _itemmodifiers += ', AC: ' + grantedMod.value;
+                                            break;
+                                        case 'innate-speed-walking':
+                                            // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
+                                            // fall through and log as ignored
+                                        default:
+                                            // these may indicate an unimplemented conversion
+                                            log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
                                     }
-                                    _itemmodifiers += ', AC: ' + grantedMod.value;
-                                }
-                                if(grantedMod.type == 'bonus' && (grantedMod.subType == 'saving-throws')) {
-                                    _itemmodifiers += ', Saving Throws +' + grantedMod.value;
                                 }
                             });
                             if(item.definition.hasOwnProperty('armorClass')){
