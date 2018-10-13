@@ -107,11 +107,9 @@ var Calendar = Calendar || (function() {
                             return;
                         }
 
-                        id = Object.keys(state[state_name].calendar.seasons).length + 1;
+                        state[state_name].calendar.seasons.push({ name, months });
 
-                        state[state_name].calendar.seasons[id] = { name, months }
-
-                        sendSingleSeasonConfigMenu(id);
+                        sendSeasonsConfigMenu();
                     break;
 
                     case 'months-config':
@@ -145,16 +143,14 @@ var Calendar = Calendar || (function() {
                             return;
                         }
 
-                        id = Object.keys(state[state_name].calendar.months).length + 1;
-
-                        state[state_name].calendar.months[id] = {
+                        state[state_name].calendar.months.push({
                             name,
                             days: 0,
                             avg_temp: 10,
-                            weather_type: 'Dry'
-                        }
+                            weather_type: 0
+                        });
 
-                        sendSingleMonthConfigMenu(id);
+                        sendMonthsConfigMenu();
                     break;
 
                     case 'holidays-config':
@@ -188,15 +184,13 @@ var Calendar = Calendar || (function() {
                             return;
                         }
 
-                        id = Object.keys(state[state_name].calendar.holidays).length + 1;
-
-                        state[state_name].calendar.holidays[id] = {
+                        state[state_name].calendar.holidays.push({
                             name,
                             day: 1,
                             month: '&nbsp;'
-                        }
+                        });
 
-                        sendSingleHolidayConfigMenu(id);
+                        sendHolidaysConfigMenu();
                     break;
 
                     case 'weather-config':
@@ -231,14 +225,12 @@ var Calendar = Calendar || (function() {
                             return;
                         }
 
-                        id = Object.keys(state[state_name].calendar.weather_types).length + 1;
-
-                        state[state_name].calendar.weather_types[id] = {
+                        state[state_name].calendar.weather_types.push({
                             name,
                             texts: []
-                        }
+                        });
 
-                        sendSingleWeatherConfigMenu(id);
+                        sendWeatherConfigMenu();
                     break;
 
                     case 'create-weather-text':
@@ -393,8 +385,8 @@ var Calendar = Calendar || (function() {
         // TODO: No month check
 
         let monthsDropdown = '?{Month';
-        Object.keys(state[state_name].calendar.months).forEach((key) => {
-            monthsDropdown += '|'+state[state_name].calendar.months[key].name+','+key
+        state[state_name].calendar.months.forEach((month, key) => {
+            monthsDropdown += '|'+month.name+','+key
         })
         monthsDropdown += '}';
 
@@ -502,8 +494,8 @@ var Calendar = Calendar || (function() {
         // TODO: No weather_types check
 
         let weatherTypeDropdown = '?{Weather Type';
-        Object.keys(state[state_name].calendar.weather_types).forEach((key) => {
-            weatherTypeDropdown += '|'+state[state_name].calendar.weather_types[key].name+','+key
+        state[state_name].calendar.weather_types.forEach((weather, key) => {
+            weatherTypeDropdown += '|'+weather.name+','+key
         })
         weatherTypeDropdown += '}';
 
@@ -554,8 +546,8 @@ var Calendar = Calendar || (function() {
         // TODO: No month check
 
         let monthsDropdown = '?{Month';
-        Object.keys(state[state_name].calendar.months).forEach((key) => {
-            monthsDropdown += '|'+state[state_name].calendar.months[key].name+','+key
+        state[state_name].calendar.months.forEach((month, key) => {
+            monthsDropdown += '|'+month.name+','+key
         })
         monthsDropdown += '}';
 
@@ -679,38 +671,38 @@ var Calendar = Calendar || (function() {
             },
             calendar:{
                 current: {
-                    month: 1,
+                    month: 0,
                     day: 1,
                     weather: 0
                 },
-                months: {
-                    1: { name: "Januari", days: 31, avg_temp: 10, weather_type: 1 },
-                    2: { name: "Februari", days: 28, avg_temp: 10, weather_type: 2 },
-                },
-                seasons: {
-                    1: { name: "Winter", months: "1-3" }
-                },
+                months: [
+                    { name: "Januari", days: 31, avg_temp: 10, weather_type: 0 },
+                    { name: "Februari", days: 28, avg_temp: 10, weather_type: 1 },
+                ],
+                seasons: [
+                    { name: "Winter", months: "1-3" }
+                ],
                 leap: {
                     year: 4,
                     month: 2
                 },
                 holidays: {
-                    party: { name: "PARTY", month: 1, day: 2 }
+                    party: { name: "PARTY", month: 0, day: 2 }
                 },
-                weather_types: {
-                    1: {
+                weather_types: [
+                    {
                         name: 'Rainy',
                         texts: [
                             "It's a light rainy day outside.",
                         ],
                     },
-                    2: {
+                    {
                         name: 'Dry',
                         texts: [
                             "Dry.",
                         ],
                     },
-                }
+                ]
             }
         };
 
