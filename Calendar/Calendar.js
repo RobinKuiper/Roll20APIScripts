@@ -41,7 +41,7 @@ var Calendar = Calendar || (function() {
         let extracommand = args.shift();
 
         let nameChange = false,
-            name, stripped_name;
+            name, stripped_name, id;
 
         if (command == state[state_name].config.command) {
             if(!playerIsGM(msg.playerid)){
@@ -89,15 +89,7 @@ var Calendar = Calendar || (function() {
                             let key = setting.shift();
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            if(key === "name"){
-                                nameChange = true;
-                                stripped_name = strip(value).toLowerCase();
-                                state[state_name].calendar.seasons[stripped_name] = state[state_name].calendar.seasons[month];
-                                state[state_name].calendar.seasons[stripped_name].name = value;
-                                delete state[state_name].calendar.seasons[season]
-                            }else{
-                                state[state_name].calendar.months[seasons][key] = value;
-                            }
+                            state[state_name].calendar.months[seasons][key] = value;
                         }
 
                         sendSingleSeasonConfigMenu((nameChange) ? stripped_name : season);
@@ -107,16 +99,16 @@ var Calendar = Calendar || (function() {
                         name = args.shift();
                         let months = args.shift();
 
-                        if(!name || state[state_name].calendar.seasons[strip(name).toLowerCase()]){
-                            makeAndSendMenu('No name was given or name already exists.', '');
+                        if(!name){
+                            sendError('No name was given.', 'gm');
                             return;
                         }
 
-                        stripped_name = strip(name).toLowerCase();
+                        id = Object.keys(state[state_name].calendar.seasons).length + 1;
 
-                        state[state_name].calendar.seasons[stripped_name] = { name, months }
+                        state[state_name].calendar.seasons[id] = { name, months }
 
-                        sendSingleSeasonConfigMenu(stripped_name);
+                        sendSingleSeasonConfigMenu(id);
                     break;
 
                     case 'months-config':
@@ -136,15 +128,7 @@ var Calendar = Calendar || (function() {
                             let key = setting.shift();
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            if(key === "name"){
-                                nameChange = true;
-                                stripped_name = strip(value).toLowerCase();
-                                state[state_name].calendar.months[stripped_name] = state[state_name].calendar.months[month];
-                                state[state_name].calendar.months[stripped_name].name = value;
-                                delete state[state_name].calendar.months[month]
-                            }else{
-                                state[state_name].calendar.months[month][key] = value;
-                            }
+                            state[state_name].calendar.months[month][key] = value;
                         }
 
                         sendSingleMonthConfigMenu((nameChange) ? stripped_name : month);
@@ -153,19 +137,21 @@ var Calendar = Calendar || (function() {
                     case 'new-month':
                         name = args.shift();
 
-                        if(!name || state[state_name].calendar.months[strip(name).toLowerCase()]){
-                            makeAndSendMenu('No name was given or name already exists.', '');
+                        if(!name){
+                            makeAndSendMenu('No name was given.', '');
                             return;
                         }
 
-                        state[state_name].calendar.months[strip(name).toLowerCase()] = {
+                        id = Object.keys(state[state_name].calendar.months).length + 1;
+
+                        state[state_name].calendar.months[id] = {
                             name,
                             days: 0,
                             avg_temp: 10,
                             weather_type: 'Dry'
                         }
 
-                        sendSingleMonthConfigMenu(strip(name).toLowerCase());
+                        sendSingleMonthConfigMenu(id);
                     break;
 
                     case 'holidays-config':
@@ -185,17 +171,7 @@ var Calendar = Calendar || (function() {
                             let key = setting.shift();
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            log(key + ': ' + value)
-
-                            if(key === "name"){
-                                nameChange = true;
-                                stripped_name = strip(value).toLowerCase();
-                                state[state_name].calendar.holidays[stripped_name] = state[state_name].calendar.holidays[holiday];
-                                state[state_name].calendar.holidays[stripped_name].name = value;
-                                delete state[state_name].calendar.holidays[holiday]
-                            }else{
-                                state[state_name].calendar.holidays[holiday][key] = value;
-                            }
+                            state[state_name].calendar.holidays[holiday][key] = value;
                         }
 
                         sendSingleHolidayConfigMenu((nameChange) ? stripped_name : holiday);
@@ -204,18 +180,20 @@ var Calendar = Calendar || (function() {
                     case 'new-holiday':
                         name = args.shift();
 
-                        if(!name || state[state_name].calendar.holidays[strip(name).toLowerCase()]){
-                            sendError('No name was given or name already exists.', 'gm');
+                        if(!name){
+                            sendError('No name was given.', 'gm');
                             return;
                         }
 
-                        state[state_name].calendar.holidays[strip(name).toLowerCase()] = {
+                        id = Object.keys(state[state_name].calendar.holidays).length + 1;
+
+                        state[state_name].calendar.holidays[id] = {
                             name,
                             day: 1,
                             month: '&nbsp;'
                         }
 
-                        sendSingleHolidayConfigMenu(strip(name).toLowerCase());
+                        sendSingleHolidayConfigMenu(id);
                     break;
 
                     case 'weather-config':
@@ -235,17 +213,8 @@ var Calendar = Calendar || (function() {
                             let key = setting.shift();
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            log(key + ': ' + value)
-
-                            if(key === "name"){
-                                nameChange = true;
-                                stripped_name = strip(value).toLowerCase();
-                                state[state_name].calendar.weather_types[stripped_name] = state[state_name].calendar.weather_types[weather];
-                                state[state_name].calendar.weather_types[stripped_name].name = value;
-                                delete state[state_name].calendar.weather_types[weather]
-                            }else{
-                                state[state_name].calendar.weather_types[weather][key] = value;
-                            }
+                            
+                            state[state_name].calendar.weather_types[weather][key] = value;
                         }
 
                         sendSingleWeatherConfigMenu((nameChange) ? stripped_name : weather);
@@ -254,17 +223,19 @@ var Calendar = Calendar || (function() {
                     case 'new-weather':
                         name = args.shift();
 
-                        if(!name || state[state_name].calendar.weather_types[strip(name).toLowerCase()]){
-                            sendError('No name was given or name already exists.', 'gm');
+                        if(!name){
+                            sendError('No name was given.', 'gm');
                             return;
                         }
 
-                        state[state_name].calendar.weather_types[strip(name).toLowerCase()] = {
+                        id = Object.keys(state[state_name].calendar.weather_types).length + 1;
+
+                        state[state_name].calendar.weather_types[id] = {
                             name,
                             texts: []
                         }
 
-                        sendSingleWeatherConfigMenu(strip(name).toLowerCase());
+                        sendSingleWeatherConfigMenu(id);
                     break;
 
                     default:
@@ -299,7 +270,7 @@ var Calendar = Calendar || (function() {
 
         let seasons = state[state_name].calendar.seasons;
         for (let [key, value] of Object.entries(seasons)) { 
-            listItems.push(makeButton(value.name + ' (' + value.months + ')', '!' + state[state_name].config.command + ' single-season-config ' + strip(value.name).toLowerCase(), styles.textButton));
+            listItems.push(makeButton(value.name + ' (' + value.months + ')', '!' + state[state_name].config.command + ' single-season-config ' + key, styles.textButton));
         }
 
         let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-season ?{Name} ?{Months|1-3}', styles.button);
@@ -311,20 +282,18 @@ var Calendar = Calendar || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    sendSingleSeasonConfigMenu = (season) => {
-        let stripped_name = strip(season).toLowerCase()
-
-        if(!season || (!state[state_name].calendar.seasons[stripped_name])){
+    sendSingleSeasonConfigMenu = (key) => {
+        if(!key || (!state[state_name].calendar.seasons[key])){
             makeAndSendMenu('No valid season was given. Please create one.', '', 'gm');
             return;
         }
 
-        season = state[state_name].calendar.seasons[stripped_name];
+        let season = state[state_name].calendar.seasons[key];
 
         // TODO: Change months with dropdown and multiple month selection.
 
-        let nameButton = makeButton(season.name, '!' + state[state_name].config.command + ' single-season-config ' + stripped_name + ' name|?{Name|'+season.name+'}', styles.button + styles.float.right),
-            monthsButton = makeButton(season.months, '!' + state[state_name].config.command + ' single-season-config ' + stripped_name + ' months|?{Months|'+season.days+'}', styles.button + styles.float.right);
+        let nameButton = makeButton(season.name, '!' + state[state_name].config.command + ' single-season-config ' + key + ' name|?{Name|'+season.name+'}', styles.button + styles.float.right),
+            monthsButton = makeButton(season.months, '!' + state[state_name].config.command + ' single-season-config ' + key + ' months|?{Months|'+season.days+'}', styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -343,7 +312,7 @@ var Calendar = Calendar || (function() {
 
         let months = state[state_name].calendar.months;
         for (let [key, value] of Object.entries(months)) { 
-            listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-month-config ' + strip(value.name).toLowerCase(), styles.textButton));
+            listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-month-config ' + key, styles.textButton));
         }
 
         let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-month ?{Name}', styles.button);
@@ -355,28 +324,26 @@ var Calendar = Calendar || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    sendSingleMonthConfigMenu = (month) => {
-        let stripped_name = strip(month).toLowerCase()
-
-        if(!month || (!state[state_name].calendar.months[stripped_name])){
-            makeAndSendMenu('No valid months was given. Please create one.', '', 'gm');
+    sendSingleMonthConfigMenu = (key) => {
+        if(!key || (!state[state_name].calendar.months[key])){
+            makeAndSendMenu('No valid month was given. Please create one.', '', 'gm');
             return;
         }
 
-        month = state[state_name].calendar.months[stripped_name];
+        let month = state[state_name].calendar.months[key];
 
-        // TODO: No month check
+        // TODO: No weather_types check
 
-        let weatherTypeDropdown = '?{Month';
+        let weatherTypeDropdown = '?{Weather Type';
         Object.keys(state[state_name].calendar.weather_types).forEach((key) => {
             weatherTypeDropdown += '|'+state[state_name].calendar.weather_types[key].name+','+key
         })
         weatherTypeDropdown += '}';
 
-        let nameButton = makeButton(month.name, '!' + state[state_name].config.command + ' single-month-config ' + stripped_name + ' name|?{Name|'+month.name+'}', styles.button + styles.float.right),
-            daysButton = makeButton(month.days, '!' + state[state_name].config.command + ' single-month-config ' + stripped_name + ' days|?{days|'+month.days+'}', styles.button + styles.float.right),
-            avgTempButton = makeButton(month.avg_temp, '!' + state[state_name].config.command + ' single-month-config ' + stripped_name + ' avg_temp|?{avg_temp|'+month.avg_temp+'}', styles.button + styles.float.right),
-            weatherTypeButton = makeButton(month.weather_type, '!' + state[state_name].config.command + ' single-month-config ' + stripped_name + ' weather_type|'+weatherTypeDropdown, styles.button + styles.float.right);
+        let nameButton = makeButton(month.name, '!' + state[state_name].config.command + ' single-month-config ' + key + ' name|?{Name|'+month.name+'}', styles.button + styles.float.right),
+            daysButton = makeButton(month.days, '!' + state[state_name].config.command + ' single-month-config ' + key + ' days|?{days|'+month.days+'}', styles.button + styles.float.right),
+            avgTempButton = makeButton(month.avg_temp, '!' + state[state_name].config.command + ' single-month-config ' + key + ' avg_temp|?{avg_temp|'+month.avg_temp+'}', styles.button + styles.float.right),
+            weatherTypeButton = makeButton(month.weather_type, '!' + state[state_name].config.command + ' single-month-config ' + key + ' weather_type|'+weatherTypeDropdown, styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -397,7 +364,7 @@ var Calendar = Calendar || (function() {
 
         let holidays = state[state_name].calendar.holidays;
         for (let [key, value] of Object.entries(holidays)) { 
-            listItems.push(makeButton(value.name + ' (' + value.month + '/' + value.day + ')', '!' + state[state_name].config.command + ' single-holiday-config ' + strip(value.name).toLowerCase(), styles.textButton));
+            listItems.push(makeButton(value.name + ' (' + value.month + '/' + value.day + ')', '!' + state[state_name].config.command + ' single-holiday-config ' + key, styles.textButton));
         }
 
         let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-holiday ?{Name}', styles.button);
@@ -409,15 +376,13 @@ var Calendar = Calendar || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    sendSingleHolidayConfigMenu = (holiday) => {
-        let stripped_name = strip(holiday).toLowerCase()
-
-        if(!holiday || (!state[state_name].calendar.holidays[stripped_name])){
+    sendSingleHolidayConfigMenu = (key) => {
+        if(!key || (!state[state_name].calendar.holidays[key])){
             makeAndSendMenu('No valid holiday was given. Please create one.', '', 'gm');
             return;
         }
 
-        holiday = state[state_name].calendar.holidays[stripped_name];
+        let holiday = state[state_name].calendar.holidays[key];
 
         // TODO: No month check
 
@@ -427,9 +392,9 @@ var Calendar = Calendar || (function() {
         })
         monthsDropdown += '}';
 
-        let nameButton = makeButton(holiday.name, '!' + state[state_name].config.command + ' single-holiday-config ' + stripped_name + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
-            dayButton = makeButton(holiday.day, '!' + state[state_name].config.command + ' single-holiday-config ' + stripped_name + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
-            monthButton = makeButton(holiday.month, '!' + state[state_name].config.command + ' single-holiday-config ' + stripped_name + ' month|'+monthsDropdown, styles.button + styles.float.right);
+        let nameButton = makeButton(holiday.name, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
+            dayButton = makeButton(holiday.day, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
+            monthButton = makeButton(holiday.month, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -449,7 +414,7 @@ var Calendar = Calendar || (function() {
 
         let weather_types = state[state_name].calendar.weather_types;
         for (let [key, value] of Object.entries(weather_types)) { 
-            listItems.push(makeButton(value.name + ' (' + value.texts.length + ')', '!' + state[state_name].config.command + ' single-weather-config ' + strip(value.name).toLowerCase(), styles.textButton));
+            listItems.push(makeButton(value.name + ' (' + value.texts.length + ')', '!' + state[state_name].config.command + ' single-weather-config ' + key, styles.textButton));
         }
 
         let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-weather ?{Name}', styles.button);
@@ -461,17 +426,15 @@ var Calendar = Calendar || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    sendSingleWeatherConfigMenu = (weather) => {
-        let stripped_name = strip(weather).toLowerCase()
-
-        if(!weather || (!state[state_name].calendar.weather_types[stripped_name])){
+    sendSingleWeatherConfigMenu = (key) => {
+        if(!key || (!state[state_name].calendar.weather_types[key])){
             makeAndSendMenu('No valid weather type was given. Please create one.', '', 'gm');
             return;
         }
 
-        weather = state[state_name].calendar.weather_types[stripped_name];
+        let weather = state[state_name].calendar.weather_types[key];
 
-        let nameButton = makeButton(weather.name, '!' + state[state_name].config.command + ' single-weather-config ' + stripped_name + ' name|?{Name|'+weather.name+'}', styles.button + styles.float.right);
+        let nameButton = makeButton(weather.name, '!' + state[state_name].config.command + ' single-weather-config ' + key + ' name|?{Name|'+weather.name+'}', styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -536,11 +499,11 @@ var Calendar = Calendar || (function() {
             },
             calendar:{
                 months: {
-                    januari: { name: "Januari", days: 31, avg_temp: 10, weather_type: "Rainy" },
-                    februari: { name: "Februari", days: 28, avg_temp: 10, weather_type: "Dry" },
+                    1: { name: "Januari", days: 31, avg_temp: 10, weather_type: 1 },
+                    2: { name: "Februari", days: 28, avg_temp: 10, weather_type: 2 },
                 },
                 seasons: {
-                    winter: { name: "Winter", months: "1-3" }
+                    1: { name: "Winter", months: "1-3" }
                 },
                 leap: {
                     year: 4,
@@ -550,13 +513,13 @@ var Calendar = Calendar || (function() {
                     party: { name: "PARTY", month: 1, day: 2 }
                 },
                 weather_types: {
-                    rainy: {
+                    1: {
                         name: 'Rainy',
                         texts: [
                             "It's a light rainy day outside.",
                         ],
                     },
-                    dry: {
+                    2: {
                         name: 'Dry',
                         texts: [
                             "Dry.",
