@@ -119,6 +119,9 @@
             }
 
             if(importData != '') {
+                // REVISIT: maybe put this here?
+                // sendChat(script_name, '<div style="'+style+'">Character sheet import started.<br><p>Please do not start additional imports until it completes.</p></div>', null, {noarchive:true});
+
                 let json = importData;
                 let character = JSON.parse(json).character;
 
@@ -1386,8 +1389,67 @@
             if(addAttack && doDamage) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
         }
 
+        let restrictions = calculateRestrictionsComment(damages.concat(healing));
+        if(restrictions != null) {
+            attributes["repeating_spell-"+level+"_"+row+"_spelltarget"] = replaceChars(restrictions);
+            if(attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] == 'ATTACK') {
+                attributes["repeating_spell-"+level+"_"+row+"_includedesc"] = 'partial';
+            }
+        }
         return attributes;
     };
+
+    const blankIfNull = (input) => {
+        return (input === null)?"":input;
+    }
+
+    // calculates spell restriction comment from damage and hit-points modifiers, as follows:
+    //
+    // as type selection (different restrictions):
+    // (friendlySubtypeName || friendlyTypeName) : restriction\n
+    // (friendlySubtypeName || friendlyTypeName) : restriction\n
+    // ...
+    //
+    // as general constraint (single modifier with a restriction):
+    // restriction 
+    //
+    // as multiple choice (same restriction multiple modifiers):
+    // restriction
+    //
+    // NOTE: this function is very defensive about inputs because some entries from beyond have
+    // null values and others have empty strings
+    const calculateRestrictionsComment = (modifiers) => {
+        if (!modifiers) {
+            return null;
+        }
+        if (modifiers.length < 1) {
+            return null;
+        }
+        let restrictions = new Set();
+        let first = blankIfNull(modifiers[0].restriction);
+        let multiple = false;
+        modifiers.forEach((modifier, i) => {
+            let current = blankIfNull(modifier.restriction);
+            if (current != first) {
+                // even if some types have null restrictions and others have non-blank ones, this still counts as choices
+                multiple = true;
+            }
+            if (current != '') {
+                // record all unique combinations
+                restrictions.add((modifier.friendlySubtypeName || modifier.friendlyTypeName) + ": " + current);
+            }
+        });
+        let lines = [...restrictions];
+        if (multiple && (lines.length > 0)) {
+            // NOTE: it is possible to have only one line here because the other choices are blank or null
+            return lines.join('\n');
+        }
+        if (first == '') {
+            // convert back to null if all we had was a blank (or null) restriction
+            return null;
+        }
+        return first;
+    }   
 
     const ucFirst = (string) => {
         if(string == null) return string;
