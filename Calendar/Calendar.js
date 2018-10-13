@@ -10,6 +10,8 @@
  * Paypal.me: https://www.paypal.me/robinkuiper
 */
 
+// TODO USE ARRAYS?
+
 var Calendar = Calendar || (function() {
     'use strict';
 
@@ -42,7 +44,7 @@ var Calendar = Calendar || (function() {
 
         let nameChange = false,
             name, stripped_name, id,
-            weatherId, textId;
+            weatherId, textId, month;
 
         if (command == state[state_name].config.command) {
             if(!playerIsGM(msg.playerid)){
@@ -117,7 +119,7 @@ var Calendar = Calendar || (function() {
                     break;
 
                     case 'single-month-config':
-                        let month = args.shift();
+                        month = args.shift();
 
                         if(!month){
                             makeAndSendMenu('No month was given.', '', 'gm');
@@ -293,12 +295,122 @@ var Calendar = Calendar || (function() {
                         sendSingleWeatherConfigMenu(weatherId);
                     break;
 
+                    case 'current':
+                        if(args.length > 0){
+                            let setting = args.shift().split('|');
+                            let key = setting.shift();
+                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+
+                            if(key === 'day'){
+                                advanceDay(value-state[state_name].calendar.current.day);
+                                sendMenu();
+                                return;
+                            }
+
+                            state[state_name].calendar.current[key] = value;
+                        }
+
+                        sendMenu();
+                    break;
+
+                    case 'advance-day':
+                        advanceDay();
+                    break;
+
+                    case 'menu':
+                        sendMenu();
+                    break;
+
+                    case 'send':
+                        let monthId = state[state_name].calendar.current.month,
+                            day = state[state_name].calendar.current.day;
+                        month = state[state_name].calendar.months[monthId];
+
+                        let calText = "<p>Today is " + month.name + ' ' + day + '.</p> \
+                            <hr> \
+                            <b>Weather</b><br> \
+                            ' + state[state_name].calendar.current.weather;
+
+                        makeAndSendMenu(calText, script_name);
+                    break;
+
                     default:
-                        sendConfigMenu();
+                        sendMenu();
                     break;
                 }
             }
         }
+    },
+
+    advanceDay = (days=1) => {
+        let newDay = getCurrentDay()+days;
+
+        if(newDay > getMonth().days){
+            if(state[state_name].calendar.months[getCurrentMonthId() + 1]){
+                state[state_name].calendar.current.month++;
+            }else{
+                state[state_name].calendar.current.month = 1;
+            }
+            state[state_name].calendar.current.day = 1;
+        }else if(newDay <= 0){
+            if(state[state_name].calendar.months[getCurrentMonthId() - 1]){
+                state[state_name].calendar.current.month--;
+            }else{
+                state[state_name].calendar.current.month = 'blaat';
+            }
+        }else{
+            state[state_name].calendar.current.day = newDay;
+        }
+
+        state[state_name].calendar.current.weather = getWeather(getMonth().weather_type);
+
+        sendMenu();
+    },
+
+    getMonth = (monthId=getCurrentMonthId()) => {
+        return state[state_name].calendar.months[monthId];
+    },
+
+    getCurrentMonthId = () => {
+        return state[state_name].calendar.current.month;
+    },
+
+    getCurrentDay = () => {
+        return state[state_name].calendar.current.day;
+    },
+
+    getWeather = (weather_type) => {
+        let weather = state[state_name].calendar.weather_types[weather_type];
+
+        let randomNumber = Math.floor(Math.random() * weather.texts.length) + 0; 
+
+        return weather.texts[randomNumber];
+    },
+
+    sendMenu = () => {
+        let currentMonth = state[state_name].calendar.months[state[state_name].calendar.current.month];
+
+        // TODO: No month check
+
+        let monthsDropdown = '?{Month';
+        Object.keys(state[state_name].calendar.months).forEach((key) => {
+            monthsDropdown += '|'+state[state_name].calendar.months[key].name+','+key
+        })
+        monthsDropdown += '}';
+
+        let currentDayButton = makeButton(state[state_name].calendar.current.day, '!' + state[state_name].config.command + ' current day|?{Day|'+state[state_name].calendar.current.day+'}', styles.button + styles.float.right),
+            currentMonthButton = makeButton(currentMonth.name, '!' + state[state_name].config.command + ' current month|'+monthsDropdown, styles.button + styles.float.right);
+
+        let listItems = [
+            '<span style="'+styles.float.left+'">Day:</span> ' + currentDayButton,
+            '<span style="'+styles.float.left+'">Month:</span> ' + currentMonthButton,
+        ];
+
+        let advanceDayButton = makeButton("Advance Day", '!' + state[state_name].config.command + ' advance-day', styles.button);
+        let sendToPlayersButton = makeButton("Send to Players", '!' + state[state_name].config.command + ' send', styles.button);
+
+        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+advanceDayButton+sendToPlayersButton;
+        makeAndSendMenu(contents, script_name, 'gm');
     },
 
     sendConfigMenu = (first, message) => {
@@ -398,7 +510,7 @@ var Calendar = Calendar || (function() {
         let nameButton = makeButton(month.name, '!' + state[state_name].config.command + ' single-month-config ' + key + ' name|?{Name|'+month.name+'}', styles.button + styles.float.right),
             daysButton = makeButton(month.days, '!' + state[state_name].config.command + ' single-month-config ' + key + ' days|?{days|'+month.days+'}', styles.button + styles.float.right),
             avgTempButton = makeButton(month.avg_temp, '!' + state[state_name].config.command + ' single-month-config ' + key + ' avg_temp|?{avg_temp|'+month.avg_temp+'}', styles.button + styles.float.right),
-            weatherTypeButton = makeButton(month.weather_type, '!' + state[state_name].config.command + ' single-month-config ' + key + ' weather_type|'+weatherTypeDropdown, styles.button + styles.float.right);
+            weatherTypeButton = makeButton(state[state_name].calendar.weather_types[month.weather_type].name, '!' + state[state_name].config.command + ' single-month-config ' + key + ' weather_type|'+weatherTypeDropdown, styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -449,7 +561,7 @@ var Calendar = Calendar || (function() {
 
         let nameButton = makeButton(holiday.name, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
             dayButton = makeButton(holiday.day, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
-            monthButton = makeButton(holiday.month, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
+            monthButton = makeButton(state[state_name].calendar.months[holiday.month].name, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -498,7 +610,7 @@ var Calendar = Calendar || (function() {
         let textListItems = [];
         state[state_name].calendar.weather_types[key].texts.forEach((text, i) => {
             let button = makeButton(handleLongString(text, 25), '!' + state[state_name].config.command + ' change-weather-text ' + key + ' ' + i + ' ?{Text|'+text+'}', styles.textButton + styles.float.left);
-            let deleteButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!' + state[state_name].config.command + ' delete-weather-text ' + key + ' ' + i, styles.button + styles.float.right);
+            let deleteButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!' + state[state_name].config.command + ' delete-weather-text ' + key + ' ' + i, styles.button + styles.float.right + 'width: 16px; height: 16px;');
             textListItems.push(button + deleteButton);
         });
 
@@ -566,6 +678,11 @@ var Calendar = Calendar || (function() {
                 command: 'cal'
             },
             calendar:{
+                current: {
+                    month: 1,
+                    day: 1,
+                    weather: 0
+                },
                 months: {
                     1: { name: "Januari", days: 31, avg_temp: 10, weather_type: 1 },
                     2: { name: "Februari", days: 28, avg_temp: 10, weather_type: 2 },
@@ -594,13 +711,8 @@ var Calendar = Calendar || (function() {
                         ],
                     },
                 }
-            },
-            debug: false
+            }
         };
-
-        if(!state[state_name].debug){
-            state[state_name].debug = defaults.debug;
-        }
 
         if(!state[state_name].config){
             state[state_name].config = defaults.config;
@@ -612,6 +724,16 @@ var Calendar = Calendar || (function() {
         if(!state[state_name].calendar){
             state[state_name].calendar = defaults.calendar;
         }else{
+            if(!state[state_name].calendar.hasOwnProperty('current')){
+                state[state_name].calendar.current = defaults.calendar.current;
+            }else{
+                if(!state[state_name].calendar.current.hasOwnProperty('day')){
+                    state[state_name].calendar.current.day = defaults.calendar.current.day;
+                }
+                if(!state[state_name].calendar.current.hasOwnProperty('month')){
+                    state[state_name].calendar.current.month = defaults.calendar.current.month;
+                }
+            }
             if(!state[state_name].calendar.hasOwnProperty('months')){
                 state[state_name].calendar.months = defaults.calendar.months;
             }
