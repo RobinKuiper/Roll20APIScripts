@@ -41,7 +41,8 @@ var Calendar = Calendar || (function() {
         let extracommand = args.shift();
 
         let nameChange = false,
-            name, stripped_name, id;
+            name, stripped_name, id,
+            weatherId, textId;
 
         if (command == state[state_name].config.command) {
             if(!playerIsGM(msg.playerid)){
@@ -236,6 +237,60 @@ var Calendar = Calendar || (function() {
                         }
 
                         sendSingleWeatherConfigMenu(id);
+                    break;
+
+                    case 'create-weather-text':
+                        weatherId = args.shift();
+                        let text = args.join(' ');
+
+                        if(!state[state_name].calendar.weather_types[weatherId]){
+                            sendError('Weather Type not found.');
+                            return;
+                        }
+
+                        state[state_name].calendar.weather_types[weatherId].texts.push(text);
+
+                        sendSingleWeatherConfigMenu(weatherId);
+                    break;
+
+                    case 'change-weather-text':
+                        weatherId = args.shift();
+                        textId = args.shift();
+                        let newText = args.join(' ');
+
+                        if(!state[state_name].calendar.weather_types[weatherId]){
+                            sendError('Weather Type not found.');
+                            return;
+                        }
+                        if(!state[state_name].calendar.weather_types[weatherId].texts.length || !state[state_name].calendar.weather_types[weatherId].texts[textId]){
+                            sendError('Selected text does not exist.');
+                            return;
+                        }
+                        if(newText === ''){
+                            // TODO: DO REMOVE?
+                        }
+
+                        state[state_name].calendar.weather_types[weatherId].texts[textId] = newText;
+
+                        sendSingleWeatherConfigMenu(weatherId);
+                    break;
+
+                    case 'delete-weather-text':
+                        weatherId = args.shift();
+                        textId = args.shift();
+
+                        if(!state[state_name].calendar.weather_types[weatherId]){
+                            sendError('Weather Type not found.');
+                            return;
+                        }
+                        if(!state[state_name].calendar.weather_types[weatherId].texts.length || !state[state_name].calendar.weather_types[weatherId].texts[textId]){
+                            sendError('Selected text does not exist.');
+                            return;
+                        }
+
+                        state[state_name].calendar.weather_types[weatherId].texts.splice(textId, 1);
+
+                        sendSingleWeatherConfigMenu(weatherId);
                     break;
 
                     default:
@@ -440,10 +495,19 @@ var Calendar = Calendar || (function() {
             '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
         ];
 
+        let textListItems = [];
+        state[state_name].calendar.weather_types[key].texts.forEach((text, i) => {
+            let button = makeButton(handleLongString(text, 25), '!' + state[state_name].config.command + ' change-weather-text ' + key + ' ' + i + ' ?{Text|'+text+'}', styles.textButton + styles.float.left);
+            let deleteButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!' + state[state_name].config.command + ' delete-weather-text ' + key + ' ' + i, styles.button + styles.float.right);
+            textListItems.push(button + deleteButton);
+        });
+
+
         let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' weather-config', styles.button + styles.fullWidth);
+        let newTextbutton = makeButton('Add Text', '!'+state[state_name].config.command + ' create-weather-text ' + key + ' ?{Text}', styles.button);
 
         let title_text = script_name + ' ' + weather.name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr>'+backButton;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
@@ -476,6 +540,10 @@ var Calendar = Calendar || (function() {
 
     strip = (str) => {
         return str.replace(/[^a-zA-Z0-9]+/g, '_');
+    },
+
+    handleLongString = (str, max=8) => {
+        return (str.length > max) ? str.slice(0, max) + '...' : str;
     },
 
     checkInstall = () => {

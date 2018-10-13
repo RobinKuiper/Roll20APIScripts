@@ -4,7 +4,7 @@ createWhisperName = (name) => {
 
 // STRINGS
 handleLongString = (str, max=8) => {
-    return (str.length > max) ? str.slice(0, 8) + '...' : str;
+    return (str.length > max) ? str.slice(0, max) + '...' : str;
 },
 
 ucFirst = (string) => {
