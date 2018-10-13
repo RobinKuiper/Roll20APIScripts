@@ -1329,36 +1329,56 @@
         if(healing.length !== 0) {
             healing = healing[0];
             if(healing.type == 'bonus') {
-                let bonus = '';
+                let bonus = 0;
                 if(getObjects(character.classes, 'name', 'Disciple of Life').length > 0) {
-                    bonus = '+'+(2 + spell.definition.level);
+                    bonus += (2 + parseInt(spell.definition.level));
                 }
 
                 attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = 'None';
                 attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = '';
                 attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = '';
                 attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = '';
-                attributes["repeating_spell-"+level+"_"+row+"_spellhealing"] = (healing.die.fixedValue !== null) ? healing.die.fixedValue+bonus : healing.die.diceString+bonus;
+                if(healing.die.diceString != null) {
+                    attributes["repeating_spell-"+level+"_"+row+"_spellhealing"] = healing.die.diceString+'+'+(parseInt(healing.die.fixedValue == null ? 0 : healing.die.fixedValue)+bonus);
+                }
+                else if (healing.die.fixedValue != null) {
+                    attributes["repeating_spell-"+level+"_"+row+"_spellhealing"] = (parseInt(healing.die.fixedValue)+bonus)+'d1';
+                }
                 attributes["repeating_spell-"+level+"_"+row+"_spelldmgmod"] = healing.usePrimaryStat ? 'Yes' : '0';
 
-                bonus = '';
+                bonus = 0;
                 if(getObjects(character.classes, 'name', 'Disciple of Life').length > 0) {
-                    bonus = '1';
+                    bonus += 1;
                 }
 
                 let ahl = spell.definition.atHigherLevels.higherLevelDefinitions;
                 for(let i in ahl) {
-                    if(ahl[i].dice == null) continue;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = ahl[i].dice.diceCount;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+ahl[i].dice.diceValue;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = bonus;
+                    if(ahl[i].dice != null) {
+                        if(ahl[i].dice.diceValue != null) {
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = ahl[i].dice.diceCount;
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+ahl[i].dice.diceValue;
+                        }
+                        else {
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd4';
+                        }
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = parseInt(ahl[i].dice.fixedValue)+bonus;
+                    }
                 }
 
                 if(healing.hasOwnProperty('atHigherLevels') && healing.atHigherLevels.scaleType === 'spellscale') {
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+healing.die.diceValue;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = bonus;
+                    if(healing.die.diceValue != null) {
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = healing.die.diceCount;
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+healing.die.diceValue;
+                    }
+                    else {
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '0';
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd4';
+                    }
+                    if(healing.die.fixedValue == null) healing.die.fixedValue = 0;
+                    attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = parseInt(healing.die.fixedValue)+bonus;
                 }
+
                 if(addAttack) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
             }
         }
