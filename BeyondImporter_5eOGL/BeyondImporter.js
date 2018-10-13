@@ -31,6 +31,7 @@
     const charisma_skills = ['deception','intimidation','performance','persuasion']
 
     let class_spells = [];
+    let spellAttacks = [];
     let beyond_caller = {};
     let object;
 
@@ -1265,6 +1266,7 @@
     const importSpells = (character, array) => {
         // set this to whatever number of items you can process at once
         // return attributes;
+        spellAttacks = [];
         let chunk = 5;
         let index = 0;
         function doChunk() {
@@ -1279,12 +1281,45 @@
                 // set Timeout for async iteration
                 onSheetWorkerCompleted(doChunk);
             } else {
-                // truly done now
-                reportReady(character);
+                log('beyond: spells imported, updating spell attack proficiency');
+                onSheetWorkerCompleted(() => { updateSpellAttackProf(character, 0); });
             }
         }
         doChunk();
     };
+
+    const updateSpellAttackProf = (character, i) => {
+        if(spellAttacks[i] == null) {
+            reportReady(character);
+            return;
+        }
+
+        // This should work... but it doesn't.
+        /*let atkOutputAttr = findObjs({ type: 'attribute', characterid: object.id, name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" })[0];
+        atkOutputAttr = atkOutputAttr || createObj('attribute', { name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput", characterid: object.id});
+        onSheetWorkerCompleted(function() {
+            updateSpellAttackProf(character, ++i);
+        });
+        log('beyond: ' + "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" + " = " + 'ATTACK');
+        atkOutputAttr.setWithWorker({ current: 'ATTACK' });*/
+
+        let atkIdAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'repeating_spell-'+spellAttacks[i].level+'_'+spellAttacks[i].id+'_spellattackid' })[0];
+        if(atkIdAttr != null) {
+            let atkId = atkIdAttr.get('current');
+            let atkProfAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'repeating_attack_'+atkId+'_atkprofflag' })[0];
+            atkProfAttr = atkProfAttr || createObj('attribute', { name: 'repeating_attack_'+atkId+'_atkprofflag', characterid: object.id});
+
+            // async load next item
+            onSheetWorkerCompleted(function() {
+                updateSpellAttackProf(character, ++i);
+            });
+            log('beyond: ' + 'repeating_attack_'+atkId+'_atkprofflag' + " = " + '(@{pb})');
+            atkProfAttr.setWithWorker({ current: '(@{pb})' });
+        }
+        else {
+            reportReady(character);
+        }
+    }
 
     const importSpell = (character, spell, addAttack) => {
         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
@@ -1379,7 +1414,9 @@
                     attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = parseInt(healing.die.fixedValue)+bonus;
                 }
 
-                if(addAttack) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+                if(addAttack)  {
+                    attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+                }
             }
         }
 
@@ -1396,10 +1433,8 @@
                     if(!doDamage){
                         doDamage = true;
 
-                        if(spell.definition.attackType == 0) spell.definition.attackType = 'none';
-                        if(spell.definition.attackType == 1) spell.definition.attackType = 'melee';
-                        if(spell.definition.attackType == 2) spell.definition.attackType = 'ranged';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.attackType === '') ? 'None' : spell.definition.attackType;
+                        let attackType = ['None', 'Melee', 'Ranged'];
+                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = attackType[spell.definition.attackType];
                         attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId === null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
 
                         let hlDiceCount = '';
@@ -1433,7 +1468,11 @@
                 }
             });
 
-            if(addAttack && doDamage) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+            if(addAttack && doDamage) {
+                // attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'SPELLCARD';
+                attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+                spellAttacks.push({level: level, id: row});
+            }
         }
 
         return attributes;
