@@ -418,9 +418,9 @@ var Calendar = Calendar || (function() {
             table += '<tr>';
             for(let j = 1; j <= 7; j++){
                 let dayGen = ((7*i)+j);
-                let dayStyle = (dayGen === currentDay) ? 'font-weight: bold; color: green;' : '';
+                let dayStyle = (dayGen === currentDay) ? 'padding-left: 4px; padding-right: 3px; font-weight: bold; color: white; background-color: green; border: 1px solid transparent; border-radius: 50%;' : '';
                 if(totalDays < dayGen) break;
-                table += '<td style="'+dayStyle+'">'+dayGen+'</td>'
+                table += '<td><span style="'+dayStyle+'">'+dayGen+'</span></td>'
             }
             table += '</tr>';
         }
