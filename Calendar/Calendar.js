@@ -409,7 +409,7 @@ var Calendar = Calendar || (function() {
         });
         upcoming_events = (upcoming_events.length) ? upcoming_events : ['No events this month.'];
         upcoming_events = '<b>Events this Month</b><br>'+makeList(upcoming_events, styles.reset + styles.list + styles.overflow, styles.overflow);
-        handout.set('notes', table+getDateString()+'<br><br><b>Weather</b><br><i>'+getWeather()+'</i><hr>'+upcoming_events);
+        handout.set('notes', table+getDateString()+'<br><br><b>Weather</b><br><i>'+state[state_name].calendar.current.weather+'</i><hr>'+upcoming_events);
 
         return handout
     },
@@ -595,7 +595,7 @@ var Calendar = Calendar || (function() {
         }
 
         buttons += monthsConfigButton + '<br>';
-        buttons += seasonsConfigButton + '<br>';
+        //buttons += seasonsConfigButton + '<br>';
         buttons += holidaysConfigButton + '<br>';
         buttons += weatherConfigButton + '<br>';
 
