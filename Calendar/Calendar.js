@@ -401,6 +401,8 @@ var Calendar = Calendar || (function() {
             inplayerjournals
         });
 
+        // TODO use and send settings.
+
         let table = generateTable(getMonth().days, getCurrentDay());
         let upcoming_events = getObjects(state[state_name].calendar.holidays, 'month', getCurrentMonthId()).map(holiday => {
             return '<i>'+getMonth().name+' '+holiday.day+' - '+holiday.name+'</i>';
