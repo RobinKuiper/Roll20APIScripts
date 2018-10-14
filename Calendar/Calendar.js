@@ -44,7 +44,7 @@ var Calendar = Calendar || (function() {
 
         let nameChange = false,
             name, stripped_name, id,
-            weatherId, textId, month;
+            weatherId, textId, month, what;
 
         if (command == state[state_name].config.command) {
             if(!playerIsGM(msg.playerid)){
@@ -67,6 +67,29 @@ var Calendar = Calendar || (function() {
                         if(args.length > 0){
                             let setting = args.shift().split('|');
                             let key = setting.shift();
+
+                            switch(key){
+                                case 'month':
+                                    config_menus.sendMonthsConfigMenu();
+                                    return;
+                                break;
+
+                                case 'season':
+                                    config_menus.sendSeasonsConfigMenu();
+                                    return;
+                                break;
+
+                                case 'holiday':
+                                    config_menus.sendHolidaysConfigMenu();
+                                    return;
+                                break;
+
+                                case 'weather':
+                                    config_menus.sendWeatherConfigMenu();
+                                    return;
+                                break;
+                            }
+
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
                             state[state_name].config[key] = value;
@@ -75,15 +98,12 @@ var Calendar = Calendar || (function() {
                         sendConfigMenu();
                     break;
 
-                    case 'seasons-config':
-                        sendSeasonsConfigMenu();
-                    break;
+                    case 'single-item-config':
+                        what = args.shift();
+                        id = args.shift();
 
-                    case 'single-season-config':
-                        let season = args.shift();
-
-                        if(!season){
-                            makeAndSendMenu('No season was given.', '', 'gm');
+                        if(!id || !what){
+                            sendError('No valid id was given.');
                             return;
                         }
 
@@ -92,145 +112,61 @@ var Calendar = Calendar || (function() {
                             let key = setting.shift();
                             let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            state[state_name].calendar.months[seasons][key] = value;
+                            state[state_name].calendar[what][id][key] = value;
                         }
 
-                        sendSingleSeasonConfigMenu((nameChange) ? stripped_name : season);
+                        config_menus[what+'SingleConfigMenu'](id);
                     break;
 
-                    case 'new-season':
-                        name = args.shift();
-                        let months = args.shift();
-
-                        if(!name){
-                            sendError('No name was given.', 'gm');
-                            return;
-                        }
-
-                        state[state_name].calendar.seasons.push({ name, months });
-
-                        sendSeasonsConfigMenu();
-                    break;
-
-                    case 'months-config':
-                        sendMonthsConfigMenu();
-                    break;
-
-                    case 'single-month-config':
-                        month = args.shift();
-
-                        if(!month){
-                            makeAndSendMenu('No month was given.', '', 'gm');
-                            return;
-                        }
-
-                        if(args.length > 0){
-                            let setting = args.shift().split('|');
-                            let key = setting.shift();
-                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
-
-                            state[state_name].calendar.months[month][key] = value;
-                        }
-
-                        sendSingleMonthConfigMenu((nameChange) ? stripped_name : month);
-                    break;
-
-                    case 'new-month':
+                    case 'new':
+                        what = args.shift();
                         name = args.shift();
 
-                        if(!name){
-                            makeAndSendMenu('No name was given.', '');
+                        if(!name || !what){
+                            sendError('Something went wrong, please try again.');
                             return;
                         }
 
-                        state[state_name].calendar.months.push({
-                            name,
-                            days: 0,
-                            avg_temp: 10,
-                            weather_type: 0
-                        });
+                        switch(what){
+                            case 'month':
+                                state[state_name].calendar.months.push({
+                                    name,
+                                    days: 0,
+                                    avg_temp: 10,
+                                    weather_type: 0
+                                });
+    
+                                config_menus.sendMonthsConfigMenu();
+                                return;
+                            break;
 
-                        sendMonthsConfigMenu();
-                    break;
+                            case 'season':
+                                let months = args.shift();
+                                state[state_name].calendar.seasons.push({ name, months });
 
-                    case 'holidays-config':
-                        sendHolidaysConfigMenu();
-                    break;
+                                config_menus.sendSeasonsConfigMenu();
+                                return;
+                            break;
 
-                    case 'single-holiday-config':
-                        let holiday = args.shift();
+                            case 'holiday':
+                                state[state_name].calendar.holidays.push({
+                                    name,
+                                    day: 1,
+                                    month: '&nbsp;'
+                                });
 
-                        if(!holiday){
-                            makeAndSendMenu('No holiday was given.', '', 'gm');
-                            return;
+                                config_menus.sendHolidaysConfigMenu();
+                            break;
+
+                            case 'weather':
+                                state[state_name].calendar.weather_types.push({
+                                    name,
+                                    texts: []
+                                });
+
+                                config_menus.sendWeatherConfigMenu();
+                            break;
                         }
-
-                        if(args.length > 0){
-                            let setting = args.shift().split('|');
-                            let key = setting.shift();
-                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
-
-                            state[state_name].calendar.holidays[holiday][key] = value;
-                        }
-
-                        sendSingleHolidayConfigMenu((nameChange) ? stripped_name : holiday);
-                    break;
-
-                    case 'new-holiday':
-                        name = args.shift();
-
-                        if(!name){
-                            sendError('No name was given.', 'gm');
-                            return;
-                        }
-
-                        state[state_name].calendar.holidays.push({
-                            name,
-                            day: 1,
-                            month: '&nbsp;'
-                        });
-
-                        sendHolidaysConfigMenu();
-                    break;
-
-                    case 'weather-config':
-                        sendWeatherConfigMenu();
-                    break;
-
-                    case 'single-weather-config':
-                        let weather = args.shift();
-
-                        if(!weather){
-                            sendError('No weather was given.', 'gm');
-                            return;
-                        }
-
-                        if(args.length > 0){
-                            let setting = args.shift().split('|');
-                            let key = setting.shift();
-                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
-
-                            
-                            state[state_name].calendar.weather_types[weather][key] = value;
-                        }
-
-                        sendSingleWeatherConfigMenu((nameChange) ? stripped_name : weather);
-                    break;
-
-                    case 'new-weather':
-                        name = args.shift();
-
-                        if(!name){
-                            sendError('No name was given.', 'gm');
-                            return;
-                        }
-
-                        state[state_name].calendar.weather_types.push({
-                            name,
-                            texts: []
-                        });
-
-                        sendWeatherConfigMenu();
                     break;
 
                     case 'create-weather-text':
@@ -244,7 +180,7 @@ var Calendar = Calendar || (function() {
 
                         state[state_name].calendar.weather_types[weatherId].texts.push(text);
 
-                        sendSingleWeatherConfigMenu(weatherId);
+                        config_menus.weather_typesSingleConfigMenu(weatherId);
                     break;
 
                     case 'change-weather-text':
@@ -266,7 +202,7 @@ var Calendar = Calendar || (function() {
 
                         state[state_name].calendar.weather_types[weatherId].texts[textId] = newText;
 
-                        sendSingleWeatherConfigMenu(weatherId);
+                        config_menus.weather_typesSingleConfigMenu(weatherId);
                     break;
 
                     case 'delete-weather-text':
@@ -284,7 +220,7 @@ var Calendar = Calendar || (function() {
 
                         state[state_name].calendar.weather_types[weatherId].texts.splice(textId, 1);
 
-                        sendSingleWeatherConfigMenu(weatherId);
+                        config_menus.weather_typesSingleConfigMenu(weatherId);
                     break;
 
                     case 'current':
@@ -318,7 +254,8 @@ var Calendar = Calendar || (function() {
                             day = state[state_name].calendar.current.day;
                         month = state[state_name].calendar.months[monthId];
 
-                        let calText = "<p>Today is " + month.name + ' ' + day + '.</p> \
+                        let calText = generateTable(month.days, day) + " \
+                            <p>Today is " + month.name + ' ' + day + '.</p> \
                             <hr> \
                             <b>Weather</b><br> \
                             ' + state[state_name].calendar.current.weather;
@@ -334,6 +271,23 @@ var Calendar = Calendar || (function() {
         }
     },
 
+    generateTable = (totalDays, currentDay) => {
+        let table = '<table border="1" style="'+styles.fullWidth+'">';
+        for(let i = 0; i < Math.ceil(totalDays/7); i++){
+            table += '<tr>';
+            for(let j = 1; j <= 7; j++){
+                let dayGen = ((7*i)+j);
+                let dayStyle = (dayGen === currentDay) ? 'font-weight: bold; color: green;' : '';
+                if(totalDays < dayGen) break;
+                table += '<td style="'+dayStyle+'">'+dayGen+'</td>'
+            }
+            table += '</tr>';
+        }
+        table += '</table>';
+
+        return table;
+    },
+
     advanceDay = (days=1) => {
         let newDay = getCurrentDay()+days;
 
@@ -341,14 +295,14 @@ var Calendar = Calendar || (function() {
             if(state[state_name].calendar.months[getCurrentMonthId() + 1]){
                 state[state_name].calendar.current.month++;
             }else{
-                state[state_name].calendar.current.month = 1;
+                state[state_name].calendar.current.month = 0;
             }
             state[state_name].calendar.current.day = 1;
         }else if(newDay <= 0){
             if(state[state_name].calendar.months[getCurrentMonthId() - 1]){
                 state[state_name].calendar.current.month--;
             }else{
-                state[state_name].calendar.current.month = 'blaat';
+                state[state_name].calendar.current.month = state[state_name].calendar.months.length-1;
             }
         }else{
             state[state_name].calendar.current.day = newDay;
@@ -380,8 +334,6 @@ var Calendar = Calendar || (function() {
     },
 
     sendMenu = () => {
-        let currentMonth = state[state_name].calendar.months[state[state_name].calendar.current.month];
-
         // TODO: No month check
 
         let monthsDropdown = '?{Month';
@@ -391,7 +343,7 @@ var Calendar = Calendar || (function() {
         monthsDropdown += '}';
 
         let currentDayButton = makeButton(state[state_name].calendar.current.day, '!' + state[state_name].config.command + ' current day|?{Day|'+state[state_name].calendar.current.day+'}', styles.button + styles.float.right),
-            currentMonthButton = makeButton(currentMonth.name, '!' + state[state_name].config.command + ' current month|'+monthsDropdown, styles.button + styles.float.right);
+            currentMonthButton = makeButton(getMonth().name, '!' + state[state_name].config.command + ' current month|'+monthsDropdown, styles.button + styles.float.right);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Day:</span> ' + currentDayButton,
@@ -401,8 +353,8 @@ var Calendar = Calendar || (function() {
         let advanceDayButton = makeButton("Advance Day", '!' + state[state_name].config.command + ' advance-day', styles.button);
         let sendToPlayersButton = makeButton("Send to Players", '!' + state[state_name].config.command + ' send', styles.button);
 
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+advanceDayButton+sendToPlayersButton;
-        makeAndSendMenu(contents, script_name, 'gm');
+        let contents = generateTable(getMonth().days, getCurrentDay()) + '<hr><b>Weather</b><br>'+state[state_name].calendar.current.weather + '<hr><b>Change</b><br>' + makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+advanceDayButton+sendToPlayersButton;
+        makeAndSendMenu(contents, script_name + ' Menu', 'gm');
     },
 
     sendConfigMenu = (first, message) => {
@@ -412,10 +364,10 @@ var Calendar = Calendar || (function() {
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
         ];
 
-        let monthsConfigButton = makeButton('Months Setup', '!' + state[state_name].config.command + ' months-config', styles.button);
-        let seasonsConfigButton = makeButton('Seasons Setup', '!' + state[state_name].config.command + ' seasons-config', styles.button);
-        let holidaysConfigButton = makeButton('Holidays Setup', '!' + state[state_name].config.command + ' holidays-config', styles.button);
-        let weatherConfigButton = makeButton('Weather Setup', '!' + state[state_name].config.command + ' weather-config', styles.button);
+        let monthsConfigButton = makeButton('Months Setup', '!' + state[state_name].config.command + ' config month', styles.button);
+        let seasonsConfigButton = makeButton('Seasons Setup', '!' + state[state_name].config.command + ' config season', styles.button);
+        let holidaysConfigButton = makeButton('Holidays Setup', '!' + state[state_name].config.command + ' config holiday', styles.button);
+        let weatherConfigButton = makeButton('Weather Setup', '!' + state[state_name].config.command + ' config weather', styles.button);
         let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
@@ -424,195 +376,214 @@ var Calendar = Calendar || (function() {
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
-    sendSeasonsConfigMenu = (message) => {
-        let listItems = [];
+    config_menus = {
+        sendSeasonsConfigMenu: (message) => {
+            let listItems = [];
 
-        let seasons = state[state_name].calendar.seasons;
-        for (let [key, value] of Object.entries(seasons)) { 
-            listItems.push(makeButton(value.name + ' (' + value.months + ')', '!' + state[state_name].config.command + ' single-season-config ' + key, styles.textButton));
-        }
+            let seasons = state[state_name].calendar.seasons;
+            for (let [key, value] of Object.entries(seasons)) { 
+                listItems.push(makeButton(value.name + ' (' + value.months + ')', '!' + state[state_name].config.command + ' single-item-config seasons ' + key, styles.textButton));
+            }
 
-        let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-season ?{Name} ?{Months|1-3}', styles.button);
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
+            let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new season ?{Name} ?{Months|1-3}', styles.button);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
 
-        let title_text = script_name + ' Seasons Config';
-        message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let title_text = script_name + ' Seasons Config';
+            message = (message) ? '<p>'+message+'</p>' : '';
+            let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-    sendSingleSeasonConfigMenu = (key) => {
-        if(!key || (!state[state_name].calendar.seasons[key])){
-            makeAndSendMenu('No valid season was given. Please create one.', '', 'gm');
-            return;
-        }
+        seasonsSingleConfigMenu: (key) => {
+            if(!key || (!state[state_name].calendar.seasons[key])){
+                makeAndSendMenu('No valid season was given. Please create one.', '', 'gm');
+                return;
+            }
 
-        let season = state[state_name].calendar.seasons[key];
+            let season = state[state_name].calendar.seasons[key];
 
-        // TODO: Change months with dropdown and multiple month selection.
+            // TODO: Change months with dropdown and multiple month selection.
 
-        let nameButton = makeButton(season.name, '!' + state[state_name].config.command + ' single-season-config ' + key + ' name|?{Name|'+season.name+'}', styles.button + styles.float.right),
-            monthsButton = makeButton(season.months, '!' + state[state_name].config.command + ' single-season-config ' + key + ' months|?{Months|'+season.days+'}', styles.button + styles.float.right);
+            let nameButton = makeButton(season.name, '!' + state[state_name].config.command + ' single-item-config seasons ' + key + ' name|?{Name|'+season.name+'}', styles.button + styles.float.right),
+                monthsButton = makeButton(season.months, '!' + state[state_name].config.command + ' single-item-config seasons ' + key + ' months|?{Months|'+season.days+'}', styles.button + styles.float.right);
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
-            '<span style="'+styles.float.left+'">Months:</span> ' + monthsButton
-        ];
+            let listItems = [
+                '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
+                '<span style="'+styles.float.left+'">Months:</span> ' + monthsButton
+            ];
 
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' seasons-config', styles.button + styles.fullWidth);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config season', styles.button + styles.fullWidth);
 
-        let title_text = script_name + ' ' + season.name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let title_text = script_name + ' ' + season.name + ' Config';
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-    sendMonthsConfigMenu = (message) => {
-        let listItems = [];
+        sendMonthsConfigMenu: (message) => {
+            let listItems = [];
 
-        let months = state[state_name].calendar.months;
-        for (let [key, value] of Object.entries(months)) { 
-            listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-month-config ' + key, styles.textButton));
-        }
+            let months = state[state_name].calendar.months;
+            for (let [key, value] of Object.entries(months)) { 
+                listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-item-config months ' + key, styles.textButton));
+            }
 
-        let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-month ?{Name}', styles.button);
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
+            let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new month ?{Name}', styles.button);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
 
-        let title_text = script_name + ' Months Config';
-        message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let title_text = script_name + ' Months Config';
+            message = (message) ? '<p>'+message+'</p>' : '';
+            let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-    sendSingleMonthConfigMenu = (key) => {
-        if(!key || (!state[state_name].calendar.months[key])){
-            makeAndSendMenu('No valid month was given. Please create one.', '', 'gm');
-            return;
-        }
+        sendMonthsConfigMenu: (message) => {
+            let listItems = [];
 
-        let month = state[state_name].calendar.months[key];
+            let months = state[state_name].calendar.months;
+            for (let [key, value] of Object.entries(months)) { 
+                listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-item-config months ' + key, styles.textButton));
+            }
 
-        // TODO: No weather_types check
+            let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new month ?{Name}', styles.button);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
 
-        let weatherTypeDropdown = '?{Weather Type';
-        state[state_name].calendar.weather_types.forEach((weather, key) => {
-            weatherTypeDropdown += '|'+weather.name+','+key
-        })
-        weatherTypeDropdown += '}';
+            let title_text = script_name + ' Months Config';
+            message = (message) ? '<p>'+message+'</p>' : '';
+            let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-        let nameButton = makeButton(month.name, '!' + state[state_name].config.command + ' single-month-config ' + key + ' name|?{Name|'+month.name+'}', styles.button + styles.float.right),
-            daysButton = makeButton(month.days, '!' + state[state_name].config.command + ' single-month-config ' + key + ' days|?{days|'+month.days+'}', styles.button + styles.float.right),
-            avgTempButton = makeButton(month.avg_temp, '!' + state[state_name].config.command + ' single-month-config ' + key + ' avg_temp|?{avg_temp|'+month.avg_temp+'}', styles.button + styles.float.right),
-            weatherTypeButton = makeButton(state[state_name].calendar.weather_types[month.weather_type].name, '!' + state[state_name].config.command + ' single-month-config ' + key + ' weather_type|'+weatherTypeDropdown, styles.button + styles.float.right);
+        monthsSingleConfigMenu: (key) => {
+            if(!key || (!state[state_name].calendar.months[key])){
+                makeAndSendMenu('No valid month was given. Please create one.', '', 'gm');
+                return;
+            }
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
-            '<span style="'+styles.float.left+'">Day:</span> ' + daysButton,
-            '<span style="'+styles.float.left+'">Avg. Temp:</span> ' + avgTempButton,
-            '<span style="'+styles.float.left+'">Weather Type:</span> ' + weatherTypeButton,
-        ];
+            let month = state[state_name].calendar.months[key];
 
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' months-config', styles.button + styles.fullWidth);
+            // TODO: No weather_types check
 
-        let title_text = script_name + ' ' + month.name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let weatherTypeDropdown = '?{Weather Type';
+            state[state_name].calendar.weather_types.forEach((weather, key) => {
+                weatherTypeDropdown += '|'+weather.name+','+key
+            })
+            weatherTypeDropdown += '}';
 
-    sendHolidaysConfigMenu = (message) => {
-        let listItems = [];
+            let nameButton = makeButton(month.name, '!' + state[state_name].config.command + ' single-item-config months ' + key + ' name|?{Name|'+month.name+'}', styles.button + styles.float.right),
+                daysButton = makeButton(month.days, '!' + state[state_name].config.command + ' single-item-config months ' + key + ' days|?{days|'+month.days+'}', styles.button + styles.float.right),
+                avgTempButton = makeButton(month.avg_temp, '!' + state[state_name].config.command + ' single-item-config months ' + key + ' avg_temp|?{avg_temp|'+month.avg_temp+'}', styles.button + styles.float.right),
+                weatherTypeButton = makeButton(state[state_name].calendar.weather_types[month.weather_type].name, '!' + state[state_name].config.command + ' single-item-config months ' + key + ' weather_type|'+weatherTypeDropdown, styles.button + styles.float.right);
 
-        let holidays = state[state_name].calendar.holidays;
-        for (let [key, value] of Object.entries(holidays)) { 
-            listItems.push(makeButton(value.name + ' (' + value.month + '/' + value.day + ')', '!' + state[state_name].config.command + ' single-holiday-config ' + key, styles.textButton));
-        }
+            let listItems = [
+                '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
+                '<span style="'+styles.float.left+'">Day:</span> ' + daysButton,
+                '<span style="'+styles.float.left+'">Avg. Temp:</span> ' + avgTempButton,
+                '<span style="'+styles.float.left+'">Weather Type:</span> ' + weatherTypeButton,
+            ];
 
-        let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-holiday ?{Name}', styles.button);
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config month', styles.button + styles.fullWidth);
 
-        let title_text = script_name + ' Holidays Config';
-        message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let title_text = script_name + ' ' + month.name + ' Config';
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-    sendSingleHolidayConfigMenu = (key) => {
-        if(!key || (!state[state_name].calendar.holidays[key])){
-            makeAndSendMenu('No valid holiday was given. Please create one.', '', 'gm');
-            return;
-        }
+        sendHolidaysConfigMenu: (message) => {
+            let listItems = [];
 
-        let holiday = state[state_name].calendar.holidays[key];
+            let holidays = state[state_name].calendar.holidays;
+            for (let [key, value] of Object.entries(holidays)) { 
+                listItems.push(makeButton(value.name + ' (' + value.month + '/' + value.day + ')', '!' + state[state_name].config.command + ' single-item-config holidays ' + key, styles.textButton));
+            }
 
-        // TODO: No month check
+            let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new holiday ?{Name}', styles.button);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
 
-        let monthsDropdown = '?{Month';
-        state[state_name].calendar.months.forEach((month, key) => {
-            monthsDropdown += '|'+month.name+','+key
-        })
-        monthsDropdown += '}';
+            let title_text = script_name + ' Holidays Config';
+            message = (message) ? '<p>'+message+'</p>' : '';
+            let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-        let nameButton = makeButton(holiday.name, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
-            dayButton = makeButton(holiday.day, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
-            monthButton = makeButton(state[state_name].calendar.months[holiday.month].name, '!' + state[state_name].config.command + ' single-holiday-config ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
+        holidaysSingleConfigMenu: (key) => {
+            if(!key || (!state[state_name].calendar.holidays[key])){
+                makeAndSendMenu('No valid holiday was given. Please create one.', '', 'gm');
+                return;
+            }
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
-            '<span style="'+styles.float.left+'">Day:</span> ' + dayButton,
-            '<span style="'+styles.float.left+'">Month:</span> ' + monthButton,
-        ];
+            let holiday = state[state_name].calendar.holidays[key];
 
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' holidays-config', styles.button + styles.fullWidth);
+            // TODO: No month check
 
-        let title_text = script_name + ' ' + holiday.name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let monthsDropdown = '?{Month';
+            state[state_name].calendar.months.forEach((month, key) => {
+                monthsDropdown += '|'+month.name+','+key
+            })
+            monthsDropdown += '}';
 
-    sendWeatherConfigMenu = (message) => {
-        let listItems = [];
+            let nameButton = makeButton(holiday.name, '!' + state[state_name].config.command + ' single-item-config holidays ' + key + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
+                dayButton = makeButton(holiday.day, '!' + state[state_name].config.command + ' single-item-config holidays ' + key + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
+                monthButton = makeButton(state[state_name].calendar.months[holiday.month].name, '!' + state[state_name].config.command + ' single-item-config holidays ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
 
-        let weather_types = state[state_name].calendar.weather_types;
-        for (let [key, value] of Object.entries(weather_types)) { 
-            listItems.push(makeButton(value.name + ' (' + value.texts.length + ')', '!' + state[state_name].config.command + ' single-weather-config ' + key, styles.textButton));
-        }
+            let listItems = [
+                '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
+                '<span style="'+styles.float.left+'">Day:</span> ' + dayButton,
+                '<span style="'+styles.float.left+'">Month:</span> ' + monthButton,
+            ];
 
-        let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new-weather ?{Name}', styles.button);
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config holiday', styles.button + styles.fullWidth);
 
-        let title_text = script_name + ' Weather Config';
-        message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
-    },
+            let title_text = script_name + ' ' + holiday.name + ' Config';
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-    sendSingleWeatherConfigMenu = (key) => {
-        if(!key || (!state[state_name].calendar.weather_types[key])){
-            makeAndSendMenu('No valid weather type was given. Please create one.', '', 'gm');
-            return;
-        }
+        sendWeatherConfigMenu: (message) => {
+            let listItems = [];
 
-        let weather = state[state_name].calendar.weather_types[key];
+            let weather_types = state[state_name].calendar.weather_types;
+            for (let [key, value] of Object.entries(weather_types)) { 
+                listItems.push(makeButton(value.name + ' (' + value.texts.length + ')', '!' + state[state_name].config.command + ' single-item-config weather_types ' + key, styles.textButton));
+            }
 
-        let nameButton = makeButton(weather.name, '!' + state[state_name].config.command + ' single-weather-config ' + key + ' name|?{Name|'+weather.name+'}', styles.button + styles.float.right);
+            let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new weather ?{Name}', styles.button);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
-        ];
+            let title_text = script_name + ' Weather Config';
+            message = (message) ? '<p>'+message+'</p>' : '';
+            let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
 
-        let textListItems = [];
-        state[state_name].calendar.weather_types[key].texts.forEach((text, i) => {
-            let button = makeButton(handleLongString(text, 25), '!' + state[state_name].config.command + ' change-weather-text ' + key + ' ' + i + ' ?{Text|'+text+'}', styles.textButton + styles.float.left);
-            let deleteButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!' + state[state_name].config.command + ' delete-weather-text ' + key + ' ' + i, styles.button + styles.float.right + 'width: 16px; height: 16px;');
-            textListItems.push(button + deleteButton);
-        });
+        weather_typesSingleConfigMenu: (key) => {
+            if(!key || (!state[state_name].calendar.weather_types[key])){
+                makeAndSendMenu('No valid weather type was given. Please create one.', '', 'gm');
+                return;
+            }
+
+            let weather = state[state_name].calendar.weather_types[key];
+
+            let nameButton = makeButton(weather.name, '!' + state[state_name].config.command + ' single-item-config weather_types ' + key + ' name|?{Name|'+weather.name+'}', styles.button + styles.float.right);
+
+            let listItems = [
+                '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
+            ];
+
+            let textListItems = [];
+            state[state_name].calendar.weather_types[key].texts.forEach((text, i) => {
+                let button = makeButton(handleLongString(text, 25), '!' + state[state_name].config.command + ' change-weather-text ' + key + ' ' + i + ' ?{Text|'+text+'}', styles.textButton + styles.float.left);
+                let deleteButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" />', '!' + state[state_name].config.command + ' delete-weather-text ' + key + ' ' + i, styles.button + styles.float.right + 'width: 16px; height: 16px;');
+                textListItems.push(button + deleteButton);
+            });
 
 
-        let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' weather-config', styles.button + styles.fullWidth);
-        let newTextbutton = makeButton('Add Text', '!'+state[state_name].config.command + ' create-weather-text ' + key + ' ?{Text}', styles.button);
+            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config weather', styles.button + styles.fullWidth);
+            let newTextbutton = makeButton('Add Text', '!'+state[state_name].config.command + ' create-weather-text ' + key + ' ?{Text}', styles.button);
 
-        let title_text = script_name + ' ' + weather.name + ' Config';
-        let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr>'+backButton;
-        makeAndSendMenu(contents, title_text, 'gm');
+            let title_text = script_name + ' ' + weather.name + ' Config';
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr>'+backButton;
+            makeAndSendMenu(contents, title_text, 'gm');
+        },
     },
 
     sendError = (error, whisper='gm') => {
