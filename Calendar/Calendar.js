@@ -113,31 +113,25 @@ var Calendar = Calendar || (function() {
                             switch(what){
                                 case 'month':
                                     what = args.shift();
-                                    config_menu = 'sendMonthsConfigMenu';
+                                    config_menu = 'monthsConfigMenu';config_menus.weather_typesConfigMenu
                                     type = 'config';
                                 break;
 
                                 case 'season':
                                     what = args.shift();
-                                    config_menu = 'sendSeasonsConfigMenu';
+                                    config_menu = 'seasonsConfigMenu';
                                     type = 'config';
                                 break;
 
                                 case 'holiday':
                                     what = args.shift();
-                                    config_menu = 'sendHolidaysConfigMenu';
+                                    config_menu = 'holidaysConfigMenu';
                                     type = 'config';
                                 break;
 
                                 case 'weather':
                                     what = args.shift();
-                                    config_menu = 'sendWeatherConfigMenu';
-                                    type = 'config';
-                                break;
-
-                                case 'landingpage':
-                                    what = args.shift();
-                                    config_menu = 'sendLandingpageConfigMenu';
+                                    config_menu = 'weather_typesConfigMenu';
                                     type = 'config';
                                 break;
 
@@ -220,7 +214,7 @@ var Calendar = Calendar || (function() {
                                     weather_type: 0
                                 });
     
-                                config_menus.sendMonthsConfigMenu();
+                                config_menus.monthsConfigMenu();
                                 return;
                             break;
 
@@ -228,7 +222,7 @@ var Calendar = Calendar || (function() {
                                 let months = args.shift();
                                 state[state_name].calendar.seasons.push({ name, months });
 
-                                config_menus.sendSeasonsConfigMenu();
+                                config_menus.seasonsConfigMenu();
                                 return;
                             break;
 
@@ -239,7 +233,7 @@ var Calendar = Calendar || (function() {
                                     month: '&nbsp;'
                                 });
 
-                                config_menus.sendHolidaysConfigMenu();
+                                config_menus.holidaysConfigMenu();
                             break;
 
                             case 'weather':
@@ -248,7 +242,7 @@ var Calendar = Calendar || (function() {
                                     texts: []
                                 });
 
-                                config_menus.sendWeatherConfigMenu();
+                                config_menus.weather_typesConfigMenu();
                             break;
                         }
                     break;
@@ -327,6 +321,27 @@ var Calendar = Calendar || (function() {
                         }
 
                         sendMenu();
+                    break;
+
+                    case 'remove':
+                        let removeType = args.shift();
+                        id = args.shift();
+
+                        if(!removeType || !id) return;
+
+                        state[state_name].calendar[removeType].splice(id, 1);
+                        
+                        /*TODO Remove holidays
+
+                        state[state_name].calendar.holidays.forEach((holiday, i) => {
+                            if(holiday.month === id) state[state_name].calendar.holidays.splice(i, 1);
+                        });*/
+
+                        if(getCurrentMonthId() === id){
+                            changeMonth(0);
+                        }
+
+                        config_menus[removeType+'ConfigMenu']()
                     break;
 
                     case 'change-weather':
@@ -578,7 +593,7 @@ var Calendar = Calendar || (function() {
     },
 
     config_menus = {
-        sendSeasonsConfigMenu: (message) => {
+        seasonsConfigMenu: (message) => {
             let config = state[state_name].config;
 
             let useSeasonsButton = makeButton(config.use_seasons, '!' + config.command + ' config season use_seasons|'+!config.use_seasons, styles.button + styles.float.right);
@@ -628,24 +643,7 @@ var Calendar = Calendar || (function() {
             makeAndSendMenu(contents, title_text, 'gm');
         },
 
-        sendMonthsConfigMenu: (message) => {
-            let listItems = [];
-
-            let months = state[state_name].calendar.months;
-            for (let [key, value] of Object.entries(months)) { 
-                listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-item-config months ' + key, styles.textButton));
-            }
-
-            let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new month ?{Name}', styles.button);
-            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config', styles.button + styles.fullWidth);
-
-            let title_text = script_name + ' Months Config';
-            message = (message) ? '<p>'+message+'</p>' : '';
-            let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+newButton+'<hr>'+backButton;
-            makeAndSendMenu(contents, title_text, 'gm');
-        },
-
-        sendMonthsConfigMenu: (message) => {
+        monthsConfigMenu: (message) => {
             let listItems = [];
 
             let months = state[state_name].calendar.months;
@@ -691,13 +689,14 @@ var Calendar = Calendar || (function() {
             ];
 
             let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config month', styles.button + styles.fullWidth);
+            let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" width="16" height="16" /> Remove', '!'+state[state_name].config.command + ' remove months ' + key, styles.button + styles.fullWidth + 'background-color: red;');
 
             let title_text = script_name + ' ' + month.name + ' Config';
-            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+removeButton+backButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
 
-        sendHolidaysConfigMenu: (message) => {
+        holidaysConfigMenu: (message) => {
             let config = state[state_name].config;
 
             let useHolidaysButton = makeButton(config.use_holidays, '!' + config.command + ' config holiday use_holidays|'+!config.use_holidays, styles.button + styles.float.right),
@@ -728,6 +727,8 @@ var Calendar = Calendar || (function() {
         },
 
         holidaysSingleConfigMenu: (key) => {
+            let config = state[state_name].config;
+
             if(!key || (!state[state_name].calendar.holidays[key])){
                 makeAndSendMenu('No valid holiday was given. Please create one.', '', 'gm');
                 return;
@@ -743,9 +744,9 @@ var Calendar = Calendar || (function() {
             })
             monthsDropdown += '}';
 
-            let nameButton = makeButton(holiday.name, '!' + state[state_name].config.command + ' single-item-config holidays ' + key + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
-                dayButton = makeButton(holiday.day, '!' + state[state_name].config.command + ' single-item-config holidays ' + key + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
-                monthButton = makeButton(state[state_name].calendar.months[holiday.month].name, '!' + state[state_name].config.command + ' single-item-config holidays ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
+            let nameButton = makeButton(holiday.name, '!' + config.command + ' single-item-config holidays ' + key + ' name|?{Name|'+holiday.name+'}', styles.button + styles.float.right),
+                dayButton = makeButton(holiday.day, '!' + config.command + ' single-item-config holidays ' + key + ' day|?{Day|'+holiday.day+'}', styles.button + styles.float.right),
+                monthButton = makeButton(state[state_name].calendar.months[holiday.month].name, '!' + config.command + ' single-item-config holidays ' + key + ' month|'+monthsDropdown, styles.button + styles.float.right);
 
             let listItems = [
                 '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
@@ -753,14 +754,14 @@ var Calendar = Calendar || (function() {
                 '<span style="'+styles.float.left+'">Month:</span> ' + monthButton,
             ];
 
-            let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config holiday', styles.button + styles.fullWidth);
+            let backButton = makeButton('< Back', '!'+config.command + ' config holiday', styles.button + styles.fullWidth);
 
             let title_text = script_name + ' ' + holiday.name + ' Config';
             let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
 
-        sendWeatherConfigMenu: (message) => {
+        weather_typesConfigMenu: (message) => {
             let config = state[state_name].config;
 
             let useWeatherButton = makeButton(config.use_weather, '!' + config.command + ' config weather use_weather|'+!config.use_weather, styles.button + styles.float.right),
