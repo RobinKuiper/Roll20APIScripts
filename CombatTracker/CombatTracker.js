@@ -67,6 +67,8 @@ var CombatTracker = CombatTracker || (function() {
         if(command !== state[state_name].config.command) return;
 
         if(extracommand === 'next'){
+            if(!getTurnorder().length) return;
+
             if(playerIsGM(msg.playerid) || msg.playerid === 'api'){
                 NextTurn();
                 return;
