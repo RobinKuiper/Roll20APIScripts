@@ -337,8 +337,14 @@ var Calendar = Calendar || (function() {
                             if(holiday.month === id) state[state_name].calendar.holidays.splice(i, 1);
                         });*/
 
-                        if(getCurrentMonthId() === id){
+                        if(removeType === 'months' && getCurrentMonthId() === id){
                             changeMonth(0);
+                        }
+
+                        if(removeType === 'weather_types'){
+                            state[state_name].calendar.months.forEach((month, i) => {
+                                state[state_name].calendar.months[i].weather_type = (state[state_name].calendar.months[i].weather_type - 1 < 0) ? 0 : state[state_name].calendar.months[i].weather_type - 1;
+                            });
                         }
 
                         config_menus[removeType+'ConfigMenu']()
@@ -819,7 +825,7 @@ var Calendar = Calendar || (function() {
             let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" width="16" height="16" /> Remove', '!'+state[state_name].config.command + ' remove weather_types ' + key, styles.button + styles.fullWidth + 'background-color: red;');
 
             let title_text = script_name + ' ' + weather.name + ' Config';
-            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr>'+removeButton+backButton;
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr><span style="font-size: 8pt">All months with this weather type will get the first weather type.</span>'+removeButton+backButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
     },
