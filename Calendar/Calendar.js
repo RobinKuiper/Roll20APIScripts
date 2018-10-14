@@ -84,6 +84,9 @@ var Calendar = Calendar || (function() {
                     break;
 
                     case 'config':
+                        let type = 'config',
+                            config_menu = false;
+
                         if(args.length > 0){
                             if(args[0] === 'export' || args[0] === 'import'){
                                 if(args[0] === 'export'){
@@ -105,37 +108,78 @@ var Calendar = Calendar || (function() {
                                 return;
                             }
 
-                            switch(args[0]){
+                            let what = args[0];
+
+                            switch(what){
                                 case 'month':
-                                    config_menus.sendMonthsConfigMenu();
-                                    return;
+                                    what = args.shift();
+                                    config_menu = 'sendMonthsConfigMenu';
+                                    type = 'config';
                                 break;
 
                                 case 'season':
-                                    config_menus.sendSeasonsConfigMenu();
-                                    return;
+                                    what = args.shift();
+                                    config_menu = 'sendSeasonsConfigMenu';
+                                    type = 'config';
                                 break;
 
                                 case 'holiday':
-                                    config_menus.sendHolidaysConfigMenu();
-                                    return;
+                                    what = args.shift();
+                                    config_menu = 'sendHolidaysConfigMenu';
+                                    type = 'config';
                                 break;
 
                                 case 'weather':
-                                    config_menus.sendWeatherConfigMenu();
-                                    return;
+                                    what = args.shift();
+                                    config_menu = 'sendWeatherConfigMenu';
+                                    type = 'config';
+                                break;
+
+                                case 'landingpage':
+                                    what = args.shift();
+                                    config_menu = 'sendLandingpageConfigMenu';
+                                    type = 'config';
+                                break;
+
+                                default:
+                                    what = 'config';
+                                    config_menu = 'normal';
+                                    type = 'config';
                                 break;
                             }
 
-                            let setting = args.shift().split('|');
-                            let key = setting.shift();
+                            if(args.length > 0){
+                                let setting = args.shift().split('|');
+                                let key = setting.shift();
 
-                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+                                let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
-                            state[state_name].config[key] = value;
+                                if(key === 'use_handout' && value) getOrCreateHandout();
+                                if(key === 'show_handout_players' && state[state_name].config.use_handout){
+                                    let handout = getOrCreateHandout();
+
+                                    handout.set('inplayerjournals', (value) ? 'all' : '');
+                                }
+
+                                state[state_name][type][key] = value;
+                            }
                         }
 
-                        sendConfigMenu();
+                        if(!config_menu || config_menu === 'normal') sendConfigMenu();
+                        else config_menus[config_menu]();
+                    break;
+
+                    case 'set-text-token':
+                        if(!msg.selected || !msg.selected.length || msg.selected.length > 1 || msg.selected[0]._type !== 'text'){
+                            sendConfigMenu(false, '<span style="color: red">You should have a <u>text</u> token selected. (<b>Only 1</b>)</span>');
+                            return;
+                        }
+
+                        state[state_name].config.token = msg.selected[0]._id;
+
+                        setToken();
+
+                        sendConfigMenu(false, '<span style="color: green">Token set!</span>');
                     break;
 
                     case 'single-item-config':
@@ -273,6 +317,10 @@ var Calendar = Calendar || (function() {
                                 advanceDay(value-state[state_name].calendar.current.day);
                                 sendMenu();
                                 return;
+                            }else if(key === 'month'){
+                                changeMonth(value);
+                                sendMenu();
+                                return;
                             }
 
                             state[state_name].calendar.current[key] = value;
@@ -289,6 +337,7 @@ var Calendar = Calendar || (function() {
 
                     case 'advance-day':
                         advanceDay();
+                        sendMenu();
                     break;
 
                     case 'menu':
@@ -301,7 +350,7 @@ var Calendar = Calendar || (function() {
                         month = state[state_name].calendar.months[monthId];
 
                         let calText = (state[state_name].config.use_table && state[state_name].config.send_table) ? generateTable(month.days, day) : '';
-                        calText += "<p>Today is " + month.name + ' ' + day + '.</p>';
+                        calText += "<p>Today is " + getDateString() + '.</p>';
                         calText += (state[state_name].config.use_weather && state[state_name].config.send_weather) ? "<hr><b>Weather</b><br>" + state[state_name].calendar.current.weather : '';
 
                         makeAndSendMenu(calText, script_name);
@@ -313,6 +362,26 @@ var Calendar = Calendar || (function() {
                 }
             }
         }
+    },
+
+    getOrCreateHandout = () => {
+        let handout = findObjs({
+                type: 'handout',
+                name: script_name
+            });
+
+        let inplayerjournals = (state[state_name].config.show_handout_players) ? "all" : "";
+
+        handout = (handout && handout[0]) ? handout[0] : createObj("handout", {
+            name: script_name,
+            inplayerjournals
+        });
+
+        log(handout)
+
+        handout.set('notes', generateTable(getMonth().days, getCurrentDay()));
+
+        return handout
     },
 
     generateTable = (totalDays, currentDay) => {
@@ -332,6 +401,24 @@ var Calendar = Calendar || (function() {
         return table;
     },
 
+    changeMonth = (monthId) => {
+        if(!state[state_name].calendar.months[monthId]){
+            sendError('Month given does not exist.');
+            return;
+        }
+
+        state[state_name].calendar.current.month = monthId;
+        state[state_name].calendar.current.weather = getWeather(getMonth().weather_type);
+        state[state_name].calendar.current.day = (getCurrentDay() > getMonth().days) ? 1 : getCurrentDay();
+
+        if(state[state_name].config.use_token) setToken();
+        if(state[state_name].config.use_handout) getOrCreateHandout();
+    },
+
+    getDateString = () =>{
+        return getMonth().name + ' ' + getCurrentDay() + ', ' + getYear();
+    },
+
     advanceDay = (days=1) => {
         let newDay = getCurrentDay()+days;
 
@@ -340,6 +427,7 @@ var Calendar = Calendar || (function() {
                 state[state_name].calendar.current.month++;
             }else{
                 state[state_name].calendar.current.month = 0;
+                state[state_name].calendar.current.year++;
             }
             state[state_name].calendar.current.day = 1;
         }else if(newDay <= 0){
@@ -347,6 +435,7 @@ var Calendar = Calendar || (function() {
                 state[state_name].calendar.current.month--;
             }else{
                 state[state_name].calendar.current.month = state[state_name].calendar.months.length-1;
+                state[state_name].calendar.current.year--;
             }
         }else{
             state[state_name].calendar.current.day = newDay;
@@ -354,7 +443,15 @@ var Calendar = Calendar || (function() {
 
         state[state_name].calendar.current.weather = getWeather(getMonth().weather_type);
 
-        sendMenu();
+        if(state[state_name].config.use_token) setToken();
+        if(state[state_name].config.use_handout) getOrCreateHandout();
+    },
+
+    setToken = () => {
+        let token = getObj('text', state[state_name].config.token);
+        if(token){
+            token.set('text', getDateString());
+        }
     },
 
     getMonth = (monthId=getCurrentMonthId()) => {
@@ -367,6 +464,10 @@ var Calendar = Calendar || (function() {
 
     getCurrentDay = () => {
         return state[state_name].calendar.current.day;
+    },
+
+    getYear = () => {
+        return state[state_name].calendar.current.year;
     },
 
     getWeather = (weather_type) => {
@@ -413,7 +514,7 @@ var Calendar = Calendar || (function() {
         contents += (state[state_name].config.use_weather) ? '<hr><b>Weather</b><br>'+state[state_name].calendar.current.weather + '<br>' + changeWeatherButton + '<br>' : '';
         contents += (state[state_name].config.use_holidays) ? holidaysText : '';
         contents += '<hr><b>Change</b><br>' + makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow);
-        contents += '<hr>'+advanceDayButton+sendToPlayersButton;
+        contents += '<hr>'+advanceDayButton+'<br>'+sendToPlayersButton;
         makeAndSendMenu(contents, script_name + ' Menu', 'gm');
     },
 
@@ -421,17 +522,27 @@ var Calendar = Calendar || (function() {
         let config = state[state_name].config;
 
         let commandButton = makeButton('!'+config.command, '!' + config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
-            useTableButton = makeButton(config.use_table, '!' + config.command + ' config use_table|'+!config.use_table, styles.button + styles.float.right);
+            useTableButton = makeButton(config.use_table, '!' + config.command + ' config use_table|'+!config.use_table, styles.button + styles.float.right),
+            useHandoutButton = makeButton(config.use_handout, '!' + config.command + ' config use_handout|'+!config.use_handout, styles.button + styles.float.right),
+            useTokenButton = makeButton(config.use_token, '!' + config.command + ' config use_token|'+!config.use_token, styles.button + styles.float.right);
 
         let sendTableButton = makeButton(config.send_table, '!' + config.command + ' config send_table|'+!config.send_table, styles.button + styles.float.right);
+        let showPlayersHandoutButton = makeButton(config.show_handout_players, '!' + config.command + ' config show_handout_players|'+!config.show_handout_players, styles.button + styles.float.right);
+        let setTokenButton = makeButton('Set Token', '!' + config.command + ' set-text-token', styles.button);
 
         let listItems = [
             '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+            '<span style="'+styles.float.left+'">Use Text Token:</span> ' + useTokenButton,
             '<span style="'+styles.float.left+'">Use Table:</span> ' + useTableButton,
+            '<span style="'+styles.float.left+'">Use Handout:</span> ' + useHandoutButton,
         ];
 
         if(config.use_table){
             listItems.push('<span style="'+styles.float.left+'">Send Table:</span> ' + sendTableButton);
+        }
+
+        if(config.use_handout){
+            listItems.push('<span style="'+styles.float.left+'">Show Handout to Players:</span> ' + showPlayersHandoutButton);
         }
 
         let monthsConfigButton = makeButton('Months Setup', '!' + config.command + ' config month', styles.button);
@@ -448,6 +559,12 @@ var Calendar = Calendar || (function() {
         let importCalendarButton = makeButton('Import Calendar', '!' + config.command + ' import ?{Json}', styles.button + styles.fullWidth);
 
         let buttons = '';
+
+        if(config.use_token){
+            buttons += setTokenButton + ' <span style="font-size: 8pt">(Select text token first.)</span><br><br>';
+        }
+
+        buttons += monthsConfigButton + '<br>';
         buttons += seasonsConfigButton + '<br>';
         buttons += holidaysConfigButton + '<br>';
         buttons += weatherConfigButton + '<br>';
@@ -455,8 +572,8 @@ var Calendar = Calendar || (function() {
         let importButtons = exportCalendarButton+importCalendarButton+'<br>'+exportConfigButton+importConfigButton+'<br>'+resetButton;
 
         let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
-        message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+monthsConfigButton+'<br>'+buttons+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+config.command+' config`.</p><hr>'+importButtons;
+        message = (message) ? '<p style="font-weight: bold">'+message+'</p><hr>' : '';
+        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+buttons+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+config.command+' config`.</p><hr>'+importButtons;
         makeAndSendMenu(contents, title_text, 'gm');
     },
 
@@ -464,7 +581,7 @@ var Calendar = Calendar || (function() {
         sendSeasonsConfigMenu: (message) => {
             let config = state[state_name].config;
 
-            let useSeasonsButton = makeButton(config.use_seasons, '!' + config.command + ' config use_seasons|'+!config.use_seasons, styles.button + styles.float.right);
+            let useSeasonsButton = makeButton(config.use_seasons, '!' + config.command + ' config season use_seasons|'+!config.use_seasons, styles.button + styles.float.right);
 
             let settingsListItems = [
                 '<span style="'+styles.float.left+'">Use Seasons:</span> ' + useSeasonsButton,
@@ -583,8 +700,8 @@ var Calendar = Calendar || (function() {
         sendHolidaysConfigMenu: (message) => {
             let config = state[state_name].config;
 
-            let useHolidaysButton = makeButton(config.use_holidays, '!' + config.command + ' config use_holidays|'+!config.use_holidays, styles.button + styles.float.right),
-                sendHolidaysButton = makeButton(config.send_holidays, '!' + config.command + ' config send_holidays|'+!config.send_holidays, styles.button + styles.float.right);
+            let useHolidaysButton = makeButton(config.use_holidays, '!' + config.command + ' config holiday use_holidays|'+!config.use_holidays, styles.button + styles.float.right),
+                sendHolidaysButton = makeButton(config.send_holidays, '!' + config.command + ' config holiday send_holidays|'+!config.send_holidays, styles.button + styles.float.right);
 
             let settingsListItems = [
                 '<span style="'+styles.float.left+'">Use Holidays:</span> ' + useHolidaysButton,
@@ -646,8 +763,8 @@ var Calendar = Calendar || (function() {
         sendWeatherConfigMenu: (message) => {
             let config = state[state_name].config;
 
-            let useWeatherButton = makeButton(config.use_weather, '!' + config.command + ' config use_weather|'+!config.use_weather, styles.button + styles.float.right),
-                sendWeatherButton = makeButton(config.send_weather, '!' + config.command + ' config send_weather|'+!config.send_weather, styles.button + styles.float.right);
+            let useWeatherButton = makeButton(config.use_weather, '!' + config.command + ' config weather use_weather|'+!config.use_weather, styles.button + styles.float.right),
+                sendWeatherButton = makeButton(config.send_weather, '!' + config.command + ' config weather send_weather|'+!config.send_weather, styles.button + styles.float.right);
 
             let settingsListItems = [
                 '<span style="'+styles.float.left+'">Use Weather:</span> ' + useWeatherButton,
@@ -817,12 +934,17 @@ var Calendar = Calendar || (function() {
                 use_table: true,
                 send_holidays: true,
                 send_weather: true,
-                send_table: true
+                send_table: true,
+                use_token: false,
+                tokenId: false,
+                use_handout: false,
+                show_handout_players: true
             },
             calendar:{
                 current: {
                     month: 0,
                     day: 1,
+                    year: 2018,
                     weather: 0
                 },
                 months: [
