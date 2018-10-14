@@ -331,7 +331,7 @@ var Calendar = Calendar || (function() {
 
                         state[state_name].calendar[removeType].splice(id, 1);
                         
-                        /*TODO Remove holidays
+                        /*TODO Remove holidays - holidays needs convert to array first
 
                         state[state_name].calendar.holidays.forEach((holiday, i) => {
                             if(holiday.month === id) state[state_name].calendar.holidays.splice(i, 1);
@@ -755,9 +755,10 @@ var Calendar = Calendar || (function() {
             ];
 
             let backButton = makeButton('< Back', '!'+config.command + ' config holiday', styles.button + styles.fullWidth);
+            let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" width="16" height="16" /> Remove', '!'+state[state_name].config.command + ' remove holidays ' + key, styles.button + styles.fullWidth + 'background-color: red;');
 
             let title_text = script_name + ' ' + holiday.name + ' Config';
-            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+removeButton+backButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
 
@@ -815,9 +816,10 @@ var Calendar = Calendar || (function() {
 
             let backButton = makeButton('< Back', '!'+state[state_name].config.command + ' config weather', styles.button + styles.fullWidth);
             let newTextbutton = makeButton('Add Text', '!'+state[state_name].config.command + ' create-weather-text ' + key + ' ?{Text}', styles.button);
+            let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" width="16" height="16" /> Remove', '!'+state[state_name].config.command + ' remove weather_types ' + key, styles.button + styles.fullWidth + 'background-color: red;');
 
             let title_text = script_name + ' ' + weather.name + ' Config';
-            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr>'+backButton;
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+makeList(textListItems, styles.reset + styles.list + styles.overflow, styles.overflow)+newTextbutton+'<hr>'+removeButton+backButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
     },
