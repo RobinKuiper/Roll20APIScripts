@@ -1020,11 +1020,16 @@
                     if(bonus.value != null) {
                         stBonTotals[0] += bonus.value;
                     }
+                    if(bonus.type == 'proficiency') {
+                        // proficiency in all saves, such as Monk level 14 feature
+                        for(let ability of Object.values(_ABILITY)) {
+                            save_proficiency_attributes[ability + '_save_prof'] = "(@{pb})";
+                        }
+                    }
                 });
                 for(let i in _ABILITIES) {
                     let abl = _ABILITY[_ABILITIES[i]];
                     let stBonuses = getObjects(character.modifiers, 'subType', abl+'-saving-throws', ['item']);
-                    let stBonTotals = [0,0,0,0,0,0,0];
                     stBonuses.forEach((bonus) => {
                         if(bonus.statId != null) {
                             stBonTotals[parseInt(i)] += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
