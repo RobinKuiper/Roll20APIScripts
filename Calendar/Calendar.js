@@ -230,7 +230,7 @@ var Calendar = Calendar || (function() {
                                 state[state_name].calendar.holidays.push({
                                     name,
                                     day: 1,
-                                    month: '&nbsp;'
+                                    month: 0
                                 });
 
                                 config_menus.holidaysConfigMenu();
@@ -325,17 +325,20 @@ var Calendar = Calendar || (function() {
 
                     case 'remove':
                         let removeType = args.shift();
-                        id = args.shift();
+                        id = parseInt(args.shift(), 10);
 
-                        if(!removeType || !id) return;
+                        if(!removeType || id < 0 || typeof id === undefined) return;
+
+                        if(state[state_name].calendar[removeType].length === 1 && removeType !== 'holidays'){
+                            sendError('There needs to be atleast one item. You can create a new one and remove this, or just change this one.');
+                            return;
+                        }
 
                         state[state_name].calendar[removeType].splice(id, 1);
-                        
-                        /*TODO Remove holidays - holidays needs convert to array first
 
-                        state[state_name].calendar.holidays.forEach((holiday, i) => {
-                            if(holiday.month === id) state[state_name].calendar.holidays.splice(i, 1);
-                        });*/
+                        for(var i = state[state_name].calendar.holidays.length - 1; i >= 0; i--) {
+                            if(state[state_name].calendar.holidays[i].month === id) state[state_name].calendar.holidays.splice(i, 1);
+                        }
 
                         if(removeType === 'months' && getCurrentMonthId() === id){
                             changeMonth(0);
@@ -397,8 +400,6 @@ var Calendar = Calendar || (function() {
             name: script_name,
             inplayerjournals
         });
-
-        log(handout)
 
         handout.set('notes', generateTable(getMonth().days, getCurrentDay()));
 
@@ -653,6 +654,9 @@ var Calendar = Calendar || (function() {
             let listItems = [];
 
             let months = state[state_name].calendar.months;
+
+            if(!months.length) listItems.push('There are no months found.');
+
             for (let [key, value] of Object.entries(months)) { 
                 listItems.push(makeButton(value.name + ' (' + value.days + ')', '!' + state[state_name].config.command + ' single-item-config months ' + key, styles.textButton));
             }
@@ -698,7 +702,7 @@ var Calendar = Calendar || (function() {
             let removeButton = makeButton('<img src="https://s3.amazonaws.com/files.d20.io/images/11381509/YcG-o2Q1-CrwKD_nXh5yAA/thumb.png?1439051579" width="16" height="16" /> Remove', '!'+state[state_name].config.command + ' remove months ' + key, styles.button + styles.fullWidth + 'background-color: red;');
 
             let title_text = script_name + ' ' + month.name + ' Config';
-            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+removeButton+backButton;
+            let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><span style="font-size: 8pt">Holidays in this month will also be remove.</span>'+removeButton+backButton;
             makeAndSendMenu(contents, title_text, 'gm');
         },
 
@@ -719,6 +723,9 @@ var Calendar = Calendar || (function() {
             let listItems = [];
 
             let holidays = state[state_name].calendar.holidays;
+
+            if(!holidays.length) listItems.push('There are no holidays found.');
+
             for (let [key, value] of Object.entries(holidays)) { 
                 listItems.push(makeButton(value.name + ' (' + value.month + '/' + value.day + ')', '!' + state[state_name].config.command + ' single-item-config holidays ' + key, styles.textButton));
             }
@@ -785,6 +792,9 @@ var Calendar = Calendar || (function() {
             let listItems = [];
 
             let weather_types = state[state_name].calendar.weather_types;
+
+            if(!weather_types.length) listItems.push('There are no weather types found.');
+
             for (let [key, value] of Object.entries(weather_types)) { 
                 listItems.push(makeButton(value.name + ' (' + value.texts.length + ')', '!' + config.command + ' single-item-config weather_types ' + key, styles.textButton));
             }
@@ -980,10 +990,10 @@ var Calendar = Calendar || (function() {
                     year: 4,
                     month: 2
                 },
-                holidays: {
-                    christmass: { name: "1st Chrismass", month: 11, day: 25 },
-                    christmass2: { name: "2nd Chrismass", month: 11, day: 26 },
-                },
+                holidays: [
+                    { name: "1st Chrismass", month: 11, day: 25 },
+                    { name: "2nd Chrismass", month: 11, day: 26 },
+                ],
                 weather_types: [
                     {
                         name: 'Rainy',
