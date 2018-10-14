@@ -401,7 +401,13 @@ var Calendar = Calendar || (function() {
             inplayerjournals
         });
 
-        handout.set('notes', generateTable(getMonth().days, getCurrentDay()));
+        let table = generateTable(getMonth().days, getCurrentDay());
+        let upcoming_events = getObjects(state[state_name].calendar.holidays, 'month', getCurrentMonthId()).map(holiday => {
+            return '<i>'+getMonth().name+' '+holiday.day+' - '+holiday.name+'</i>';
+        });
+        upcoming_events = (upcoming_events.length) ? upcoming_events : ['No events this month.'];
+        upcoming_events = '<b>Events this Month</b><br>'+makeList(upcoming_events, styles.reset + styles.list + styles.overflow, styles.overflow);
+        handout.set('notes', table+getDateString()+'<br><br><b>Weather</b><br><i>'+getWeather()+'</i><hr>'+upcoming_events);
 
         return handout
     },
@@ -481,7 +487,7 @@ var Calendar = Calendar || (function() {
     },
 
     getCurrentMonthId = () => {
-        return state[state_name].calendar.current.month;
+        return parseInt(state[state_name].calendar.current.month, 10);
     },
 
     getCurrentDay = () => {
@@ -492,7 +498,7 @@ var Calendar = Calendar || (function() {
         return state[state_name].calendar.current.year;
     },
 
-    getWeather = (weather_type) => {
+    getWeather = (weather_type=getMonth().weather_type) => {
         let weather = state[state_name].calendar.weather_types[weather_type];
 
         let randomNumber = Math.floor(Math.random() * weather.texts.length) + 0; 
