@@ -43,7 +43,8 @@
     const script_name = 'BeyondImporter';
     const state_name = 'BEYONDIMPORTER';
     const debug = false;
-
+    var spellTargetInAttacks = true;
+    
     on('ready', function() {
         checkInstall();
         log(script_name + ' Ready! Command: !beyond');
@@ -63,8 +64,14 @@
             let importData = '';
             if(args.length < 1) { sendHelpMenu(beyond_caller); return; }
 
-            let initTiebreaker = state[state_name][beyond_caller.id].config.initTieBreaker;
-            let languageGrouping = state[state_name][beyond_caller.id].config.languageGrouping;
+            let config = state[state_name][beyond_caller.id].config;
+            let initTiebreaker = config.initTieBreaker;
+            let languageGrouping = config.languageGrouping;
+            
+            // if not set, we default to true even without a config reset
+            if (config.hasOwnProperty('spellTargetInAttacks')) {
+                spellTargetInAttacks = config.spellTargetInAttacks;
+            }
 
             for(let i = 0; i < args.length; i+=2) {
                 let k = args[i].trim();
@@ -1389,11 +1396,13 @@
             if(addAttack && doDamage) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
         }
 
-        let restrictions = calculateRestrictionsComment(damages.concat(healing));
-        if(restrictions != null) {
-            attributes["repeating_spell-"+level+"_"+row+"_spelltarget"] = replaceChars(restrictions);
-            if(attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] == 'ATTACK') {
-                attributes["repeating_spell-"+level+"_"+row+"_includedesc"] = 'partial';
+        if (spellTargetInAttacks) {
+            let restrictions = calculateRestrictionsComment(damages.concat(healing));
+            if(restrictions != null) {
+                attributes["repeating_spell-"+level+"_"+row+"_spelltarget"] = replaceChars(restrictions);
+                if(attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] == 'ATTACK') {
+                    attributes["repeating_spell-"+level+"_"+row+"_includedesc"] = 'partial';
+                }
             }
         }
         return attributes;
@@ -1478,6 +1487,7 @@
 
         let languageGroupingButton = makeButton(state[state_name][playerid].config.languageGrouping, '!beyond --config languageGrouping|'+!state[state_name][playerid].config.languageGrouping, buttonStyle);
         let initTieBreakerButton = makeButton(state[state_name][playerid].config.initTieBreaker, '!beyond --config initTieBreaker|'+!state[state_name][playerid].config.initTieBreaker, buttonStyle);
+        let spellTargetInAttacksButton = makeButton(state[state_name][playerid].config.spellTargetInAttacks, '!beyond --config spellTargetInAttacks|'+!state[state_name][playerid].config.spellTargetInAttacks, buttonStyle);
 
         let inPlayerJournalsButton = makeButton(player.get('displayname'), '', buttonStyle);
         let controlledByButton = makeButton(player.get('displayname'), '', buttonStyle);
@@ -1502,7 +1512,8 @@
             '<span style="float: left; margin-top: 6px;">In Player Journal:</span> '+inPlayerJournalsButton,
             '<span style="float: left; margin-top: 6px;">Player Control Permission:</span> '+controlledByButton,
             '<span style="float: left; margin-top: 6px;">Language Grouping:</span> '+languageGroupingButton,
-            '<span style="float: left; margin-top: 6px;">Initiative Tie Breaker:</span> '+initTieBreakerButton
+            '<span style="float: left; margin-top: 6px;">Initiative Tie Breaker:</span> '+initTieBreakerButton,
+            '<span style="float: left; margin-top: 6px;">Spell Info in Attacks:</span> '+spellTargetInAttacksButton
         ]
 
         let sheetList = '<hr><b>Character Sheet</b>'+makeList(sheetListItems, 'overflow: hidden; list-style: none; padding: 0; margin: 0;', 'overflow: hidden; margin-top: 5px;');
@@ -1786,6 +1797,7 @@
             controlledby: '',
             languageGrouping: false,
             initTieBreaker: false,
+            spellTargetInAttacks: true,
             imports: {
                 classes: true,
                 class_spells: true,
