@@ -694,7 +694,7 @@
                                     }
 
                                     let monkDieSize = Math.floor((monk_level - 1) / 4) * 2 + 4;
-                                    let monkAvgDmg = monkDieSize = (1 + monkDieSize) / 2;
+                                    let monkAvgDmg = (1 + monkDieSize) / 2;
 
                                     if(monkAvgDmg > itemAvgDmg) {
                                         item.definition.damage.diceString = '1d'+monkDieSize;
