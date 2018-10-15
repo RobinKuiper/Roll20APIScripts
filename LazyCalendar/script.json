@@ -1,0 +1,16 @@
+{
+    "name": "LazyCalendar",
+    "script": "LazyCalendar.js",
+    "version": "0.1.6",
+    "previousversions": [],
+    "description": "",
+    "authors": "Robin Kuiper",
+    "roll20userid": "1226016",
+    "useroptions": [],
+    "dependencies": {
+        "state.TEMPLATE": "read,write",
+        "attribute.current": "read"
+    },
+    "modifies": {},
+    "conflicts": []
+}
