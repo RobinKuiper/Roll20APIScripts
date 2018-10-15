@@ -751,6 +751,8 @@
                                 Object.assign(repeating_attributes, repAttack);
                                 // /CREATE ATTACK
                             }
+                            let itemArmorClass = 0;
+                            itemArmorClass += (item.definition.armorClass == null ? 0 : item.definition.armorClass);
                             item.definition.grantedModifiers.forEach((grantedMod) => {
                                 for(let abilityId in _ABILITIES) {
                                     let ABL = _ABILITIES[abilityId];
@@ -763,12 +765,12 @@
                                 if(grantedMod.type == 'bonus') {
                                     switch (grantedMod.subType) {
                                         case 'armor-class':
-                                            hasArmor = true;
-                                        // fall through
+                                            // wielding a shield or wearing other item which only give a bonus to armor class doesn't qualify as wearing armor
+                                            // including items such as staff of power, ring of protection, etc.
+                                            // fall through
                                         case 'unarmored-armor-class':
                                             if(item.definition.hasOwnProperty('armorClass')) {
-                                                // XXX let's not modify the input data, it will eventually lead to problems
-                                                item.definition.armorClass += grantedMod.value;
+                                                itemArmorClass += grantedMod.value;
                                             }
                                             else {
                                                 _itemmodifiers += ', AC +' + grantedMod.value;
@@ -781,7 +783,7 @@
                                             _itemmodifiers += ', Ability Checks +' + grantedMod.value;
                                             break;
                                         case 'speed':
-                                            // REVISIT there does not seem to be any way to implement these items in Roll20?
+                                            // Speed attribute in Roll20 OGL sheets is not calculated. They must be manually set
                                             break;
                                         case 'magic':
                                             // these are picked up in the weapons code above
@@ -794,19 +796,15 @@
                                 if(grantedMod.type == 'set') {
                                     switch (grantedMod.subType) {
                                         case 'armor-class':
-                                            hasArmor = true;
-                                            // XXX should this really search the entire character?  is this for feats or class features?
-                                            let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                            aac.forEach((aacb) => {
-                                                grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
-                                            });
-                                        // fall through
+                                            // If an item qualifies as armor, it will be given the .armorClass property and a type property of "Light/Medium/Heavy Armor".
+                                            // Items with modifiers like this don't qualify as armor. I don't know of any items that have this specific modifier.
+                                            // fall through
                                         case 'unarmored-armor-class':
                                             _itemmodifiers += ', AC: ' + grantedMod.value;
                                             break;
                                         case 'innate-speed-walking':
-                                        // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
-                                        // fall through and log as ignored
+                                            // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
+                                            // fall through and log as ignored
                                         default:
                                             // these may indicate an unimplemented conversion
                                             log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
@@ -814,13 +812,14 @@
                                 }
                             });
                             if(item.definition.hasOwnProperty('armorClass')){
+                                let ac = itemArmorClass;
+                                // This includes features such as defense fighting style, which require the user to wear armor
                                 let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                let ac = item.definition.armorClass;
                                 aac.forEach((aacb) => {
                                     ac = parseInt(ac) + parseInt(aacb.value);
                                 });
                                 _itemmodifiers += ', AC: ' + ac;
-                                hasArmor = true;
+                                if(["Light Armor", "Medium Armor", "Heavy Armor"].indexOf(item.definition.type) >= 0) hasArmor = true;
                             }
                             attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
                             Object.assign(repeating_attributes, attributes);
@@ -841,6 +840,21 @@
 
                     let name = 'Unarmored Defense';
                     let modifiers = '';
+
+                    // Label the unarmored armor class based on the feature it originates from
+                    character.classes.forEach((charClass) => {
+                        charClass.definition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
+                            name = cF.name;
+                        });
+                        if(charClass.subclassDefinition != null) {
+                            charClass.subclassDefinition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
+                                name = cF.name;
+                            });
+                        }
+                    });
+                    character.race.racialTraits.filter(rT => rT.id == ua.componentId).forEach((rT) => {
+                        name = rT.name;
+                    })
 
                     if(ua.componentTypeId == 306912077) { // Integrated Protection (Armor Type Option)
                         row = getRepeatingRowIds('inventory', 'itemname', 'Integrated Potection', 0);
