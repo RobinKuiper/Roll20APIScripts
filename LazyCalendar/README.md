@@ -14,6 +14,8 @@
 
 LazyCalendar is a fully customizable calendar to help you keep track in your games.
 
+The idea comes from [Nicholas Lambert](https://github.com/nicholasdeanlambert) ([script](https://github.com/nicholasdeanlambert/Roll20-APIs/blob/master/CalendarPC/calendarPC.js)).
+
 ### Commands
 
 * **!cal [menu]** - Shows the calendar menu.

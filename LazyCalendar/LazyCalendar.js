@@ -10,8 +10,6 @@
  * Paypal.me: https://www.paypal.me/robinkuiper
 */
 
-// TODO USE ARRAYS?
-
 var LazyCalendar = LazyCalendar || (function() {
     'use strict';
 
