@@ -31,6 +31,7 @@
     const charisma_skills = ['deception','intimidation','performance','persuasion']
 
     let class_spells = [];
+    let spellAttacks = [];
     let beyond_caller = {};
     let object;
 
@@ -197,6 +198,8 @@
                 let speedMods = getObjects(character, 'subType', 'speed');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
+                        // REVISIT: what item is this for?  boots of striding and springing use set: innate-speed-walking and Loadstone uses bonus: speed
+                        // so maybe this is for some feat or class feature? we could scope the search to not the whole character to clarify this
                         if(speedMod.type == 'set') {
                             weightSpeeds.normal.walk = (speedMod.value > weightSpeeds.normal.walk ? speedMod.value : weightSpeeds.normal.walk);
                         }
@@ -692,7 +695,7 @@
                                     }
 
                                     let monkDieSize = Math.floor((monk_level - 1) / 4) * 2 + 4;
-                                    let monkAvgDmg = monkDieSize = (1 + monkDieSize) / 2;
+                                    let monkAvgDmg = (1 + monkDieSize) / 2;
 
                                     if(monkAvgDmg > itemAvgDmg) {
                                         item.definition.damage.diceString = '1d'+monkDieSize;
@@ -747,32 +750,62 @@
                                 for(let abilityId in _ABILITIES) {
                                     let ABL = _ABILITIES[abilityId];
                                     if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
-                                        _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
+                                        // log('beyond debug 1: '+item.definition.name+' = '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value);
+                                        // This is causing an error... solution currently unknown
+                                        // _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
                                     }
                                 }
-                                if(grantedMod.type == 'bonus' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
-                                    if(grantedMod.subType == 'armor-class') {
-                                        hasArmor = true;
-                                    }
-                                    if(item.definition.hasOwnProperty('armorClass')) {
-                                        item.definition.armorClass += grantedMod.value;
-                                    }
-                                    else {
-                                        _itemmodifiers += ', AC +' + grantedMod.value;
+                                if(grantedMod.type == 'bonus') {
+                                    switch (grantedMod.subType) {
+                                        case 'armor-class':
+                                            hasArmor = true;
+                                        // fall through
+                                        case 'unarmored-armor-class':
+                                            if(item.definition.hasOwnProperty('armorClass')) {
+                                                // XXX let's not modify the input data, it will eventually lead to problems
+                                                item.definition.armorClass += grantedMod.value;
+                                            }
+                                            else {
+                                                _itemmodifiers += ', AC +' + grantedMod.value;
+                                            }
+                                            break;
+                                        case 'saving-throws':
+                                            _itemmodifiers += ', Saving Throws +' + grantedMod.value;
+                                            break;
+                                        case 'ability-checks':
+                                            _itemmodifiers += ', Ability Checks +' + grantedMod.value;
+                                            break;
+                                        case 'speed':
+                                            // REVISIT there does not seem to be any way to implement these items in Roll20? 
+                                            break;
+                                        case 'magic':
+                                            // these are picked up in the weapons code above
+                                            break;
+                                        default:
+                                            // these may indicate an unimplemented conversion
+                                            log('ignoring item ' + item.definition.name + ' bonus modifier for ' + grantedMod.subType);
                                     }
                                 }
-                                if(grantedMod.type == 'set' && (grantedMod.subType == 'unarmored-armor-class' || grantedMod.subType == 'armor-class')) {
-                                    if(grantedMod.subType == 'armor-class') {
-                                        hasArmor = true;
-                                        let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                        aac.forEach((aacb) => {
-                                            grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
-                                        });
+                                if(grantedMod.type == 'set') {
+                                    switch (grantedMod.subType) {
+                                        case 'armor-class':
+                                            hasArmor = true;
+                                            // XXX should this really search the entire character?  is this for feats or class features?
+                                            let aac = getObjects(character, 'subType', 'armored-armor-class');
+                                            aac.forEach((aacb) => {
+                                                grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
+                                            });
+                                        // fall through
+                                        case 'unarmored-armor-class':
+                                            _itemmodifiers += ', AC: ' + grantedMod.value;
+                                            break;
+                                        case 'innate-speed-walking':
+                                        // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
+                                        // fall through and log as ignored
+                                        default:
+                                            // these may indicate an unimplemented conversion
+                                            log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
                                     }
-                                    _itemmodifiers += ', AC: ' + grantedMod.value;
-                                }
-                                if(grantedMod.type == 'bonus' && (grantedMod.subType == 'saving-throws')) {
-                                    _itemmodifiers += ', Saving Throws +' + grantedMod.value;
                                 }
                             });
                             if(item.definition.hasOwnProperty('armorClass')){
@@ -989,11 +1022,16 @@
                     if(bonus.value != null) {
                         stBonTotals[0] += bonus.value;
                     }
+                    if(bonus.type == 'proficiency') {
+                        // proficiency in all saves, such as Monk level 14 feature
+                        for(let ability of Object.values(_ABILITY)) {
+                            save_proficiency_attributes[ability + '_save_prof'] = "(@{pb})";
+                        }
+                    }
                 });
                 for(let i in _ABILITIES) {
                     let abl = _ABILITY[_ABILITIES[i]];
                     let stBonuses = getObjects(character.modifiers, 'subType', abl+'-saving-throws', ['item']);
-                    let stBonTotals = [0,0,0,0,0,0,0];
                     stBonuses.forEach((bonus) => {
                         if(bonus.statId != null) {
                             stBonTotals[parseInt(i)] += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
@@ -1156,7 +1194,7 @@
 
         // create empty attribute if not already there
         let nextAttribute = findObjs({ type: 'attribute', characterid: object.id, name: nextItem[0] })[0];
-        nextAttribute = nextAttribute || createObj('attribute', { name: nextItem[0], characterid: object.id});
+        nextAttribute = nextAttribute || createObj('attribute', { name: nextItem[0], characterid: object.id });
 
         // async load next item
         onSheetWorkerCompleted(function() {
@@ -1232,33 +1270,73 @@
         return spellsArr;
     };
 
-    const importSpells = (character, array) => {
+    const importSpells = (character, spells) => {
         // set this to whatever number of items you can process at once
         // return attributes;
+        spellAttacks = [];
         let chunk = 5;
         let index = 0;
         function doChunk() {
             let cnt = chunk;
             let attributes = {};
-            while (cnt-- && index < array.length) {
-                Object.assign(attributes, importSpell(character, array[index], true));
+            while (cnt-- && index < spells.length) {
+                Object.assign(attributes, importSpell(character, spells, index, true));
                 ++index;
             }
             setAttrs(object.id, attributes);
-            if (index < array.length) {
+            if (index < spells.length) {
                 // set Timeout for async iteration
                 onSheetWorkerCompleted(doChunk);
             } else {
-                // truly done now
-                reportReady(character);
+                log('beyond: spells imported, updating spell attack proficiency');
+                onSheetWorkerCompleted(() => { updateSpellAttackProf(character, 0); });
             }
         }
         doChunk();
     };
 
-    const importSpell = (character, spell, addAttack) => {
+    const updateSpellAttackProf = (character, i) => {
+        if(spellAttacks[i] == null) {
+            reportReady(character);
+            return;
+        }
+
+        // This should work... but it doesn't.
+        /*let atkOutputAttr = findObjs({ type: 'attribute', characterid: object.id, name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" })[0];
+        atkOutputAttr = atkOutputAttr || createObj('attribute', { name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput", characterid: object.id});
+        onSheetWorkerCompleted(function() {
+            updateSpellAttackProf(character, ++i);
+        });
+        log('beyond: ' + "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" + " = " + 'ATTACK');
+        atkOutputAttr.setWithWorker({ current: 'ATTACK' });*/
+
+        let atkIdAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'repeating_spell-'+spellAttacks[i].level+'_'+spellAttacks[i].id+'_spellattackid' })[0];
+        if(atkIdAttr != null) {
+            let atkId = atkIdAttr.get('current');
+            let atkProfAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'repeating_attack_'+atkId+'_atkprofflag' })[0];
+            atkProfAttr = atkProfAttr || createObj('attribute', { name: 'repeating_attack_'+atkId+'_atkprofflag', characterid: object.id });
+
+            // async load next item
+            onSheetWorkerCompleted(function() {
+                updateSpellAttackProf(character, ++i);
+            });
+            log('beyond: ' + 'repeating_attack_'+atkId+'_atkprofflag' + " = " + '(@{pb})');
+            atkProfAttr.setWithWorker({ current: '(@{pb})' });
+        }
+        else {
+            reportReady(character);
+        }
+    }
+
+    const importSpell = (character, spells, index, addAttack) => {
+        let spell = spells[index];
+
+        let matchingSpells = spells.filter((spellAttributes) => {
+            return spellAttributes.definition.name == spell.definition.name;
+        });
+
         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
-        let row = getRepeatingRowIds('spell-'+level, 'spellname', spell.definition.name)[0];
+        let row = getRepeatingRowIds('spell-'+level, 'spellname', spell.definition.name, matchingSpells.findIndex(sA => sA.id == spell.id && sA.spellCastingAbility == spell.spellCastingAbility));
 
         spell.castingTime = {
             castingTimeInterval: spell.activation.activationTime,
@@ -1299,37 +1377,59 @@
         if(healing.length !== 0) {
             healing = healing[0];
             if(healing.type == 'bonus') {
-                let bonus = '';
+                let bonus = 0;
                 if(getObjects(character.classes, 'name', 'Disciple of Life').length > 0) {
-                    bonus = '+'+(2 + spell.definition.level);
+                    bonus += (2 + parseInt(spell.definition.level));
                 }
 
                 attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = 'None';
                 attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = '';
                 attributes["repeating_spell-"+level+"_"+row+"_spelldamage"] = '';
                 attributes["repeating_spell-"+level+"_"+row+"_spelldamagetype"] = '';
-                attributes["repeating_spell-"+level+"_"+row+"_spellhealing"] = (healing.die.fixedValue !== null) ? healing.die.fixedValue+bonus : healing.die.diceString+bonus;
+                if(healing.die.diceString != null) {
+                    attributes["repeating_spell-"+level+"_"+row+"_spellhealing"] = healing.die.diceString+'+'+(parseInt(healing.die.fixedValue == null ? 0 : healing.die.fixedValue)+bonus);
+                }
+                else if (healing.die.fixedValue != null) {
+                    attributes["repeating_spell-"+level+"_"+row+"_spellhealing"] = (parseInt(healing.die.fixedValue)+bonus)+'d1';
+                }
                 attributes["repeating_spell-"+level+"_"+row+"_spelldmgmod"] = healing.usePrimaryStat ? 'Yes' : '0';
 
-                bonus = '';
+                bonus = 0;
                 if(getObjects(character.classes, 'name', 'Disciple of Life').length > 0) {
-                    bonus = '1';
+                    bonus += 1;
                 }
 
                 let ahl = spell.definition.atHigherLevels.higherLevelDefinitions;
                 for(let i in ahl) {
-                    if(ahl[i].dice == null) continue;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = ahl[i].dice.diceCount;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+ahl[i].dice.diceValue;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = bonus;
+                    if(ahl[i].dice != null) {
+                        if(ahl[i].dice.diceValue != null) {
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = ahl[i].dice.diceCount;
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+ahl[i].dice.diceValue;
+                        }
+                        else {
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '0';
+                            attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd4';
+                        }
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = parseInt(ahl[i].dice.fixedValue)+bonus;
+                    }
                 }
 
                 if(healing.hasOwnProperty('atHigherLevels') && healing.atHigherLevels.scaleType === 'spellscale') {
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '1';
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+healing.die.diceValue;
-                    attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = bonus;
+                    if(healing.die.diceValue != null) {
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = healing.die.diceCount;
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd'+healing.die.diceValue;
+                    }
+                    else {
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldie"] = '0';
+                        attributes["repeating_spell-"+level+"_"+row+"_spellhldietype"] = 'd4';
+                    }
+                    if(healing.die.fixedValue == null) healing.die.fixedValue = 0;
+                    attributes["repeating_spell-"+level+"_"+row+"_spellhlbonus"] = parseInt(healing.die.fixedValue)+bonus;
                 }
-                if(addAttack) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+
+                if(addAttack)  {
+                    attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+                }
             }
         }
 
@@ -1346,11 +1446,9 @@
                     if(!doDamage){
                         doDamage = true;
 
-                        if(spell.definition.attackType == 0) spell.definition.attackType = 'none';
-                        if(spell.definition.attackType == 1) spell.definition.attackType = 'melee';
-                        if(spell.definition.attackType == 2) spell.definition.attackType = 'ranged';
-                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = (spell.definition.attackType === '') ? 'None' : spell.definition.attackType;
-                        attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId === null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
+                        let attackType = ['None', 'Melee', 'Ranged'];
+                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = attackType[spell.definition.attackType == null ? 0 : spell.definition.attackType];
+                        attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId == null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
 
                         let hlDiceCount = '';
                         let hlDiceValue = '';
@@ -1383,7 +1481,11 @@
                 }
             });
 
-            if(addAttack && doDamage) attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+            if(addAttack && doDamage) {
+                // attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'SPELLCARD';
+                attributes["repeating_spell-"+level+"_"+row+"_spelloutput"] = 'ATTACK';
+                spellAttacks.push({level: level, id: row});
+            }
         }
 
         return attributes;
@@ -1523,14 +1625,13 @@
             for(let i in matches) {
                 let row = matches[i].get('name').replace('repeating_'+section+'_','').replace('_'+attribute,'');
                 ids.push(row);
-                // if(section == 'inventory') sendChat(script_name, matchValue+' ('+ids.length+')'+': '+row, null, {noarchive:true});
             }
             if(ids.length == 0) ids.push(generateRowID());
         }
         else ids.push(generateRowID());
 
         if(index == null) return ids;
-        else return ids[index] == null && index > 0 ? ids[0] : ids[index];
+        else return ids[index] == null && index >= 0 ? generateRowID() : ids[index];
     }
 
     const createRepeatingTrait = (object, trait, options) => {
