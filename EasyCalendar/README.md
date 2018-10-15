@@ -1,4 +1,4 @@
-## Template
+## LazyCalendar
 
 * Skype: RobinKuiper.eu
 * Discord: Atheos#1095
@@ -12,7 +12,7 @@
 
 ---
 
-Calendar is a fully customizable calendar to help you keep track in your games.
+LazyCalendar is a fully customizable calendar to help you keep track in your games.
 
 ### Commands
 

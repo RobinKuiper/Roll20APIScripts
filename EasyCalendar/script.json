@@ -1,7 +1,7 @@
 {
-    "name": "Template",
-    "script": "Template.js",
-    "version": "0.1.0",
+    "name": "LazyCalendar",
+    "script": "LazyCalendar.js",
+    "version": "0.1.6",
     "previousversions": [],
     "description": "",
     "authors": "Robin Kuiper",

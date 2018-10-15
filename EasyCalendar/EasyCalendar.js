@@ -1,5 +1,5 @@
 /*
- * Version 0.1.0
+ * Version 0.1.6
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -12,7 +12,7 @@
 
 // TODO USE ARRAYS?
 
-var Calendar = Calendar || (function() {
+var LazyCalendar = LazyCalendar || (function() {
     'use strict';
 
     // Styling for the chat responses.
@@ -31,8 +31,8 @@ var Calendar = Calendar || (function() {
         underline: 'text-decoration: underline;',
         strikethrough: 'text-decoration: strikethrough'
     },
-    script_name = 'Calendar',
-    state_name = 'CALENDAR',
+    script_name = 'LazyCalendar',
+    state_name = 'LAZYCALENDAR',
 
     handleInput = (msg) => {
         if (msg.type != 'api') return;
@@ -876,7 +876,6 @@ var Calendar = Calendar || (function() {
 
     //return an array of objects according to key, value, or key and value matching, optionally ignoring objects in array of names
     getObjects = (obj, key, val, except) => {
-        log(val)
         except = except || [];
         let objects = [];
         for (let i in obj) {
@@ -897,7 +896,6 @@ var Calendar = Calendar || (function() {
                 }
             }
         }
-        log(objects)
         return objects;
     },
 
@@ -1132,6 +1130,6 @@ var Calendar = Calendar || (function() {
 on('ready',function() {
     'use strict';
 
-    Calendar.checkInstall();
-    Calendar.registerEventHandlers();
+    LazyCalendar.checkInstall();
+    LazyCalendar.registerEventHandlers();
 });
