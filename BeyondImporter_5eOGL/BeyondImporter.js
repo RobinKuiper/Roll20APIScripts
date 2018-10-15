@@ -12,10 +12,15 @@
  * Patreon: https://patreon.com/robinkuiper
  * Paypal.me: https://www.paypal.me/robinkuiper
  *
- * Modified By Matt DeKok
+ * Modified By:
+ *
+ * Name: Matt DeKok
  * Discord: Sillvva#2532
  * Roll20: https://app.roll20.net/users/494585/sillvva
- * Github: https://github.com/sillvva/Roll20-API-Scripts
+ *
+ * Name: Ammo Goettsch
+ * Discord: ammo#7063
+ * Roll20: https://app.roll20.net/users/2990964/ammo
  */
 
 (function() {
@@ -147,13 +152,13 @@
                 let single_attributes = {};
 
                 // these are written individually after all the single attributes, in alphabetical order
-                // these have to be written after the last time that update_class is called in the 5e OGL sheet, so 
+                // these have to be written after the last time that update_class is called in the 5e OGL sheet, so
                 // we wait until we have written all the other individual attributes that might trigger it
-                let save_proficiency_attributes = {}
+                let save_proficiency_attributes = {};
 
                 // these are written in one large write once everything else is written
                 // NOTE: changing any stats after all these are imported would create a lot of updates, so it is
-                // good that we write these when all the stats are done 
+                // good that we write these when all the stats are done
                 let repeating_attributes = {};
 
                 object = null;
@@ -315,7 +320,7 @@
                     proficiencies.forEach((prof) => {
                         let skill = prof.subType.replace(/-/g, '_');
                         if(skills.includes(skill)){
-                            let attributes = {}
+                            let attributes = {};
                             attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
                             Object.assign(single_attributes, attributes);
                         }
@@ -776,7 +781,7 @@
                                             _itemmodifiers += ', Ability Checks +' + grantedMod.value;
                                             break;
                                         case 'speed':
-                                            // REVISIT there does not seem to be any way to implement these items in Roll20? 
+                                            // REVISIT there does not seem to be any way to implement these items in Roll20?
                                             break;
                                         case 'magic':
                                             // these are picked up in the weapons code above
@@ -1209,8 +1214,26 @@
 
         // scan for modifiers except those in items, because we will get those bonuses from the items once they are imported
         // NOTE: this also handles the problem that Beyond includes modifiers from items that are not currently equipped/attuned
-        let hpLevelBons = getObjects(character.modifiers, 'subType', 'hit-points-per-level', ['item']).forEach((bons) => {
-            hp += total_level * bons.value;
+        let hpLevelBonus = getObjects(character.modifiers, 'subType', 'hit-points-per-level', ['item']).forEach((bonus) => {
+            let level = total_level;
+
+            // Ensure that per-level bonuses from class features only apply for the levels of the class and not the character's total level.
+            let charClasses = character.classes.filter((charClass) => {
+                let output = charClass.definition.classFeatures.findIndex(cF => cF.id == bonus.componentId) >= 0;
+                if(charClass.subclassDefinition != null) {
+                    output = output || charClass.subclassDefinition.classFeatures.findIndex(cF => cF.id == bonus.componentId) >= 0;
+                }
+                return output;
+            });
+
+            if(charClasses.length > 0) {
+                level = 0;
+                charClasses.forEach((charClass) => {
+                    level += parseInt(charClass.level);
+                });
+            }
+
+            hp += level * bonus.value;
         });
 
         let hpAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'hp' })[0];
@@ -1303,12 +1326,12 @@
 
         // This should work... but it doesn't.
         /*let atkOutputAttr = findObjs({ type: 'attribute', characterid: object.id, name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" })[0];
-        atkOutputAttr = atkOutputAttr || createObj('attribute', { name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput", characterid: object.id});
-        onSheetWorkerCompleted(function() {
-            updateSpellAttackProf(character, ++i);
-        });
-        log('beyond: ' + "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" + " = " + 'ATTACK');
-        atkOutputAttr.setWithWorker({ current: 'ATTACK' });*/
+         atkOutputAttr = atkOutputAttr || createObj('attribute', { name: "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput", characterid: object.id});
+         onSheetWorkerCompleted(function() {
+         updateSpellAttackProf(character, ++i);
+         });
+         log('beyond: ' + "repeating_spell-"+spellAttacks[i].level+"_"+spellAttacks[i].id+"_spelloutput" + " = " + 'ATTACK');
+         atkOutputAttr.setWithWorker({ current: 'ATTACK' });*/
 
         let atkIdAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'repeating_spell-'+spellAttacks[i].level+'_'+spellAttacks[i].id+'_spellattackid' })[0];
         if(atkIdAttr != null) {
@@ -1608,9 +1631,9 @@
     };
 
     const replaceChars = (text) => {
-        text = text.replace('\&rsquo\;', '\'').replace('\&mdash\;','—').replace('\ \;',' ').replace('\&hellip\;','…');
+        text = text.replace('\&rsquo\;', '\'').replace('\&mdash\;','—').replace('\ \;',' ').replace('\&hellip\;','…');
         text = text.replace('\û\;','û').replace('’', '\'').replace(' ', ' ');
-        text = text.replace(/\<li[^\>]+\>/gi,'• ').replace('\<\/li\>','');
+        text = text.replace(/<li[^>]+>/gi,'• ').replace(/<\/li>/gi,'');
 
         return text;
     };
