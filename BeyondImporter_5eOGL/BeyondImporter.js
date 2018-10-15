@@ -750,14 +750,16 @@
                                 for(let abilityId in _ABILITIES) {
                                     let ABL = _ABILITIES[abilityId];
                                     if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
-                                        _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
+                                        // log('beyond debug 1: '+item.definition.name+' = '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value);
+                                        // This is causing an error... solution currently unknown
+                                        // _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
                                     }
                                 }
                                 if(grantedMod.type == 'bonus') {
                                     switch (grantedMod.subType) {
                                         case 'armor-class':
                                             hasArmor = true;
-                                            // fall through
+                                        // fall through
                                         case 'unarmored-armor-class':
                                             if(item.definition.hasOwnProperty('armorClass')) {
                                                 // XXX let's not modify the input data, it will eventually lead to problems
@@ -793,13 +795,13 @@
                                             aac.forEach((aacb) => {
                                                 grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
                                             });
-                                            // fall through
+                                        // fall through
                                         case 'unarmored-armor-class':
                                             _itemmodifiers += ', AC: ' + grantedMod.value;
                                             break;
                                         case 'innate-speed-walking':
-                                            // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
-                                            // fall through and log as ignored
+                                        // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
+                                        // fall through and log as ignored
                                         default:
                                             // these may indicate an unimplemented conversion
                                             log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
@@ -1192,7 +1194,7 @@
 
         // create empty attribute if not already there
         let nextAttribute = findObjs({ type: 'attribute', characterid: object.id, name: nextItem[0] })[0];
-        nextAttribute = nextAttribute || createObj('attribute', { name: nextItem[0], characterid: object.id});
+        nextAttribute = nextAttribute || createObj('attribute', { name: nextItem[0], characterid: object.id });
 
         // async load next item
         onSheetWorkerCompleted(function() {
@@ -1268,7 +1270,7 @@
         return spellsArr;
     };
 
-    const importSpells = (character, array) => {
+    const importSpells = (character, spells) => {
         // set this to whatever number of items you can process at once
         // return attributes;
         spellAttacks = [];
@@ -1277,12 +1279,12 @@
         function doChunk() {
             let cnt = chunk;
             let attributes = {};
-            while (cnt-- && index < array.length) {
-                Object.assign(attributes, importSpell(character, array[index], true));
+            while (cnt-- && index < spells.length) {
+                Object.assign(attributes, importSpell(character, spells, index, true));
                 ++index;
             }
             setAttrs(object.id, attributes);
-            if (index < array.length) {
+            if (index < spells.length) {
                 // set Timeout for async iteration
                 onSheetWorkerCompleted(doChunk);
             } else {
@@ -1312,7 +1314,7 @@
         if(atkIdAttr != null) {
             let atkId = atkIdAttr.get('current');
             let atkProfAttr = findObjs({ type: 'attribute', characterid: object.id, name: 'repeating_attack_'+atkId+'_atkprofflag' })[0];
-            atkProfAttr = atkProfAttr || createObj('attribute', { name: 'repeating_attack_'+atkId+'_atkprofflag', characterid: object.id});
+            atkProfAttr = atkProfAttr || createObj('attribute', { name: 'repeating_attack_'+atkId+'_atkprofflag', characterid: object.id });
 
             // async load next item
             onSheetWorkerCompleted(function() {
@@ -1326,9 +1328,15 @@
         }
     }
 
-    const importSpell = (character, spell, addAttack) => {
+    const importSpell = (character, spells, index, addAttack) => {
+        let spell = spells[index];
+
+        let matchingSpells = spells.filter((spellAttributes) => {
+            return spellAttributes.definition.name == spell.definition.name;
+        });
+
         let level = (spell.definition.level === 0) ? 'cantrip' : spell.definition.level.toString();
-        let row = getRepeatingRowIds('spell-'+level, 'spellname', spell.definition.name)[0];
+        let row = getRepeatingRowIds('spell-'+level, 'spellname', spell.definition.name, matchingSpells.findIndex(sA => sA.id == spell.id && sA.spellCastingAbility == spell.spellCastingAbility));
 
         spell.castingTime = {
             castingTimeInterval: spell.activation.activationTime,
@@ -1439,8 +1447,8 @@
                         doDamage = true;
 
                         let attackType = ['None', 'Melee', 'Ranged'];
-                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = attackType[spell.definition.attackType];
-                        attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId === null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
+                        attributes["repeating_spell-"+level+"_"+row+"_spellattack"] = attackType[spell.definition.attackType == null ? 0 : spell.definition.attackType];
+                        attributes["repeating_spell-"+level+"_"+row+"_spellsave"] = (spell.definition.saveDcAbilityId == null) ? '' : ucFirst(_ABILITY[_ABILITIES[spell.definition.saveDcAbilityId]]);
 
                         let hlDiceCount = '';
                         let hlDiceValue = '';
@@ -1617,14 +1625,13 @@
             for(let i in matches) {
                 let row = matches[i].get('name').replace('repeating_'+section+'_','').replace('_'+attribute,'');
                 ids.push(row);
-                // if(section == 'inventory') sendChat(script_name, matchValue+' ('+ids.length+')'+': '+row, null, {noarchive:true});
             }
             if(ids.length == 0) ids.push(generateRowID());
         }
         else ids.push(generateRowID());
 
         if(index == null) return ids;
-        else return ids[index] == null && index > 0 ? ids[0] : ids[index];
+        else return ids[index] == null && index >= 0 ? generateRowID() : ids[index];
     }
 
     const createRepeatingTrait = (object, trait, options) => {
