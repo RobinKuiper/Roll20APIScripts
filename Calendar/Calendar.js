@@ -156,6 +156,8 @@ var Calendar = Calendar || (function() {
                                 }
 
                                 state[state_name][type][key] = value;
+
+                                if(state[state_name].config.use_handout) getOrCreateHandout();
                             }
                         }
 
@@ -389,6 +391,8 @@ var Calendar = Calendar || (function() {
     },
 
     getOrCreateHandout = () => {
+        let config = state[state_name].config;
+
         let handout = findObjs({
                 type: 'handout',
                 name: script_name
@@ -409,13 +413,21 @@ var Calendar = Calendar || (function() {
         });
         upcoming_events = (upcoming_events.length) ? upcoming_events : ['No events this month.'];
         upcoming_events = '<b>Events this Month</b><br>'+makeList(upcoming_events, styles.reset + styles.list + styles.overflow, styles.overflow);
-        handout.set('notes', table+getDateString()+'<br><br><b>Weather</b><br><i>'+state[state_name].calendar.current.weather+'</i><hr>'+upcoming_events);
+
+        let notes = '';
+        
+        if(config.use_table) notes += table;
+        notes += getDateString() + '<br><br>';
+        if(config.use_weather) notes += '<b>Weather</b><br><i>'+state[state_name].calendar.current.weather+'</i>';
+        if(config.use_holidays) notes += '<hr>'+upcoming_events;
+
+        handout.set('notes', notes);
 
         return handout
     },
 
     generateTable = (totalDays, currentDay) => {
-        let table = '<table border="1" style="'+styles.fullWidth+'">';
+        let table = '<b>'+getMonth().name+'</b><table border="1" style="'+styles.fullWidth+'">';
         for(let i = 0; i < Math.ceil(totalDays/7); i++){
             table += '<tr>';
             for(let j = 1; j <= 7; j++){
@@ -976,17 +988,17 @@ var Calendar = Calendar || (function() {
                 },
                 months: [
                     { name: "Januari", days: 31, avg_temp: 10, weather_type: 0 },
-                    { name: "Februari", days: 28, avg_temp: 10, weather_type: 1 },
-                    { name: "March", days: 31, avg_temp: 10, weather_type: 1 },
+                    { name: "Februari", days: 28, avg_temp: 10, weather_type: 0 },
+                    { name: "March", days: 31, avg_temp: 10, weather_type: 0 },
                     { name: "April", days: 30, avg_temp: 10, weather_type: 1 },
                     { name: "May", days: 31, avg_temp: 10, weather_type: 1 },
                     { name: "June", days: 30, avg_temp: 10, weather_type: 1 },
                     { name: "July", days: 31, avg_temp: 10, weather_type: 1 },
                     { name: "August", days: 31, avg_temp: 10, weather_type: 1 },
-                    { name: "September", days: 30, avg_temp: 10, weather_type: 1 },
-                    { name: "October", days: 31, avg_temp: 10, weather_type: 1 },
-                    { name: "November", days: 30, avg_temp: 10, weather_type: 1 },
-                    { name: "December", days: 31, avg_temp: 10, weather_type: 1 },
+                    { name: "September", days: 30, avg_temp: 10, weather_type: 0 },
+                    { name: "October", days: 31, avg_temp: 10, weather_type: 0 },
+                    { name: "November", days: 30, avg_temp: 10, weather_type: 2 },
+                    { name: "December", days: 31, avg_temp: 10, weather_type: 2 },
                 ],
                 seasons: [
                     { name: "Autumn", months: "1-3" },
@@ -1006,15 +1018,41 @@ var Calendar = Calendar || (function() {
                     {
                         name: 'Rainy',
                         texts: [
-                            "It's a light rainy day outside.",
-                            "It's raining very hard today."
+                            'Misty - A low mist hangs in the air that limits vision to a maximum of 150 ft. for everything of large size and smaller. Any such target is assumed to have total cover while anything huge or larger past this range is considered to have three-quarters cover. Any Survival(wisdom) check made to navigate through the mist has disadvantage.',
+                            'Heavy Mist - A thick almost tangible mist drowns out any vision past 15ft. for everything large and smaller, with anything huge or larger only being visible up to 30ft. away. All sight based abilities outside of the 15ft. range are at disadvantage and all creatures and objects outside of that range are assumed to have total cover. This disadvantage cannot be negated and also applies to navigation unless the DM specifically allows you to.',
+                            'Dry and Sunny - These days are rare and should be enjoyed.',
+                            'Sunny with Rain Showers - Smaller localised rain clouds fill the skies, leaving the days filled both with rain and rainbows. There will be a 1 in 3 chance of it currently being dry on the character’s position.',
+                            'Rainy - A sheet of rain falls over the land, creating a damp but slightly cosy atmosphere while walking under the massive trees of the jungle. Though the humidity rises most places within the jungle are still relatively dry due to the thick canopy catching most of the rain.',
+                            'Heavy Rain - Rain and wind tear at the trees and pour down on any poor adventurer out to test their luck. Any Wisdom(perception) checks beyond 150ft. become blurred and are at disadvantage except for anything that’s huge or larger. Any creature outside of this range that is large or smaller gains the benefits of three-quarters cover and missile weapons ranges are halved.',
+                            'Tropical Storm - The sky darkens as lighting, rain and mayhem rain down from above while the wind tears the trees away from the earth itself. Rivers swell and rage through the jungle, preventing any form of travel by boat. Any guide worth their salt knows that the best choice is to hunker down and wait out the storm, but there are always those foolish enough to think they can test mother nature. Anyone braving the storm immediately gains a level of exhaustion and must make a DC 10 Constitution saving throw at the end of the day to prevent weariness from setting in. On top of the attributes of “Heavy Rain” all characters are also at disadvantage for making Wisdom(survival) checks to navigate.',
+                            'Extremely Warm and Rainy - The heat rises to 35°C and above making movement cumbersome. Any character that decides to travel long distances during these days gets a level of exhaustion.',
+                            'Extremely Warm and Dry - The heat rises to 35°C and above making movement cumbersome. Any character that decides to travel long distances during these days gets a level of exhaustion. Characters will need to actively prevent being dehydrated throughout the day.',
                         ],
                     },
                     {
                         name: 'Dry',
                         texts: [
-                            "Dry.",
-                            "Dryness is keeping on and on!"
+                            'Misty - A low mist hangs in the air that limits vision to a maximum of 150 ft. for everything of large size and smaller. Any such target is assumed to have total cover while anything huge or larger past this range is considered to have three-quarters cover. Any Survival(wisdom) check made to navigate through the mist has disadvantage.',
+                            'Heavy Mist - A thick almost tangible mist drowns out any vision past 15ft. for everything large and smaller, with anything huge or larger only being visible up to 30ft. away. All sight based abilities outside of the 15ft. range are at disadvantage and all creatures and objects outside of that range are assumed to have total cover. This disadvantage cannot be negated and also applies to navigation unless the DM specifically allows you to.',
+                            'Dry and Sunny - These days are rare and should be enjoyed.',
+                            'Sunny with Rain Showers - Smaller localised rain clouds fill the skies, leaving the days filled both with rain and rainbows. There will be a 1 in 3 chance of it currently being dry on the character’s position.',
+                            'Rainy - A sheet of rain falls over the land, creating a damp but slightly cosy atmosphere while walking under the massive trees of the jungle. Though the humidity rises most places within the jungle are still relatively dry due to the thick canopy catching most of the rain.',
+                            'Heavy Rain - Rain and wind tear at the trees and pour down on any poor adventurer out to test their luck. Any Wisdom(perception) checks beyond 150ft. become blurred and are at disadvantage except for anything that’s huge or larger. Any creature outside of this range that is large or smaller gains the benefits of three-quarters cover and missile weapons ranges are halved.',
+                            'Tropical Storm - The sky darkens as lighting, rain and mayhem rain down from above while the wind tears the trees away from the earth itself. Rivers swell and rage through the jungle, preventing any form of travel by boat. Any guide worth their salt knows that the best choice is to hunker down and wait out the storm, but there are always those foolish enough to think they can test mother nature. Anyone braving the storm immediately gains a level of exhaustion and must make a DC 10 Constitution saving throw at the end of the day to prevent weariness from setting in. On top of the attributes of “Heavy Rain” all characters are also at disadvantage for making Wisdom(survival) checks to navigate.',
+                            'Extremely Warm and Rainy - The heat rises to 35°C and above making movement cumbersome. Any character that decides to travel long distances during these days gets a level of exhaustion.',
+                            'Extremely Warm and Dry - The heat rises to 35°C and above making movement cumbersome. Any character that decides to travel long distances during these days gets a level of exhaustion. Characters will need to actively prevent being dehydrated throughout the day.',
+                        ],
+                    },
+                    {
+                        name: 'Extreme',
+                        texts: [
+                            'Misty - A low mist hangs in the air that limits vision to a maximum of 150 ft. for everything of large size and smaller. Any such target is assumed to have total cover while anything huge or larger past this range is considered to have three-quarters cover. Any Survival(wisdom) check made to navigate through the mist has disadvantage.',
+                            'Heavy Mist - A thick almost tangible mist drowns out any vision past 15ft. for everything large and smaller, with anything huge or larger only being visible up to 30ft. away. All sight based abilities outside of the 15ft. range are at disadvantage and all creatures and objects outside of that range are assumed to have total cover. This disadvantage cannot be negated and also applies to navigation unless the DM specifically allows you to.',
+                            'Sunny with Rain Showers - Smaller localised rain clouds fill the skies, leaving the days filled both with rain and rainbows. There will be a 1 in 3 chance of it currently being dry on the character’s position.',
+                            'Rainy - A sheet of rain falls over the land, creating a damp but slightly cosy atmosphere while walking under the massive trees of the jungle. Though the humidity rises most places within the jungle are still relatively dry due to the thick canopy catching most of the rain.',
+                            'Heavy Rain - Rain and wind tear at the trees and pour down on any poor adventurer out to test their luck. Any Wisdom(perception) checks beyond 150ft. become blurred and are at disadvantage except for anything that’s huge or larger. Any creature outside of this range that is large or smaller gains the benefits of three-quarters cover and missile weapons ranges are halved.',
+                            'Tropical Storm - The sky darkens as lighting, rain and mayhem rain down from above while the wind tears the trees away from the earth itself. Rivers swell and rage through the jungle, preventing any form of travel by boat. Any guide worth their salt knows that the best choice is to hunker down and wait out the storm, but there are always those foolish enough to think they can test mother nature. Anyone braving the storm immediately gains a level of exhaustion and must make a DC 10 Constitution saving throw at the end of the day to prevent weariness from setting in. On top of the attributes of “Heavy Rain” all characters are also at disadvantage for making Wisdom(survival) checks to navigate.',
+                            'Extremely Warm and Rainy - The heat rises to 35°C and above making movement cumbersome. Any character that decides to travel long distances during these days gets a level of exhaustion.',
                         ],
                     },
                 ]
