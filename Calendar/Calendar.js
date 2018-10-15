@@ -379,6 +379,12 @@ var Calendar = Calendar || (function() {
                         calText += "<p>Today is " + getDateString() + '.</p>';
                         calText += (state[state_name].config.use_weather && state[state_name].config.send_weather) ? "<hr><b>Weather</b><br>" + state[state_name].calendar.current.weather : '';
 
+                        let upcoming_events = getObjects(state[state_name].calendar.holidays, 'month', getCurrentMonthId()).map(holiday => {
+                            return '<i>'+getMonth().name+' '+holiday.day+' - '+holiday.name+'</i>';
+                        });
+                        upcoming_events = (upcoming_events.length) ? upcoming_events : ['No events this month.'];
+                        calText += (state[state_name].config.use_holidays && state[state_name].config.send_holidays) ? '<hr><b>Events this Month</b><br>'+makeList(upcoming_events, styles.reset + styles.list + styles.overflow, styles.overflow) : '';
+
                         makeAndSendMenu(calText, script_name);
                     break;
 
@@ -547,16 +553,16 @@ var Calendar = Calendar || (function() {
         let sendToPlayersButton = makeButton("Send to Players", '!' + state[state_name].config.command + ' send', styles.button);
         let changeWeatherButton = makeButton("Change Weather", '!' + state[state_name].config.command + ' change-weather', styles.button + styles.float.right);
 
-        let holidaysText = (getHolidays().length) ? '<hr><b>Holidays</b><br>' : '';
-        getHolidays().forEach(holiday => {
-            holidaysText += holiday.name + '<br>';
-        });
-
         let contents = (state[state_name].config.use_table) ? generateTable(getMonth().days, getCurrentDay()) : '';
         contents += (state[state_name].config.use_weather) ? '<hr><b>Weather</b><br>'+state[state_name].calendar.current.weather + '<br>' + changeWeatherButton + '<br>' : '';
-        contents += (state[state_name].config.use_holidays) ? holidaysText : '';
+        let upcoming_events = getObjects(state[state_name].calendar.holidays, 'month', getCurrentMonthId()).map(holiday => {
+            return '<i>'+getMonth().name+' '+holiday.day+' - '+holiday.name+'</i>';
+        });
+        upcoming_events = (upcoming_events.length) ? upcoming_events : ['No events this month.'];
+        contents += (state[state_name].config.use_holidays) ? '<hr><b>Events this Month</b><br>'+makeList(upcoming_events, styles.reset + styles.list + styles.overflow, styles.overflow)+'<br>' : '';
         contents += '<hr><b>Change</b><br>' + makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow);
         contents += '<hr>'+advanceDayButton+'<br>'+sendToPlayersButton;
+
         makeAndSendMenu(contents, script_name + ' Menu', 'gm');
     },
 
@@ -783,7 +789,7 @@ var Calendar = Calendar || (function() {
 
             let listItems = [
                 '<span style="'+styles.float.left+'">Name:</span> ' + nameButton,
-                '<span style="'+styles.float.left+'">Day:</span> ' + dayButton,
+                '<span style="'+styles.float.left+'">Days:</span> ' + dayButton,
                 '<span style="'+styles.float.left+'">Month:</span> ' + monthButton,
             ];
 
