@@ -747,7 +747,7 @@ var Calendar = Calendar || (function() {
             if(!holidays.length) listItems.push('There are no holidays found.');
 
             for (let [key, value] of Object.entries(holidays)) { 
-                listItems.push(makeButton(value.name + ' (' + value.month + '/' + value.day + ')', '!' + state[state_name].config.command + ' single-item-config holidays ' + key, styles.textButton));
+                listItems.push(makeButton(value.name + ' (' + getMonth(value.month).name + ' ' + value.day + ')', '!' + state[state_name].config.command + ' single-item-config holidays ' + key, styles.textButton));
             }
 
             let newButton = makeButton('Add New', '!' + state[state_name].config.command + ' new holiday ?{Name}', styles.button);
@@ -870,6 +870,7 @@ var Calendar = Calendar || (function() {
 
     //return an array of objects according to key, value, or key and value matching, optionally ignoring objects in array of names
     getObjects = (obj, key, val, except) => {
+        log(val)
         except = except || [];
         let objects = [];
         for (let i in obj) {
@@ -881,7 +882,7 @@ var Calendar = Calendar || (function() {
                 objects = objects.concat(getObjects(obj[i], key, val));
             } else
             //if key matches and value matches or if key matches and value is not passed (eliminating the case where key matches but passed value does not)
-            if (i == key && obj[i] == val || i == key && val == '') { //
+            if (i == key && obj[i] == val || i == key && val === '') { //
                 objects.push(obj);
             } else if (obj[i] == val && key == ''){
                 //only add if the object is not already in the array
@@ -890,6 +891,7 @@ var Calendar = Calendar || (function() {
                 }
             }
         }
+        log(objects)
         return objects;
     },
 
@@ -1011,8 +1013,13 @@ var Calendar = Calendar || (function() {
                     month: 2
                 },
                 holidays: [
-                    { name: "1st Chrismass", month: 11, day: 25 },
-                    { name: "2nd Chrismass", month: 11, day: 26 },
+                    { name: "New Year's Day", month: 0, day: 1 },
+                    { name: "Valentine's Day", month: 1, day: 14 },
+                    { name: "Independence Day", month: 6, day: 4 },
+                    { name: "Halloween", month: 9, day: 31 },
+                    { name: "1st Chrismass Day", month: 11, day: 25 },
+                    { name: "2nd Chrismass Day", month: 11, day: 26 },
+                    { name: "New Year's Eve", month: 11, day: 31 },
                 ],
                 weather_types: [
                     {
