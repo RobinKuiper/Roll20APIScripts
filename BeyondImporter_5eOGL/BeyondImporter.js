@@ -128,6 +128,8 @@
                 let json = importData;
                 let character = JSON.parse(json).character;
 
+                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is starting.</div>', null, {noarchive:true});
+
                 class_spells = [];
 
                 // these are written first and individually, since they trigger a lot of changes
@@ -1170,10 +1172,11 @@
                 let items = [ ['class', className] ];
                 items = items.concat(
                     sortedAttributeItems(class_attributes),
-                    sortedAttributeItems(single_attributes),
                     sortedAttributeItems(save_proficiency_attributes));
 
-                processItem(character, items, repeating_attributes, total_level)
+                Object.assign(single_attributes, repeating_attributes)
+
+                processItem(character, items, single_attributes, total_level)
             }
         }
     });
@@ -1199,7 +1202,7 @@
             loadHitPoints(character, total_level);
 
             if(class_spells.length > 0 && state[state_name][beyond_caller.id].config.imports.class_spells) {
-                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>Class spells are being imported over time.</p></div>', null, {noarchive:true});
+                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br />Class spells are being imported over time.</div>', null, {noarchive:true});
 
                 // this is really just artificially asynchronous, we are not currently using a worker, so it will happen as soon as we return
                 onSheetWorkerCompleted(() => {
