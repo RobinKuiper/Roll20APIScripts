@@ -202,7 +202,7 @@
                     };
                 }
 
-                let speedMods = getObjects(character, 'subType', 'speed');
+                let speedMods = getObjects(character.modifiers, 'subType', 'speed');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         // REVISIT: what item is this for?  boots of striding and springing use set: innate-speed-walking and Loadstone uses bonus: speed
@@ -213,7 +213,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'innate-speed-flying');
+                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-flying');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
@@ -223,7 +223,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'innate-speed-swimming');
+                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-swimming');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
@@ -233,7 +233,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'innate-speed-climbing');
+                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-climbing');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
@@ -243,7 +243,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'unarmored-movement');
+                speedMods = getObjects(character.modifiers, 'subType', 'unarmored-movement');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'bonus') {
@@ -256,7 +256,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'speed');
+                speedMods = getObjects(character.modifiers, 'subType', 'speed');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'bonus') {
@@ -830,7 +830,7 @@
                 }
 
                 // If character has unarmored defense, add it to the inventory, so a player can enable/disable it.
-                let unarmored = getObjects(character, 'subType', 'unarmored-armor-class');
+                let unarmored = getObjects(character.modifiers, 'subType', 'unarmored-armor-class', ['item']);
                 let x = 0;
                 if(unarmored != null) unarmored.forEach((ua, i) => {
                     if(ua.type != 'set') return;
@@ -896,20 +896,28 @@
                     });
                 }
 
+                //Skill Bonuses and Half Proficiencies
+                let bonuses = getObjects(character.modifiers, 'type', 'bonus').filter(bonus => skills.includes(bonus.subType.replace(/-/g, '_')) && !bonus.id.includes('spell'));
+                let bonus_attributes = {};
+                bonuses.forEach((bonus) => {
+                    bonus_attributes[type + '_flat'] = bonus.value;
+                });
+                Object.assign(single_attributes, bonus_attributes);
+
                 skills.forEach((skill) => {
                     let skill_prof = getObjects(proficiencies, 'subType', skill.replace(/_/g, '-'));
                     if(skill_prof.length == 0) {
-                        let hpModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency');
-                        let hprModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency-round-up');
+                        let hpModifiers = getObjects(character.modifiers, 'type', 'half-proficiency');
+                        let hprModifiers = getObjects(character.modifiers, 'type', 'half-proficiency-round-up');
                         if(hprModifiers.length > 0) {
                             hprModifiers.forEach((modifier) => {
                                 if(
                                     modifier.subType == 'ability-checks'
-                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.indexOf(skill) !== -1)
+                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.includes(skill))
+                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.includes(skill))
+                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.includes(skill))
+                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.includes(skill))
+                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.includes(skill))
                                 ) {
                                     let attributes = {};
                                     attributes[skill + "_flat"] = Math.ceil((Math.floor((total_level - 1) / 4) + 2) / 2);
@@ -921,11 +929,11 @@
                             hpModifiers.forEach((modifier) => {
                                 if(
                                     modifier.subType == 'ability-checks'
-                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.indexOf(skill) !== -1)
+                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.includes(skill))
+                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.includes(skill))
+                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.includes(skill))
+                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.includes(skill))
+                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.includes(skill))
                                 ) {
                                     let attributes = {};
                                     attributes[skill + "_flat"] = Math.floor((Math.floor((total_level - 1) / 4) + 2) / 2);
@@ -936,9 +944,8 @@
                     }
                 });
 
-
-                let hpModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency');
-                let hprModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency-round-up');
+                let hpModifiers = getObjects(character.modifiers, 'type', 'half-proficiency');
+                let hprModifiers = getObjects(character.modifiers, 'type', 'half-proficiency-round-up');
                 if(hprModifiers.length > 0) {
                     hprModifiers.forEach((modifier) => {
                         if(modifier.subType == 'initiative') {
@@ -998,40 +1005,24 @@
                     Object.assign(single_attributes, attributes);
                 });
 
-                // Other Bonuses
-                // XXX what are these?  should they really scan the ENTIRE character?
-                let bonuses = getObjects(character, 'type', 'bonus');
-                let bonus_attributes = {};
-                if(state[state_name][beyond_caller.id].config.imports.bonuses){
-                    bonuses.forEach((bonus) => {
-                        if(!bonus.id.includes('spell')){
-                            switch(bonus.subType){
-                                default:
-                                    let type = bonus.subType.replace(/-/g, '_')
-                                    if(skills.includes(type)){
-                                        bonus_attributes[type + '_flat'] = bonus.value;
-                                    }
-                                    break;
-                            }
-                        }
-                    })
-                }
-
                 // Initiative Style
-                let init_style = '@{d20}';
                 let init_mods = getObjects(character.modifiers, 'subType', 'initiative');
-                let initadv = false;
-                let initdis = false;
-                init_mods.forEach((mod) => {
-                    if(mod.type == 'advantage') {
-                        initadv = true;
-                    }
-                    else {
-                        initdis = true;
-                    }
-                });
+
+                let init_style = '@{d20}';
+                let initadv = init_mods.filter(im => im.type == 'advantage').length > 0;
+                let initdis = init_mods.filter(im => im.type == 'disadvantage').length > 0;
                 if(initadv && !initdis) init_style = '{@{d20},@{d20}}kh1';
                 if(!initadv && initdis) init_style = '{@{d20},@{d20}}kl1';
+
+                let initbon = 0;
+                init_mods.filter(im => im.type == 'bonus').forEach((bonus) => {
+                    if(bonus.statId != null) {
+                        initbon += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
+                    }
+                    if(bonus.value != null) {
+                        initbon += bonus.value;
+                    }
+                });
 
                 // Saving Throw Bonuses and proficiencies
                 let stBonuses = getObjects(character.modifiers, 'subType', 'saving-throws', ['item']);
@@ -1155,6 +1146,7 @@
                     'dtype': 'full',
                     'init_tiebreaker': initTiebreaker ? '@{dexterity}/100' : '',
                     'initiative_style': init_style,
+                    'initmod': initbon,
                     // 'jack_of_all_trades': jack
                 };
 
