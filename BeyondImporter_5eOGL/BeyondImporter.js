@@ -132,31 +132,9 @@
 
                 class_spells = [];
 
-                // these are written first and individually, since they trigger a lot of changes
-                // 'class' is written first, the rest alphabetically
-                let class_attributes = {
-                    'class': character.classes[0].definition.name,
-                    'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
-                    'base_level': character.classes[0].level,
-
-                    // prevent upgrades, because they recalculate the class (saves etc.)
-                    'version': '2.5',
-
-                    // prevent character mancer from doing anything
-                    'l1mancer_status': 'complete',
-                    'mancer_cancel': 'on'
-
-                    // multiclass attributes are added here by the code
-                }
-
-                // these are written individually after all the class attributes, in alphabetical order
-                // we don't expect these to trigger many dramatic changes to other attributes
+                // these are automatically sorted into attributes that are written individually, in alphabetical order
+                // and other attributes that are then written as a bulk write, but all are written before repeating_attributes
                 let single_attributes = {};
-
-                // these are written individually after all the single attributes, in alphabetical order
-                // these have to be written after the last time that update_class is called in the 5e OGL sheet, so
-                // we wait until we have written all the other individual attributes that might trigger it
-                let save_proficiency_attributes = {};
 
                 // these are written in one large write once everything else is written
                 // NOTE: changing any stats after all these are imported would create a lot of updates, so it is
@@ -164,6 +142,7 @@
                 let repeating_attributes = {};
 
                 object = null;
+
                 // Remove characters with the same name if overwrite is enabled.
                 if(state[state_name][beyond_caller.id].config.overwrite) {
                     let objects = findObjs({
@@ -188,6 +167,15 @@
                     });
                 }
 
+                // base class, if set
+                if (character.classes && (character.classes.length > 0)) {
+                    Object.assign(single_attributes, {
+                        'class': character.classes[0].definition.name,
+                        'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
+                        'base_level': character.classes[0].level
+                    });
+                }
+                
                 // Make Speed String
                 let weightSpeeds = character.race.weightSpeeds;
                 if(weightSpeeds == null) {
@@ -441,7 +429,7 @@
                             attributes['other_resource_name'] = 'Pact Magic';
                             attributes['other_resource_max'] = getPactMagicSlots(current_class.level);
                             attributes['other_resource'] = getPactMagicSlots(current_class.level);
-                            Object.assign(class_attributes, attributes);
+                            Object.assign(single_attributes, attributes);
                         }
 
                         if(current_class.definition.name == 'Monk') monk_level = current_class.level;
@@ -562,7 +550,7 @@
                             }
                         }
                     });
-                    Object.assign(class_attributes, multiclasses);
+                    Object.assign(single_attributes, multiclasses);
                 }
 
                 // Import Character Inventory
@@ -1037,7 +1025,7 @@
                     if(bonus.type == 'proficiency') {
                         // proficiency in all saves, such as Monk level 14 feature
                         for(let ability of Object.values(_ABILITY)) {
-                            save_proficiency_attributes[ability + '_save_prof'] = "(@{pb})";
+                            single_attributes[ability + '_save_prof'] = "(@{pb})";
                         }
                     }
                 });
@@ -1052,7 +1040,7 @@
                             stBonTotals[parseInt(i)] += bonus.value;
                         }
                         if(bonus.type == 'proficiency') {
-                            save_proficiency_attributes[abl + '_save_prof'] = "(@{pb})";
+                            single_attributes[abl + '_save_prof'] = "(@{pb})";
                         }
                     });
                 }
@@ -1155,38 +1143,75 @@
                 // XXX what is the status of these?
                 // Object.assign(single_attributes, bonus_attributes);
 
-                // take class name out of attributes, so we can place it first
-                let className = class_attributes['class'];
-                delete class_attributes['class'];
+                // these do not need to be written carefully, because they aren't looked at until the sheet is opened
+                Object.assign(single_attributes, {
+                    // prevent upgrades, because they recalculate the class (saves etc.)
+                    'version': '2.5',
+
+                    // prevent character mancer from doing anything
+                    'l1mancer_status': 'complete',
+                    'mancer_cancel': 'on'
+                });
 
                 // make work queue
-                // set class first, everything else is alphabetical within each group of attributes
-                let items = [ ['class', className] ];
-                items = items.concat(
-                    sortedAttributeItems(class_attributes),
-                    sortedAttributeItems(save_proficiency_attributes));
-
-                Object.assign(single_attributes, repeating_attributes)
-
-                processItem(character, items, single_attributes, total_level)
+                let items = createSingleWriteQueue(single_attributes);
+                processItem(character, items, single_attributes, repeating_attributes, total_level)
             }
         }
     });
 
-    const sortedAttributeItems = (attributesDictionary) => {
-        items = Object.keys(attributesDictionary).map(function(key) {
-            return [key, attributesDictionary[key]];
-        });
-        items.sort(function(left, right) {
-            return ('' + left[0]).localeCompare(right[0]);
-        });
+    const createSingleWriteQueue = (attributes) => {
+        // this is the list of trigger attributes that will trigger class recalculation, as of 5e OGL 2.5 October 2018
+        // (see on... handler that calls update_class in sheet html)
+        // these are written first and individually, since they trigger a lot of changes
+        let class_update_triggers = [
+            'class', // NOTE: MUST be first because of shift below
+            'custom_class', 
+            'cust_classname', 
+            'cust_hitdietype', 
+            'cust_spellcasting_ability', 
+            'cust_spellslots', 
+            'cust_strength_save_prof', 
+            'cust_dexterity_save_prof', 
+            'cust_constitution_save_prof', 
+            'cust_intelligence_save_prof', 
+            'cust_wisdom_save_prof', 
+            'cust_charisma_save_prof', 
+            'subclass', 
+            'multiclass1', 
+            'multiclass1_subclass', 
+            'multiclass2', 
+            'multiclass2_subclass', 
+            'multiclass3', 
+            'multiclass3_subclass'];
+
+        // set class first, everything else is alphabetical
+        let classAttribute = class_update_triggers.shift();
+        class_update_triggers.sort();
+        class_update_triggers.unshift(classAttribute);
+
+        // write in deterministic order (class first, then alphabetical)
+        let items = [];
+        for (trigger of class_update_triggers) {
+            let value = attributes[trigger];
+            if ((value === undefined) || (value === null)) {
+                continue;
+            }
+            items.push([trigger, value]);
+            log('beyond: trigger attribute ' + trigger);
+            delete attributes[trigger];
+        }
         return items;
     }
-
-    const processItem = (character, items, repeating_attributes, total_level) => {
+    
+    const processItem = (character, items, single_attributes, repeating_attributes, total_level) => {
         let nextItem = items.shift();
 
         if (!nextItem) {
+            // do one giant write for all the single attributes, before we create a bunch of attacks 
+            // and other things that depend on stat changes
+            setAttrs(object.id, single_attributes);
+
             // do one giant write for all the repeating attributes
             setAttrs(object.id, repeating_attributes);
 
@@ -1212,7 +1237,7 @@
 
         // async load next item
         onSheetWorkerCompleted(function() {
-            processItem(character, items, repeating_attributes, total_level);
+            processItem(character, items, single_attributes, repeating_attributes, total_level);
         });
         log('beyond: ' + nextItem[0] + " = " + String(nextItem[1]));
         nextAttribute.setWithWorker({ current: nextItem[1] });
