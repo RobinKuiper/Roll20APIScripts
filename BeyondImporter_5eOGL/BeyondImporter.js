@@ -747,9 +747,7 @@
                                 for(let abilityId in _ABILITIES) {
                                     let ABL = _ABILITIES[abilityId];
                                     if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
-                                        // log('beyond debug 1: '+item.definition.name+' = '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value);
-                                        // This is causing an error... solution currently unknown
-                                        // _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
+                                        _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
                                     }
                                 }
                                 if(grantedMod.type == 'bonus') {
