@@ -34,12 +34,14 @@ var Template = Template || (function() {
     handleInput = (msg) => {
         if (msg.type != 'api') return;
 
+        let config = config;
+
         // Split the message into command and argument(s)
         let args = msg.content.split(' ');
         let command = args.shift().substring(1);
         let extracommand = args.shift();
 
-        if (command == state[state_name].config.command) {
+        if (command == config.command) {
             if(!playerIsGM(msg.playerid)){
                 // Player Commands
                 switch(extracommand){
@@ -53,7 +55,7 @@ var Template = Template || (function() {
                     case 'reset':
                         state[state_name] = {};
                         setDefaults(true);
-                        sendConfigMenu();
+                        config_menus.main();
                     break;
 
                     case 'config':
@@ -65,57 +67,73 @@ var Template = Template || (function() {
                             state[state_name].config[key] = value;
                         }
 
-                        sendConfigMenu();
+                        config_menus.main();
                     break;
 
                     default:
-                        sendConfigMenu();
+                        config_menus.main();
                     break;
                 }
             }
         }
     },
 
-    sendConfigMenu = (first, message) => {
-        let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
+    config_menus = {
+        main = (first, message) => {
+            let config = state[state_name].config;
 
-        let listItems = [
-            '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
-        ];
+            let commandButton = make.button('!'+config.command, '!' + config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right);
 
-        let resetButton = makeButton('Reset', '!' + state[state_name].config.command + ' reset', styles.button + styles.fullWidth);
+            let listItems = [
+                '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+            ];
 
-        let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
-        message = (message) ? '<p>'+message+'</p>' : '';
-        let contents = message+makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+state[state_name].config.command+' config`.</p><hr>'+resetButton;
-        makeAndSendMenu(contents, title_text, 'gm');
+            let resetButton = make.button('Reset', '!' + config.command + ' reset', styles.button + styles.fullWidth);
+
+            let title_text = (first) ? script_name + ' First Time Setup' : script_name + ' Config';
+            message = (message) ? '<p>'+message+'</p>' : '';
+            let contents = message+make.list(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr><p style="font-size: 80%">You can always come back to this config by typing `!'+config.command+' config`.</p><hr>'+resetButton;
+            make.menu(contents, title_text, 'gm');
+        },
     },
 
-    sendError = (error, whisper='gm') => {
-        makeAndSendMenu(error, '', whisper, 'border-color: red; color: red;');
+    message = {
+        error = (message, whisper='gm', style='border-color: red; color: red;') => {
+            make.menu(message, '', whisper, style);
+        },
+
+        normal = (message, whisper='gm', style='') => {
+            make.menu(message, '', whisper, style)
+        },
+
+        success = (message, whisper='gm', style='border-color: green; color: green;') => {
+            make.menu(message, '', whisper, style)
+        },
     },
 
-    makeAndSendMenu = (contents, title, whisper, style='') => {
-        title = (title && title != '') ? makeTitle(title) : '';
-        whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
-        sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+style+'">'+title+contents+'</div>', null, {noarchive:true});
-    },
+    make = {
+        menu = (contents, title, whisper, style='') => {
+            title = (title && title != '') ? make.title(title) : '';
+            whisper = (whisper && whisper !== '') ? '/w ' + whisper + ' ' : '';
+            sendChat(script_name, whisper + '<div style="'+styles.menu+styles.overflow+style+'">'+title+contents+'</div>', null, {noarchive:true});
+        },
 
-    makeTitle = (title) => {
-        return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
-    },
+        title = (title) => {
+            return '<h3 style="margin-bottom: 10px;">'+title+'</h3>';
+        },
 
-    makeButton = (title, href, style) => {
-        return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
-    },
+        button = (title, href, style) => {
+            return '<a style="'+style+'" href="'+href+'">'+title+'</a>';
+        },
 
-    makeList = (items, listStyle, itemStyle) => {
-        let list = '<ul style="'+listStyle+'">';
-        items.forEach((item) => {
-            list += '<li style="'+itemStyle+'">'+item+'</li>';
-        });
-        list += '</ul>';
-        return list;
+        list = (items, listStyle, itemStyle) => {
+            let list = '<ul style="'+listStyle+'">';
+            items.forEach((item) => {
+                list += '<li style="'+itemStyle+'">'+item+'</li>';
+            });
+            list += '</ul>';
+            return list;
+        },
     },
 
     checkInstall = () => {
@@ -125,7 +143,7 @@ var Template = Template || (function() {
         setDefaults();
 
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
+        if(state[state_name].debug){ make.menu(script_name + ' Ready! Debug On.', '', 'gm') }
     },
 
     registerEventHandlers = () => {
@@ -153,7 +171,7 @@ var Template = Template || (function() {
         }
 
         if(!state[state_name].config.hasOwnProperty('firsttime') && !reset){
-            sendConfigMenu(true);
+            config_menus.main(true);
             state[state_name].config.firsttime = false;
         }
     };
