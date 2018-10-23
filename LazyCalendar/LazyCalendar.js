@@ -314,6 +314,73 @@ var LazyCalendar = LazyCalendar || (function() {
                         config_menus.weather_type(weather_typeId);
                     break;
 
+                    case 'moon':
+                        let moonId = args.shift();
+
+                        if(!moonId){
+                            message.error('No moon id was given.');
+                        }
+
+                        if(moonId === 'new'){
+                            let moonName = args.join(' ');
+
+                            if(!moonName){
+                                message.error('No name was given.');
+                                return;
+                            }
+
+                            moonId = create.moon(moonName);
+
+                            config_menus.moons();
+
+                            return;
+                        }
+
+                        moonId = parseInt(moonId, 10);
+
+                        if(!calendar.moons[moonId]){
+                            message.error('Unknown moon.');
+                            return;
+                        }
+
+                        if(args[0] === 'set'){
+                            args.splice(0, 1);
+                            let setting = args.join(' ').split('|');
+                            let key = setting.shift();
+                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
+
+                            calendar.moons[moonId][key] = value;
+                        }
+
+                        if(args[0] === 'remove'){
+                            remove.moon(moonId);
+                            config_menus.moons();
+                            return;
+                        }
+
+                        if(args[0] === 'cycle'){
+                            args.splice(0, 1);
+                            let cycleId = args.shift();
+
+                            if(cycleId === 'new'){
+                                let moon_cycle = args.join(' ');
+                                if(!moon_cycle || moon_cycle === ''){
+                                    sendError('No text was given.');
+                                    return;
+                                }
+                                create.moon_cycle(moonId, moon_cycle);
+                            }
+
+                            if(args[0] === 'remove'){
+                                remove.moon_cycle(moonId, cycleId);
+                            }else{
+                                calendar.moons[moonId].cycle[cycleId] = args.join(' ');
+                            }
+                        }
+
+                        config_menus.moon(moonId);
+                    break;
+
                     case 'change-weather':
                         setCurrentWeather();
                         sendMenu();
@@ -395,6 +462,11 @@ var LazyCalendar = LazyCalendar || (function() {
                         sendMenu();
                     break;
 
+                    case 'calculate':
+                        make.menu(calculateWeekday(parseInt(args.shift()), parseInt(args.shift()), parseInt(args.shift()), (args.shift() === "true") ? true : false));
+                        //log(calculateMoonPhase(parseInt(args.shift()), parseInt(args.shift()), parseInt(args.shift()), getMonth().days, getTotalYearDays(), getMoon(0).cycle, true));
+                    break;
+
                     default:
                         sendMenu();
                     break;
@@ -454,7 +526,27 @@ var LazyCalendar = LazyCalendar || (function() {
             calendar.weather_types[weather_typeId].texts.push(text);
 
             return calendar.weather_types[weather_typeId].texts.length - 1;
-        }
+        },
+
+        moon: (name) => {
+            let calendar = state[state_name].calendar;
+
+            calendar.moons.push({
+                name,
+                days_per_cycle: 7,
+                cycle: []
+            });
+
+            return calendar.moons.length - 1;
+        },
+
+        moon_cycle: (moonId, cycle) => {
+            let calendar = state[state_name].calendar;
+
+            calendar.moons[moonId].cycle.push(cycle);
+
+            return calendar.moons[moonId].cycle.length - 1;
+        },
     },
 
     remove = {
@@ -499,6 +591,10 @@ var LazyCalendar = LazyCalendar || (function() {
             state[state_name].calendar.weather_types.splice(weather_typeId, 1);
         },
         weather_type_text: (weather_typeId, textId) => state[state_name].calendar.weather_types[weather_typeId].texts.splice(textId, 1),
+        moon: (moonId) => {
+            state[state_name].calendar.moons.splice(moonId, 1)
+        },
+        moon_cycle: (moonId, cycleId) => state[state_name].calendar.moons[moonId].cycle.splice(cycleId, 1),
     },
 
     showToPlayers = (details='full') => {
@@ -516,6 +612,14 @@ var LazyCalendar = LazyCalendar || (function() {
         if(config.use_weather && config.send_weather && (details === 'full' || details === 'weather')){
             if(details === 'full') contents += '<hr>';
             contents += '<b>Weather</b><br>'+getCurrentWeather();
+        }
+
+        if(config.use_moons && config.send_moons && (details === 'full' || details === 'moons')){
+            if(details === 'full') contents += 'hr';
+            contents += '<hr><b>Moon(s)</b><br>';
+            getMoons().forEach((moon, id) => {
+                contents += '<u>'+moon.name+'</u> - ' + calculateMoonPhase(getCurrentYear(), getCurrentMonthId()+1, getCurrentDoM(), getMonth().days, getTotalYearDays(), moon.cycle, true).phase + '<br>';
+            });
         }
 
         if(config.use_holidays && config.send_holidays && (details === 'full' || details === 'holidays')){
@@ -542,6 +646,7 @@ var LazyCalendar = LazyCalendar || (function() {
             showFull: make.button('Full', command + ' show full', styles.button),
             showWeather: make.button('Weather', command + ' show weather', styles.button),
             showDate: make.button('Date', command + ' show date', styles.button),
+            showMoons: make.button('Moons', command + ' show moons', styles.button),
             showHolidays: make.button('Holidays', command + ' show holidays', styles.button),
             set_day: make.button(getCurrentDoM(), command + ' set day ?{Day}', styles.button + styles.float.right),
             set_month: make.button(getMonth(getCurrentMonthId()).name, command + ' set month ' + dropdown.months(), styles.button + styles.float.right),
@@ -567,6 +672,13 @@ var LazyCalendar = LazyCalendar || (function() {
             contents += '<br>' + buttons.change_weather + '<br>';
         }
 
+        if(config.use_moons){
+            contents += '<hr><b>Moon(s)</b><br>';
+            getMoons().forEach((moon, id) => {
+                contents += '<u>'+moon.name+'</u> - ' + calculateMoonPhase(getCurrentYear(), getCurrentMonthId()+1, getCurrentDoM(), getMonth().days, getTotalYearDays(), moon.cycle, true).phase + '<br>';
+            });
+        }
+
         if(config.use_holidays){
             contents += '<hr><b>Holidays</b><br>';
             contents += (!getHolidays().length) ? 'No holidays in this month.' : '';
@@ -580,7 +692,7 @@ var LazyCalendar = LazyCalendar || (function() {
         contents += '<hr>';
         contents += '<b>Advance</b>: ' + buttons.advance + buttons.advance_month + buttons.advance_year;
         contents += '<hr>';
-        contents += '<b>Send</b>: ' + buttons.showFull + buttons.showDate + buttons.showHolidays + buttons.showWeather;
+        contents += '<b>Send</b>: ' + buttons.showFull + buttons.showDate + buttons.showHolidays + buttons.showMoons + buttons.showWeather;
 
         make.menu(contents, script_name, 'gm');
     },
@@ -590,9 +702,11 @@ var LazyCalendar = LazyCalendar || (function() {
 
         days = parseInt(days, 10);
 
-        setCurrentDoW(getCurrentDoW() + days);
+        //setCurrentDoW(getCurrentDoW() + days);
         setCurrentDoM(getCurrentDoM() + days);
         setCurrentDoY(getCurrentDoY() + days);
+
+        setCurrentDoW(calculateWeekday(getCurrentYear(), getCurrentMonthId(), getCurrentDoM(), true));
 
         if(config.use_weather) setCurrentWeather(getMonth().weather_type);
         if(config.use_token) setToken();
@@ -673,12 +787,14 @@ var LazyCalendar = LazyCalendar || (function() {
         advanceYear(year-getCurrentYear());
     },
 
+    // To much hacks... Needs fixing.
     generateTable = (totalDays=getMonth().days, currentDay=getCurrentDoM()) => {
         let calendar = state[state_name].calendar,
             totalWeekdays = calendar.weekdays.length,
             DoW = getCurrentDoW(),
             DoM = getCurrentDoM(),
-            DoY = getCurrentDoY();
+            DoY = getCurrentDoY(),
+            fDoW = calculateWeekday(getCurrentYear(), getCurrentMonthId(), 1, true);
 
         let table = '<b>'+getMonth().name+'</b><table border="1" style="'+styles.fullWidth+'">';
 
@@ -690,11 +806,10 @@ var LazyCalendar = LazyCalendar || (function() {
 
         for(let i = 0; i < Math.ceil(totalDays/totalWeekdays)+1; i++){
             table += '<tr>';
+
             if(i === 0){
-                if(DoW !== DoM && DoM !== DoY){
-                    for(let k = 1; k < DoW; k++){
-                        table += '<td style="border: none">&nbsp;</td>';
-                    }
+                for(let k = 0; k < fDoW; k++){
+                    table += '<td>&nbsp;</td>';
                 }
             }
 
@@ -702,16 +817,12 @@ var LazyCalendar = LazyCalendar || (function() {
                 let dayGen = ((totalWeekdays*i)+j);
 
                 if(i === 0){
-                    if(DoW !== DoM && DoM !== DoY){
-                        if(dayGen < DoW){
-                            continue;
-                        }
+                    if(dayGen < fDoW + 1){
+                        continue;
                     }
                 }
 
-                if(DoW !== DoM && DoM !== DoY){
-                    dayGen = dayGen - DoW + 1;
-                }
+                dayGen = dayGen - fDoW;
                 
                 let dayStyle = (dayGen === currentDay) ? 'padding-left: 4px; padding-right: 3px; font-weight: bold; color: white; background-color: green; border: 1px solid transparent; border-radius: 50%;' : '';
                 if(totalDays < dayGen) break;
@@ -764,7 +875,7 @@ var LazyCalendar = LazyCalendar || (function() {
     setCurrentDoW = (day) => {
         let calendar = state[state_name].calendar;
 
-        let totalWeekdays = calendar.weekdays.length;
+        /*let totalWeekdays = calendar.weekdays.length;
 
         if(day > totalWeekdays){
             setCurrentDoW(day - totalWeekdays);
@@ -772,7 +883,7 @@ var LazyCalendar = LazyCalendar || (function() {
         }else if(day < 0){
             setCurrentDoW(day + totalWeekdays);
             return;
-        }
+        }*/
 
         state[state_name].calendar.current.day_of_the_week = day;
     },
@@ -815,7 +926,7 @@ var LazyCalendar = LazyCalendar || (function() {
 
     getMonth = (monthId=getCurrentMonthId()) => state[state_name].calendar.months[monthId] || false,
 
-    getWeekdayName = (dayId=getCurrentDoW()) => state[state_name].calendar.weekdays[dayId-1],
+    getWeekdayName = (dayId=getCurrentDoW()) => state[state_name].calendar.weekdays[dayId],
 
     getHolidays = (monthId=getCurrentMonthId()) => getObjects(state[state_name].calendar.holidays, 'month', monthId),
 
@@ -823,7 +934,165 @@ var LazyCalendar = LazyCalendar || (function() {
 
     getWeather_type = (weather_typeId) => state[state_name].calendar.weather_types[weather_typeId] || false,
 
+    getMoons = () => state[state_name].calendar.moons,
+
+    getMoon = (moonId) => state[state_name].calendar.moons[moonId] || false,
+
     getTokenId = () => state[state_name].config.tokenId,
+
+    // Thanks to https://github.com/giboow/mooncalc
+    calculateMoonPhase = (year=getCurrentYear(), month=getCurrentMonthId()+1, day=getCurrentDoM(), daysInMonth=getMonth().days, daysInYear=getTotalYearDays(), cycles=getMoon(0).cycle, gregorian=true) => {
+        var age, // Moon's age
+          distance, // Moon's distance in earth radii
+          latitude, // Moon's ecliptic latitude
+          longitude, // Moon's ecliptic longitude
+          phase, // Moon's phase
+          trajectory, // Moon's trajectory
+          zodiac, // Moon's zodiac sign 
+          cycle_switch;
+
+        var yy, mm, k1, k2, k3, jd;
+        var ip, dp, np, rp;
+
+        yy = year - Math.floor((12 - month) / 10);
+        mm = month + 9;
+        if (mm >= 12) {
+          mm = mm - 12;
+        }
+
+        k1 = Math.floor(daysInYear * (yy + 4712));
+        k2 = Math.floor(daysInMonth * mm + 0.5);
+        k3 = Math.floor(Math.floor((yy / 100) + 49) * 0.75) - 38;
+
+        jd = k1 + k2 + day + 59;  // for dates in Julian calendar
+        if (jd > 2299160) {
+          jd = jd - k3;      // for Gregorian calendar
+        }
+
+        //calculate moon's age in days
+        ip = normalize((jd - 2451550.1) / 29.530588853);
+        age = ip * 29.53;
+
+        cycle_switch = daysInMonth / cycles.length;
+        let cycle = day / cycle_switch;
+        cycle = (cycle <= 0.5) ? 0 : Math.round(cycle) - 1;
+
+        phase = cycles[cycle];
+
+        /*if (age <  1.84566) {
+          phase = 'NEW';
+          trajectory = 'ascendent';
+        } else if (age <  5.53699) {
+          phase = 'Waxing crescent';
+          trajectory = 'ascendent';
+        } else if (age <  9.22831) {
+          phase = 'First quarter';
+          trajectory = 'ascendent';
+        } else if (age < 12.91963) {
+          phase = 'Waxing gibbous';
+          trajectory = 'ascendent';
+        } else if (age < 16.61096) {
+          phase = 'FULL';
+          trajectory = 'descendent';
+        } else if (age < 20.30228) {
+          phase = 'Waning gibbous';
+          trajectory = 'descendent';
+        } else if (age < 23.99361) {
+          phase = 'Last quarter';
+          trajectory = 'descendent';
+        } else if (age < 27.68493) {
+          phase = 'Waning crescent';
+          trajectory = 'descendent';
+        } else {
+          phase = 'NEW';
+          trajectory = 'ascendent';
+        }*/
+
+        ip = ip * 2 * Math.PI;  //Convert phase to radians
+
+        // Calculate moon's distance
+        dp = 2 * Math.PI * normalize((jd - 2451562.2) / 27.55454988);
+        distance = 60.4 - 3.3 * Math.cos(dp) - 0.6 * Math.cos(2 * ip - dp) - 0.5 * Math.cos(2 * ip);
+
+        // Calculate moon's ecliptic latitude
+        np = 2 * Math.PI * normalize((jd - 2451565.2) / 27.212220817);
+        latitude = 5.1 * Math.sin(np);
+
+        // Calculate moon's ecliptic longitude
+        rp = normalize((jd - 2451555.8) / 27.321582241);
+        longitude = 360 * rp + 6.3 * Math.sin(dp) + 1.3 * Math.sin(2 * ip - dp) + 0.7 * Math.sin(2 * ip);
+
+        if (longitude <  33.18) {
+          zodiac = 'Pisces';
+        } else if (longitude <  51.16) {
+          zodiac = 'Aries';
+        } else if (longitude <  93.44) {
+          zodiac = 'Taurus';
+        } else if (longitude < 119.48) {
+          zodiac = 'Gemini';
+        } else if (longitude < 135.30) {
+          zodiac = 'Cancer';
+        } else if (longitude < 173.34) {
+          zodiac = 'Leo';
+        } else if (longitude < 224.17) {
+          zodiac = 'Virgo';
+        } else if (longitude < 242.57) {
+          zodiac = 'Libra';
+        } else if (longitude < 271.26) {
+          zodiac = 'Scorpio';
+        } else if (longitude < 302.49) {
+          zodiac = 'Sagittarius';
+        } else if (longitude < 311.72) {
+          zodiac = 'Capricorn';
+        } else if (longitude < 348.58) {
+          zodiac = 'Aquarius';
+        } else {
+          zodiac = 'Pisces';
+        }
+
+        return {
+          'date' : { 'year' : year, 'month' : month , 'day' : day},
+          'age' : age,
+          'distance' : distance * 6371,
+          'ecliptic' : {
+            'latitude' : latitude,
+            'longitude' : longitude
+          },
+          'phase' : phase,
+          'trajectory' : trajectory,
+          'constellation' : zodiac,
+        };
+    },
+
+    calculateWeekday = (year=getCurrentYear(),monthId=getCurrentMonthId(),day=getCurrentDoM(),gregorian=false) => {
+        let a = gmod(year,100);
+        let b = Math.floor(a/4);
+        const monthKey = [1,4,4,0,2,5,0,3,6,1,4,6];
+        let c = b + day + monthKey[monthId];
+        if(1 === yearType(year,(gregorian ? 'g': 'j')) && monthId + 1 < 3) {
+            c -= 1;
+        }
+        let d = c;
+        if(gregorian) {
+            d += [6,4,2,0][gmod(Math.floor(year/100),4)];
+        } else {
+            d += 18 - Math.floor(year/100);
+        }
+        let e = d+ a;
+        let f = gmod(e,state[state_name].calendar.weekdays.length);
+        return gmod(f -2,state[state_name].calendar.weekdays.length); //state[state_name].calendar.weekdays.length
+    },
+
+    yearType = (year,cal) => {
+        // determine year type (yt=0 for common; yt=1 for bissextile) for Julian calendar (cal='j') or Gregorian calendar (cal='g')
+        let yt=0;
+        if(gmod(year,4) == 0) yt=1;
+        if(cal == 'g'){
+            if(gmod(year,400) == 0) yt=1;
+            else if(gmod(year,100) == 0) yt=0;
+        }
+        return yt;
+    },
 
     setToken = (tokenId=getTokenId()) => {
         if(tokenId !== getTokenId()) state[state_name].config.tokenId = tokenId;
@@ -892,6 +1161,7 @@ var LazyCalendar = LazyCalendar || (function() {
                 weekdays: make.button('Weekday Setup', command + ' config weekdays', styles.button),
                 holidays: make.button('Holidays Setup', command + ' config holidays', styles.button),
                 weather: make.button('Weather Setup', command + ' config weather_types', styles.button),
+                moons: make.button('Moon Setup', command + ' config moons', styles.button),
                 importConfig: make.button('Import Config', command + ' import config ?{JSON}', styles.button + styles.fullWidth),
                 exportConfig: make.button('Export Config', command + ' export config', styles.button + styles.fullWidth),
                 importCalendar: make.button('Import Calendar', command + ' import calendar ?{JSON}', styles.button + styles.fullWidth),
@@ -912,7 +1182,8 @@ var LazyCalendar = LazyCalendar || (function() {
                 buttons.months,
                 buttons.weekdays,
                 buttons.holidays,
-                buttons.weather
+                buttons.weather,
+                buttons.moons
             ];
 
             let importListItems = [
@@ -1148,6 +1419,72 @@ var LazyCalendar = LazyCalendar || (function() {
             let title = script_name + ' - ' + weather_type.name;
             make.menu(contents, title);
         },
+
+        moons: () => {
+            let config = state[state_name].config,
+                command = '!' + config.command,
+                calendar = state[state_name].calendar;
+
+            let listItems = [];
+            calendar.moons.forEach((moon, id) => {
+                listItems.push(make.button(moon.name, command + ' moon ' + id, styles.textButton));
+            });
+
+            let buttons = {
+                add: make.button('Add New', command + ' moon new ?{Name}', styles.button),
+                back: make.button('< Back', command + ' config', styles.button),
+                use: make.button(config.use_moons, command + ' config moons use_moons|'+!config.use_moons, styles.button + styles.float.right),
+                send: make.button(config.send_moons, command + ' config moons send_moons|'+!config.send_moons, styles.button + styles.float.right),
+            }
+
+            let configListItems = [];
+            configListItems.push(make.buttonListItem('Use Moons', buttons.use));
+            if(config.use_moons) configListItems.push(make.buttonListItem('Send Moons', buttons.send));
+
+            let contents = make.list(configListItems);
+            contents += '<hr>';
+            contents += make.list(listItems);
+            contents += '<hr>';
+            contents += buttons.add;
+            contents += '<hr>';
+            contents += buttons.back;
+
+            let title = script_name + ' Moons';
+            make.menu(contents, title, 'gm');
+        },
+
+        moon: (id) => {
+            let config = state[state_name].config,
+                command = '!' + config.command,
+                moon = getMoon(id);
+
+            let buttons = {
+                name: make.button(moon.name, command + ' moon ' + id + ' set name|?{Name|'+moon.name+'}', styles.button + styles.float.right),
+                create_cycle: make.button('Add Cycle', command + ' moon ' + id + ' cycle new ?{Cycle Name}', styles.button),
+                remove: make.button('Remove', command + ' moon ' + id + ' remove', styles.button + styles.fullWidth + ' background-color: red;'),
+                back: make.button('< Back', command + ' config moons', styles.button + styles.fullWidth),
+            }
+
+            let listItems = [
+                make.buttonListItem('Name', buttons.name),
+            ]
+
+            let cycleListItems = [];
+            moon.cycle.forEach((cycle, cycleId) => {
+                cycleListItems.push(make.buttonListItem(make.button(handleLongString(cycle, 25, '...'), command + ' moon ' + id + ' cycle ' + cycleId + ' ?{Cycle|'+cycle+'}', styles.textButton), make.button('Remove', command + ' moon ' + id + ' cycle ' + cycleId + ' remove', styles.button + styles.float.right)));
+            });
+
+            let contents = make.list(listItems);
+            contents += '<hr>';
+            contents += make.list(cycleListItems);
+            contents += buttons.create_cycle;
+            contents += '<hr>';
+            contents += buttons.remove;
+            contents += buttons.back;
+
+            let title = script_name + ' - ' + moon.name;
+            make.menu(contents, title);
+        },
     },
 
     dropdown = {
@@ -1217,6 +1554,20 @@ var LazyCalendar = LazyCalendar || (function() {
         buttonListItem: (title, button) => {
             return '<span style="'+styles.float.left+'">'+title+':</span> ' + button;
         },
+    },
+
+    //normalize values to range 0...1
+    normalize = (v) => {
+      v = v - Math.floor(v);
+      if (v < 0) {
+        v = v + 1;
+      }
+      return v;
+    },
+
+    gmod = (m,n) => {
+        // generalized modulo function (m mod n) - also valid for negative values of m
+        return ((m%n)+n)%n;
     },
 
     jsonExport = (type='calendar') => {
@@ -1292,7 +1643,7 @@ var LazyCalendar = LazyCalendar || (function() {
         setDefaults();
 
         log(script_name + ' Ready! Command: !'+state[state_name].config.command);
-        if(state[state_name].debug){ makeAndSendMenu(script_name + ' Ready! Debug On.', '', 'gm') }
+        if(state[state_name].debug){ make.menu(script_name + ' Ready! Debug On.', '', 'gm') }
     },
 
     registerEventHandlers = () => {
@@ -1307,9 +1658,11 @@ var LazyCalendar = LazyCalendar || (function() {
                 use_holidays: true,
                 use_weather: true,
                 use_table: true,
+                use_moons: true,
                 send_holidays: true,
                 send_weather: true,
                 send_table: true,
+                send_moons: true,
                 use_token: false,
                 tokenId: false,
                 use_handout: false,
@@ -1320,7 +1673,7 @@ var LazyCalendar = LazyCalendar || (function() {
                 current: {
                     month: 0,
                     day_of_the_year: 1,
-                    day_of_the_week: 1,
+                    day_of_the_week: 0,
                     day_of_the_month: 1,
                     year: 2018,
                     weather: 'Misty - A low mist hangs in the air that limits vision to a maximum of 150 ft. for everything of large size and smaller. Any such target is assumed to have total cover while anything huge or larger past this range is considered to have three-quarters cover. Any Survival(wisdom) check made to navigate through the mist has disadvantage.',
@@ -1408,6 +1761,22 @@ var LazyCalendar = LazyCalendar || (function() {
                             'Extremely Warm and Rainy - The heat rises to 35°C and above making movement cumbersome. Any character that decides to travel long distances during these days gets a level of exhaustion.',
                         ],
                     },
+                ],
+                moons: [
+                    {
+                        name: 'Normal',
+                        days_per_cycle: 7,
+                        cycle: [
+                            'New Moon',
+                            'Waxing Crescent',
+                            'First Quarter',
+                            'Waxing Gibbous',
+                            'Full Moon',
+                            'Waning Gibbous',
+                            'Last Quarter',
+                            'Waning Crescent'
+                        ]
+                    }
                 ]
             }
         };
@@ -1430,6 +1799,9 @@ var LazyCalendar = LazyCalendar || (function() {
             if(!state[state_name].config.hasOwnProperty('use_table')){
                 state[state_name].config.use_table = defaults.config.use_table;
             }
+            if(!state[state_name].config.hasOwnProperty('use_moons')){
+                state[state_name].config.use_moons = defaults.config.use_moons;
+            }
             if(!state[state_name].config.hasOwnProperty('send_holidays')){
                 state[state_name].config.send_holidays = defaults.config.send_holidays;
             }
@@ -1438,6 +1810,9 @@ var LazyCalendar = LazyCalendar || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('send_table')){
                 state[state_name].config.send_table = defaults.config.send_table;
+            }
+            if(!state[state_name].config.hasOwnProperty('send_moons')){
+                state[state_name].config.send_moons = defaults.config.send_moons;
             }
             if(!state[state_name].config.hasOwnProperty('use_token')){
                 state[state_name].config.use_token = defaults.config.use_token;
@@ -1504,6 +1879,9 @@ var LazyCalendar = LazyCalendar || (function() {
             }
             if(!state[state_name].calendar.hasOwnProperty('weather_types')){
                 state[state_name].calendar.weather_types = defaults.calendar.weather_types;
+            }
+            if(!state[state_name].calendar.hasOwnProperty('moons')){
+                state[state_name].calendar.moons = defaults.calendar.moons;
             }
         }
 

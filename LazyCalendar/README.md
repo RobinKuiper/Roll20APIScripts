@@ -115,9 +115,11 @@ Roll20 Thread:
 
 ---
 
-
-
-Code Rework
-Weekdays
-Change Year
-!cal command players
+#### Changelog
+**v0.2.0**
+* Code Rework
+* Added Weekdays
+* Change Year
+* !cal command players
+* Added Moons
+* Bugfixes
