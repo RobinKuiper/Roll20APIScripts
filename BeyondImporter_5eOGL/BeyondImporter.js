@@ -128,33 +128,13 @@
                 let json = importData;
                 let character = JSON.parse(json).character;
 
+                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is starting.</div>', null, {noarchive:true});
+
                 class_spells = [];
 
-                // these are written first and individually, since they trigger a lot of changes
-                // 'class' is written first, the rest alphabetically
-                let class_attributes = {
-                    'class': character.classes[0].definition.name,
-                    'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
-                    'base_level': character.classes[0].level,
-
-                    // prevent upgrades, because they recalculate the class (saves etc.)
-                    'version': '2.5',
-
-                    // prevent character mancer from doing anything
-                    'l1mancer_status': 'complete',
-                    'mancer_cancel': 'on'
-
-                    // multiclass attributes are added here by the code
-                }
-
-                // these are written individually after all the class attributes, in alphabetical order
-                // we don't expect these to trigger many dramatic changes to other attributes
+                // these are automatically sorted into attributes that are written individually, in alphabetical order
+                // and other attributes that are then written as a bulk write, but all are written before repeating_attributes
                 let single_attributes = {};
-
-                // these are written individually after all the single attributes, in alphabetical order
-                // these have to be written after the last time that update_class is called in the 5e OGL sheet, so
-                // we wait until we have written all the other individual attributes that might trigger it
-                let save_proficiency_attributes = {};
 
                 // these are written in one large write once everything else is written
                 // NOTE: changing any stats after all these are imported would create a lot of updates, so it is
@@ -162,6 +142,7 @@
                 let repeating_attributes = {};
 
                 object = null;
+
                 // Remove characters with the same name if overwrite is enabled.
                 if(state[state_name][beyond_caller.id].config.overwrite) {
                     let objects = findObjs({
@@ -186,6 +167,15 @@
                     });
                 }
 
+                // base class, if set
+                if (character.classes && (character.classes.length > 0)) {
+                    Object.assign(single_attributes, {
+                        'class': character.classes[0].definition.name,
+                        'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
+                        'base_level': character.classes[0].level
+                    });
+                }
+                
                 // Make Speed String
                 let weightSpeeds = character.race.weightSpeeds;
                 if(weightSpeeds == null) {
@@ -200,7 +190,7 @@
                     };
                 }
 
-                let speedMods = getObjects(character, 'subType', 'speed');
+                let speedMods = getObjects(character.modifiers, 'subType', 'speed');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         // REVISIT: what item is this for?  boots of striding and springing use set: innate-speed-walking and Loadstone uses bonus: speed
@@ -211,7 +201,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'innate-speed-flying');
+                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-flying');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
@@ -221,7 +211,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'innate-speed-swimming');
+                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-swimming');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
@@ -231,7 +221,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'innate-speed-climbing');
+                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-climbing');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
@@ -241,7 +231,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'unarmored-movement');
+                speedMods = getObjects(character.modifiers, 'subType', 'unarmored-movement');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'bonus') {
@@ -254,7 +244,7 @@
                     });
                 }
 
-                speedMods = getObjects(character, 'subType', 'speed');
+                speedMods = getObjects(character.modifiers, 'subType', 'speed');
                 if(speedMods != null) {
                     speedMods.forEach((speedMod) => {
                         if(speedMod.type == 'bonus') {
@@ -439,7 +429,7 @@
                             attributes['other_resource_name'] = 'Pact Magic';
                             attributes['other_resource_max'] = getPactMagicSlots(current_class.level);
                             attributes['other_resource'] = getPactMagicSlots(current_class.level);
-                            Object.assign(class_attributes, attributes);
+                            Object.assign(single_attributes, attributes);
                         }
 
                         if(current_class.definition.name == 'Monk') monk_level = current_class.level;
@@ -560,7 +550,7 @@
                             }
                         }
                     });
-                    Object.assign(class_attributes, multiclasses);
+                    Object.assign(single_attributes, multiclasses);
                 }
 
                 // Import Character Inventory
@@ -751,24 +741,24 @@
                                 Object.assign(repeating_attributes, repAttack);
                                 // /CREATE ATTACK
                             }
+                            let itemArmorClass = 0;
+                            itemArmorClass += (item.definition.armorClass == null ? 0 : item.definition.armorClass);
                             item.definition.grantedModifiers.forEach((grantedMod) => {
                                 for(let abilityId in _ABILITIES) {
                                     let ABL = _ABILITIES[abilityId];
                                     if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
-                                        // log('beyond debug 1: '+item.definition.name+' = '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value);
-                                        // This is causing an error... solution currently unknown
-                                        // _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
+                                        _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
                                     }
                                 }
                                 if(grantedMod.type == 'bonus') {
                                     switch (grantedMod.subType) {
                                         case 'armor-class':
-                                            hasArmor = true;
-                                        // fall through
+                                            // wielding a shield or wearing other item which only give a bonus to armor class doesn't qualify as wearing armor
+                                            // including items such as staff of power, ring of protection, etc.
+                                            // fall through
                                         case 'unarmored-armor-class':
                                             if(item.definition.hasOwnProperty('armorClass')) {
-                                                // XXX let's not modify the input data, it will eventually lead to problems
-                                                item.definition.armorClass += grantedMod.value;
+                                                itemArmorClass += grantedMod.value;
                                             }
                                             else {
                                                 _itemmodifiers += ', AC +' + grantedMod.value;
@@ -781,7 +771,7 @@
                                             _itemmodifiers += ', Ability Checks +' + grantedMod.value;
                                             break;
                                         case 'speed':
-                                            // REVISIT there does not seem to be any way to implement these items in Roll20?
+                                            // Speed attribute in Roll20 OGL sheets is not calculated. They must be manually set
                                             break;
                                         case 'magic':
                                             // these are picked up in the weapons code above
@@ -794,19 +784,15 @@
                                 if(grantedMod.type == 'set') {
                                     switch (grantedMod.subType) {
                                         case 'armor-class':
-                                            hasArmor = true;
-                                            // XXX should this really search the entire character?  is this for feats or class features?
-                                            let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                            aac.forEach((aacb) => {
-                                                grantedMod.value = parseInt(grantedMod.value) + parseInt(aacb.value);
-                                            });
-                                        // fall through
+                                            // If an item qualifies as armor, it will be given the .armorClass property and a type property of "Light/Medium/Heavy Armor".
+                                            // Items with modifiers like this don't qualify as armor. I don't know of any items that have this specific modifier.
+                                            // fall through
                                         case 'unarmored-armor-class':
                                             _itemmodifiers += ', AC: ' + grantedMod.value;
                                             break;
                                         case 'innate-speed-walking':
-                                        // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
-                                        // fall through and log as ignored
+                                            // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
+                                            // fall through and log as ignored
                                         default:
                                             // these may indicate an unimplemented conversion
                                             log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
@@ -814,13 +800,14 @@
                                 }
                             });
                             if(item.definition.hasOwnProperty('armorClass')){
+                                let ac = itemArmorClass;
+                                // This includes features such as defense fighting style, which require the user to wear armor
                                 let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                let ac = item.definition.armorClass;
                                 aac.forEach((aacb) => {
                                     ac = parseInt(ac) + parseInt(aacb.value);
                                 });
                                 _itemmodifiers += ', AC: ' + ac;
-                                hasArmor = true;
+                                if(["Light Armor", "Medium Armor", "Heavy Armor"].indexOf(item.definition.type) >= 0) hasArmor = true;
                             }
                             attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
                             Object.assign(repeating_attributes, attributes);
@@ -829,7 +816,7 @@
                 }
 
                 // If character has unarmored defense, add it to the inventory, so a player can enable/disable it.
-                let unarmored = getObjects(character, 'subType', 'unarmored-armor-class');
+                let unarmored = getObjects(character.modifiers, 'subType', 'unarmored-armor-class', ['item']);
                 let x = 0;
                 if(unarmored != null) unarmored.forEach((ua, i) => {
                     if(ua.type != 'set') return;
@@ -841,6 +828,21 @@
 
                     let name = 'Unarmored Defense';
                     let modifiers = '';
+
+                    // Label the unarmored armor class based on the feature it originates from
+                    character.classes.forEach((charClass) => {
+                        charClass.definition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
+                            name = cF.name;
+                        });
+                        if(charClass.subclassDefinition != null) {
+                            charClass.subclassDefinition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
+                                name = cF.name;
+                            });
+                        }
+                    });
+                    character.race.racialTraits.filter(rT => rT.id == ua.componentId).forEach((rT) => {
+                        name = rT.name;
+                    })
 
                     if(ua.componentTypeId == 306912077) { // Integrated Protection (Armor Type Option)
                         row = getRepeatingRowIds('inventory', 'itemname', 'Integrated Potection', 0);
@@ -880,20 +882,28 @@
                     });
                 }
 
+                //Skill Bonuses and Half Proficiencies
+                let bonuses = getObjects(character.modifiers, 'type', 'bonus').filter(bonus => skills.includes(bonus.subType.replace(/-/g, '_')) && !bonus.id.includes('spell'));
+                let bonus_attributes = {};
+                bonuses.forEach((bonus) => {
+                    bonus_attributes[type + '_flat'] = bonus.value;
+                });
+                Object.assign(single_attributes, bonus_attributes);
+
                 skills.forEach((skill) => {
                     let skill_prof = getObjects(proficiencies, 'subType', skill.replace(/_/g, '-'));
                     if(skill_prof.length == 0) {
-                        let hpModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency');
-                        let hprModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency-round-up');
+                        let hpModifiers = getObjects(character.modifiers, 'type', 'half-proficiency');
+                        let hprModifiers = getObjects(character.modifiers, 'type', 'half-proficiency-round-up');
                         if(hprModifiers.length > 0) {
                             hprModifiers.forEach((modifier) => {
                                 if(
                                     modifier.subType == 'ability-checks'
-                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.indexOf(skill) !== -1)
+                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.includes(skill))
+                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.includes(skill))
+                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.includes(skill))
+                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.includes(skill))
+                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.includes(skill))
                                 ) {
                                     let attributes = {};
                                     attributes[skill + "_flat"] = Math.ceil((Math.floor((total_level - 1) / 4) + 2) / 2);
@@ -905,11 +915,11 @@
                             hpModifiers.forEach((modifier) => {
                                 if(
                                     modifier.subType == 'ability-checks'
-                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.indexOf(skill) !== -1)
-                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.indexOf(skill) !== -1)
+                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.includes(skill))
+                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.includes(skill))
+                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.includes(skill))
+                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.includes(skill))
+                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.includes(skill))
                                 ) {
                                     let attributes = {};
                                     attributes[skill + "_flat"] = Math.floor((Math.floor((total_level - 1) / 4) + 2) / 2);
@@ -920,9 +930,8 @@
                     }
                 });
 
-
-                let hpModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency');
-                let hprModifiers = getObjects(character.modifiers.class, 'type', 'half-proficiency-round-up');
+                let hpModifiers = getObjects(character.modifiers, 'type', 'half-proficiency');
+                let hprModifiers = getObjects(character.modifiers, 'type', 'half-proficiency-round-up');
                 if(hprModifiers.length > 0) {
                     hprModifiers.forEach((modifier) => {
                         if(modifier.subType == 'initiative') {
@@ -982,40 +991,24 @@
                     Object.assign(single_attributes, attributes);
                 });
 
-                // Other Bonuses
-                // XXX what are these?  should they really scan the ENTIRE character?
-                let bonuses = getObjects(character, 'type', 'bonus');
-                let bonus_attributes = {};
-                if(state[state_name][beyond_caller.id].config.imports.bonuses){
-                    bonuses.forEach((bonus) => {
-                        if(!bonus.id.includes('spell')){
-                            switch(bonus.subType){
-                                default:
-                                    let type = bonus.subType.replace(/-/g, '_')
-                                    if(skills.includes(type)){
-                                        bonus_attributes[type + '_flat'] = bonus.value;
-                                    }
-                                    break;
-                            }
-                        }
-                    })
-                }
-
                 // Initiative Style
-                let init_style = '@{d20}';
                 let init_mods = getObjects(character.modifiers, 'subType', 'initiative');
-                let initadv = false;
-                let initdis = false;
-                init_mods.forEach((mod) => {
-                    if(mod.type == 'advantage') {
-                        initadv = true;
-                    }
-                    else {
-                        initdis = true;
-                    }
-                });
+
+                let init_style = '@{d20}';
+                let initadv = init_mods.filter(im => im.type == 'advantage').length > 0;
+                let initdis = init_mods.filter(im => im.type == 'disadvantage').length > 0;
                 if(initadv && !initdis) init_style = '{@{d20},@{d20}}kh1';
                 if(!initadv && initdis) init_style = '{@{d20},@{d20}}kl1';
+
+                let initbon = 0;
+                init_mods.filter(im => im.type == 'bonus').forEach((bonus) => {
+                    if(bonus.statId != null) {
+                        initbon += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
+                    }
+                    if(bonus.value != null) {
+                        initbon += bonus.value;
+                    }
+                });
 
                 // Saving Throw Bonuses and proficiencies
                 let stBonuses = getObjects(character.modifiers, 'subType', 'saving-throws', ['item']);
@@ -1030,7 +1023,7 @@
                     if(bonus.type == 'proficiency') {
                         // proficiency in all saves, such as Monk level 14 feature
                         for(let ability of Object.values(_ABILITY)) {
-                            save_proficiency_attributes[ability + '_save_prof'] = "(@{pb})";
+                            single_attributes[ability + '_save_prof'] = "(@{pb})";
                         }
                     }
                 });
@@ -1045,7 +1038,7 @@
                             stBonTotals[parseInt(i)] += bonus.value;
                         }
                         if(bonus.type == 'proficiency') {
-                            save_proficiency_attributes[abl + '_save_prof'] = "(@{pb})";
+                            single_attributes[abl + '_save_prof'] = "(@{pb})";
                         }
                     });
                 }
@@ -1139,6 +1132,7 @@
                     'dtype': 'full',
                     'init_tiebreaker': initTiebreaker ? '@{dexterity}/100' : '',
                     'initiative_style': init_style,
+                    'initmod': initbon,
                     // 'jack_of_all_trades': jack
                 };
 
@@ -1147,37 +1141,75 @@
                 // XXX what is the status of these?
                 // Object.assign(single_attributes, bonus_attributes);
 
-                // take class name out of attributes, so we can place it first
-                let className = class_attributes['class'];
-                delete class_attributes['class'];
+                // these do not need to be written carefully, because they aren't looked at until the sheet is opened
+                Object.assign(single_attributes, {
+                    // prevent upgrades, because they recalculate the class (saves etc.)
+                    'version': '2.5',
+
+                    // prevent character mancer from doing anything
+                    'l1mancer_status': 'complete',
+                    'mancer_cancel': 'on'
+                });
 
                 // make work queue
-                // set class first, everything else is alphabetical within each group of attributes
-                let items = [ ['class', className] ];
-                items = items.concat(
-                    sortedAttributeItems(class_attributes),
-                    sortedAttributeItems(single_attributes),
-                    sortedAttributeItems(save_proficiency_attributes));
-
-                processItem(character, items, repeating_attributes, total_level)
+                let items = createSingleWriteQueue(single_attributes);
+                processItem(character, items, single_attributes, repeating_attributes, total_level)
             }
         }
     });
 
-    const sortedAttributeItems = (attributesDictionary) => {
-        items = Object.keys(attributesDictionary).map(function(key) {
-            return [key, attributesDictionary[key]];
-        });
-        items.sort(function(left, right) {
-            return ('' + left[0]).localeCompare(right[0]);
-        });
+    const createSingleWriteQueue = (attributes) => {
+        // this is the list of trigger attributes that will trigger class recalculation, as of 5e OGL 2.5 October 2018
+        // (see on... handler that calls update_class in sheet html)
+        // these are written first and individually, since they trigger a lot of changes
+        let class_update_triggers = [
+            'class', // NOTE: MUST be first because of shift below
+            'custom_class', 
+            'cust_classname', 
+            'cust_hitdietype', 
+            'cust_spellcasting_ability', 
+            'cust_spellslots', 
+            'cust_strength_save_prof', 
+            'cust_dexterity_save_prof', 
+            'cust_constitution_save_prof', 
+            'cust_intelligence_save_prof', 
+            'cust_wisdom_save_prof', 
+            'cust_charisma_save_prof', 
+            'subclass', 
+            'multiclass1', 
+            'multiclass1_subclass', 
+            'multiclass2', 
+            'multiclass2_subclass', 
+            'multiclass3', 
+            'multiclass3_subclass'];
+
+        // set class first, everything else is alphabetical
+        let classAttribute = class_update_triggers.shift();
+        class_update_triggers.sort();
+        class_update_triggers.unshift(classAttribute);
+
+        // write in deterministic order (class first, then alphabetical)
+        let items = [];
+        for (trigger of class_update_triggers) {
+            let value = attributes[trigger];
+            if ((value === undefined) || (value === null)) {
+                continue;
+            }
+            items.push([trigger, value]);
+            log('beyond: trigger attribute ' + trigger);
+            delete attributes[trigger];
+        }
         return items;
     }
-
-    const processItem = (character, items, repeating_attributes, total_level) => {
+    
+    const processItem = (character, items, single_attributes, repeating_attributes, total_level) => {
         let nextItem = items.shift();
 
         if (!nextItem) {
+            // do one giant write for all the single attributes, before we create a bunch of attacks 
+            // and other things that depend on stat changes
+            setAttrs(object.id, single_attributes);
+
             // do one giant write for all the repeating attributes
             setAttrs(object.id, repeating_attributes);
 
@@ -1185,7 +1217,7 @@
             loadHitPoints(character, total_level);
 
             if(class_spells.length > 0 && state[state_name][beyond_caller.id].config.imports.class_spells) {
-                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br><p>Class spells are being imported over time.</p></div>', null, {noarchive:true});
+                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is almost ready.<br />Class spells are being imported over time.</div>', null, {noarchive:true});
 
                 // this is really just artificially asynchronous, we are not currently using a worker, so it will happen as soon as we return
                 onSheetWorkerCompleted(() => {
@@ -1203,7 +1235,7 @@
 
         // async load next item
         onSheetWorkerCompleted(function() {
-            processItem(character, items, repeating_attributes, total_level);
+            processItem(character, items, single_attributes, repeating_attributes, total_level);
         });
         log('beyond: ' + nextItem[0] + " = " + String(nextItem[1]));
         nextAttribute.setWithWorker({ current: nextItem[1] });
