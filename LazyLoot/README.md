@@ -16,7 +16,7 @@ Add your loot tables to LazyLoot, and whenever you want to give out the loot, pr
 
 ---
 
-## Create
+### Create
 
 Create your loot tables with a nice menu...
 
@@ -25,25 +25,39 @@ Create your loot tables with a nice menu...
 
 ---
 
-## Give
+### Give
 
 ...And give it to your players.
 
 ![Give Menu](https://i.imgur.com/oQAfq7Z.png "Give Menu")
 ![Give Menu 2](https://i.imgur.com/4X4a9qU.png "Give Menu 2")
 ![Character Select](https://i.imgur.com/KBL9mxc.png "Character Select")
+![Handout](https://i.imgur.com/LZycrkE.png "Handout")
 
 ---
 
-### Commands
+## Config
+
+![Config](https://i.imgur.com/pLooSbZ.png "Config")
+
+* **Command** - The command used for this script.
+* **Auto Inventory** - Add the taken items automatically to the characters inventory (works only for the 5eOGL character sheet.)
+* **Save Handout** - Save the taken items to a players handout.
+
+## Commands
 
 * **!loot** - Shows the menu.
 * **!loot config** - Shows the config menu.
-
-Roll20 Thread: 
 
 ---
 
 [![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
 
 ---
+
+#### Changelog
+**v0.1.1**
+* Save treasure to handout.
+* More config options.
+* Styling changes.
+* Bugfixes

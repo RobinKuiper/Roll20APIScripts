@@ -1,5 +1,5 @@
 /*
- * Version 0.1.0
+ * Version 0.1.1
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -52,16 +52,14 @@ var LazyLoot = LazyLoot || (function() {
                             lootid = args.shift(),
                             itemid = args.shift(),
                             quantity = args.shift(),
-                            characterid = args.shift(),
                             loot = get.loot_table(lootid);
 
-                            if(!loot || !loot.given){
-                                message.error('No loot for you!', sender);
-                                return;
-                            }
+                        if(!loot || !loot.given){
+                            message.error('No loot for you!', sender);
+                            return;
+                        }
 
-                        let item = loot.items[itemid],
-                            character = getObj('character', characterid);
+                        let item = loot.items[itemid];
 
                         if(!item){
                             message.error('Item not found.', sender);
@@ -73,42 +71,54 @@ var LazyLoot = LazyLoot || (function() {
                             return;
                         }
 
-                        if(!characterid){
-                            let characters = findObjs({ type: 'character', controlledby: playerid });
-
-                            if(characters.length > 1){
-                                let contents = '<p>To which character do you want to add the item: "<b>'+item.name+'</b>":</p>';
-                                characters.forEach(character => {
-                                    contents += make.button(character.get('name'), '!' + config.command + ' take ' + lootid + ' ' + itemid + ' ' + quantity + ' ' + character.get('id')) + '<br>';
-                                });
-                                make.menu(contents, '', sender);
-                                return;
-                            }else if(characters.length === 1){
-                                characterid = characters[0].get('id');
-                            }else{
-                                message.error('You don\'t have any characters.', sender);
-                                return;
-                            }
-                        }
-
-                        if(character){
-                            if(item.quantity > 1){
-                                quantity = (quantity) ? (quantity <= item.quantity) ? parseInt(quantity) : item.quantity : quantity - 1;
-                                item.quantity -= quantity;
-                                if(item.quantity <= 0){
-                                    item.taken = true;
-                                }
-                            }else{
+                        if(item.quantity > 1){
+                            quantity = (quantity) ? (quantity <= item.quantity) ? parseInt(quantity) : item.quantity : quantity - 1;
+                            item.quantity -= quantity;
+                            if(item.quantity <= 0){
                                 item.taken = true;
                             }
-                            addItemToInventory(item, character, quantity);
-                            message.success(item.name + ' added to ' + character.get('name') + '\'s inventory.', sender);
-                            giveToPlayers(lootid);
-                            return;
                         }else{
-                            message.error('Couldn\'t find character', sender);
-                            return;
+                            item.taken = true;
                         }
+
+                        if(config.auto_inv){
+                            let characterid = args.shift(),
+                                character = getObj('character', characterid)
+
+                            if(!characterid){
+                                let characters = findObjs({ type: 'character', controlledby: playerid });
+
+                                if(characters.length > 1){
+                                    let contents = '<p>To which character do you want to add the item: "<b>'+item.name+'</b>":</p>';
+                                    characters.forEach(character => {
+                                        contents += make.button(character.get('name'), '!' + config.command + ' take ' + lootid + ' ' + itemid + ' ' + quantity + ' ' + character.get('id')) + '<br>';
+                                    });
+                                    make.menu(contents, '', sender);
+                                    return;
+                                }else if(characters.length === 1){
+                                    characterid = characters[0].get('id');
+                                }else{
+                                    message.error('You don\'t have any characters.', sender);
+                                    return;
+                                }
+                            }
+
+                            if(character){
+                                addItemToInventory(item, character, quantity);
+                                message.success(item.name + ' added to ' + character.get('name') + '\'s inventory.', sender);
+                            }else{
+                                message.error('Couldn\'t find character', sender);
+                                return;
+                            }
+                        }
+
+                        if(config.save_treasure_handout){
+                            let player = getObj('player', playerid);
+                            addItemToHandout(item, player, quantity);
+                            message.success(item.name + ' added to your treasure handout.', sender);
+                        }
+
+                        giveToPlayers(lootid);
                     break;
 
                     default:
@@ -259,7 +269,6 @@ var LazyLoot = LazyLoot || (function() {
     },
 
     addItemToInventory = (item, character, quantity) => {
-        let prevAdded = [];
         let row = generateRowID();
 
         let attributes = {};
@@ -270,6 +279,44 @@ var LazyLoot = LazyLoot || (function() {
         attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.description);
 
         setAttrs(character.get('id'), attributes);
+    },
+
+    addItemToHandout = (item, player, quantity=1) => {
+        let handout = getOrCreateHandout(player);
+
+        handout.get('notes', (notes) => {
+
+            notes = (notes === "null") ? '' : notes;
+
+            let re = new RegExp('[0-9]x ' + item.name, 'gm');
+            if(notes.match(re)){
+                quantity += parseInt(notes.match(re)[0].split(' ')[0]);
+                notes = notes.replace(re, quantity + 'x ' + item.name);
+            }else{
+                notes += '<br><b>' + quantity + 'x ' + item.name + '</b> <i>(Weight: ' + item.weight + ', Description: ' + item.description + ')</i>';
+            }  
+
+            setTimeout(() => {
+                handout.set('notes',notes);                        
+            },0);
+        });
+    },
+
+    getOrCreateHandout = (player) => {
+        let handout_name = player.get('displayname') + ' - Treasure';
+        let handout = findObjs({
+                type: 'handout',
+                name: handout_name
+            });
+
+        let inplayerjournals = player.get('id');
+        let controlledby = player.get('id');
+
+        return (handout && handout[0]) ? handout[0] : createObj("handout", {
+            name: handout_name,
+            inplayerjournals,
+            controlledby
+        });
     },
 
     get = {
@@ -314,8 +361,9 @@ var LazyLoot = LazyLoot || (function() {
                 }
 
                 for(var i = start; i <= end; i++){
-                    let itemButton = make.button(loot[i].name, command + ' loot_table ' + i, styles.textButton + styles.float.left);
-                    let giveButton = make.button('G', command + ' loot_table ' + i + ' give', styles.button + styles.float.right);
+                    let title = (loot[i].given) ? '<span style="text-decoration: line-through;">'+loot[i].name+'</span>' : loot[i].name;
+                    let itemButton = make.button(title, command + ' loot_table ' + i, styles.textButton + styles.float.left);
+                    let giveButton = (loot[i].items.length && !loot[i].given) ? make.button('G', command + ' loot_table ' + i + ' give', styles.button + styles.float.right) : '';
                     //let removeButton = make.button('R', command + ' loot_table ' + i + ' remove', styles.button + styles.float.right);
                     lootListItems.push(itemButton + giveButton);
                 }
@@ -367,6 +415,7 @@ var LazyLoot = LazyLoot || (function() {
             contents += '<hr>';
             contents += buttons.add;
             contents += '<hr>';
+            contents += (loot.given) ? '<p style="font-weight: 900; font-size: 9pt;">You have already given this treasure before. Some items may be taken.</p>' : '';
             contents += (loot.items.length) ? buttons.give : '';
             contents += '<hr>';
             contents += buttons.back;
@@ -382,6 +431,8 @@ var LazyLoot = LazyLoot || (function() {
 
             let buttons = {
                 command: make.button('!'+config.command, command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
+                auto_inv: make.button(config.auto_inv, command + ' config auto_inv|'+!config.auto_inv, styles.button + styles.float.right),
+                save_treasure_handout: make.button(config.save_treasure_handout, command + ' config save_treasure_handout|'+!config.save_treasure_handout, styles.button + styles.float.right),
                 reset: make.button('Reset Config', command + ' reset ?{Are you sure? Type Yes}', styles.button + styles.fullWidth + ' background-color: red;'),
                 importConfig: make.button('Import Config', command + ' import config ?{JSON}', styles.button + styles.fullWidth),
                 exportConfig: make.button('Export Config', command + ' export config', styles.button + styles.fullWidth),
@@ -391,6 +442,8 @@ var LazyLoot = LazyLoot || (function() {
 
             let configListItems = [];
             configListItems.push(make.buttonListItem('Command', buttons.command));
+            configListItems.push(make.buttonListItem('Auto Inventory (5eOgl)', buttons.auto_inv));
+            configListItems.push(make.buttonListItem('Save Handout', buttons.save_treasure_handout));
 
             let importListItems = [
                 buttons.exportLoot,
@@ -580,6 +633,8 @@ var LazyLoot = LazyLoot || (function() {
         const defaults = {
             config: {
                 command: 'loot',
+                auto_inv: false,
+                save_treasure_handout: true
             },
             loot: [
                 {
@@ -630,6 +685,12 @@ var LazyLoot = LazyLoot || (function() {
         }else{
             if(!state[state_name].config.hasOwnProperty('command')){
                 state[state_name].config.command = defaults.config.command;
+            }
+            if(!state[state_name].config.hasOwnProperty('auto_inv')){
+                state[state_name].config.auto_inv = defaults.config.auto_inv;
+            }
+            if(!state[state_name].config.hasOwnProperty('save_treasure_handout')){
+                state[state_name].config.save_treasure_handout = defaults.config.save_treasure_handout;
             }
         }
         if(!state[state_name].loot){
