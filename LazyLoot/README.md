@@ -41,8 +41,20 @@ Create your loot tables with a nice menu...
 ![Config](https://i.imgur.com/pLooSbZ.png "Config")
 
 * **Command** - The command used for this script.
-* **Auto Inventory** - Add the taken items automatically to the characters inventory (works only for the 5eOGL character sheet.)
+* **Auto Inventory** - Add the taken items automatically to the characters inventory, configuration need.
 * **Save Handout** - Save the taken items to a players handout.
+
+### Sheet Config
+
+![Sheet Config](https://i.imgur.com/pyv231F.png "Sheet Config")
+
+The configuration here is defaulted for the 5eOGL character sheet.
+
+* **Inventory Attr. Name** - The name of the repeating attribute.
+* **Field - Name** - Item name field for the repeating attribute.
+* **Field - Weight** - Item weight field for the repeating attribute.
+* **Field - Quantity** - Item quantity field for the repeating attribute.
+* **Field - Description** - Item description field for the repeating attribute.
 
 ## Commands
 
@@ -56,6 +68,10 @@ Create your loot tables with a nice menu...
 ---
 
 #### Changelog
+**v0.1.2**
+* Multisheet support
+* Bugfixes
+
 **v0.1.1**
 * Save treasure to handout.
 * More config options.

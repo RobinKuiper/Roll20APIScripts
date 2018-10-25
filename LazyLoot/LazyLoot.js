@@ -1,5 +1,5 @@
 /*
- * Version 0.1.1
+ * Version 0.1.2
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -51,8 +51,9 @@ var LazyLoot = LazyLoot || (function() {
                             sender = msg.who,   
                             lootid = args.shift(),
                             itemid = args.shift(),
-                            quantity = args.shift(),
-                            loot = get.loot_table(lootid);
+                            amount = parseInt(args.shift()) || 1,
+                            loot = get.loot_table(lootid),
+                            taken = false;
 
                         if(!loot || !loot.given){
                             message.error('No loot for you!', sender);
@@ -72,13 +73,12 @@ var LazyLoot = LazyLoot || (function() {
                         }
 
                         if(item.quantity > 1){
-                            quantity = (quantity) ? (quantity <= item.quantity) ? parseInt(quantity) : item.quantity : quantity - 1;
-                            item.quantity -= quantity;
+                            amount = (amount) ? (amount <= item.quantity) ? amount : item.quantity : amount - 1;
                             if(item.quantity <= 0){
-                                item.taken = true;
+                                taken = true;
                             }
                         }else{
-                            item.taken = true;
+                            taken = true;
                         }
 
                         if(config.auto_inv){
@@ -91,7 +91,7 @@ var LazyLoot = LazyLoot || (function() {
                                 if(characters.length > 1){
                                     let contents = '<p>To which character do you want to add the item: "<b>'+item.name+'</b>":</p>';
                                     characters.forEach(character => {
-                                        contents += make.button(character.get('name'), '!' + config.command + ' take ' + lootid + ' ' + itemid + ' ' + quantity + ' ' + character.get('id')) + '<br>';
+                                        contents += make.button(character.get('name'), '!' + config.command + ' take ' + lootid + ' ' + itemid + ' ' + amount + ' ' + character.get('id')) + '<br>';
                                     });
                                     make.menu(contents, '', sender);
                                     return;
@@ -104,7 +104,7 @@ var LazyLoot = LazyLoot || (function() {
                             }
 
                             if(character){
-                                addItemToInventory(item, character, quantity);
+                                addItemToInventory(item, character, amount);
                                 message.success(item.name + ' added to ' + character.get('name') + '\'s inventory.', sender);
                             }else{
                                 message.error('Couldn\'t find character', sender);
@@ -114,10 +114,12 @@ var LazyLoot = LazyLoot || (function() {
 
                         if(config.save_treasure_handout){
                             let player = getObj('player', playerid);
-                            addItemToHandout(item, player, quantity);
+                            addItemToHandout(item, player, amount);
                             message.success(item.name + ' added to your treasure handout.', sender);
                         }
 
+                        item.quantity -= amount;
+                        item.taken = taken;
                         giveToPlayers(lootid);
                     break;
 
@@ -198,9 +200,9 @@ var LazyLoot = LazyLoot || (function() {
 
                                     if(i_id === 'new'){
                                         let item_name = args.shift().replace('_', ' '),
-                                            quantity = parseInt(args.shift()),
-                                            weight = parseInt(args.shift()),
-                                            description = args.join(' ');
+                                            quantity = parseInt(args.shift()) || 1,
+                                            weight = parseInt(args.shift()) || 0,
+                                            description = args.join(' ') || '';
 
                                         if(!item_name || item_name === ''){
                                             message.error('No item name was given.');
@@ -269,14 +271,15 @@ var LazyLoot = LazyLoot || (function() {
     },
 
     addItemToInventory = (item, character, quantity) => {
+        let config = state[state_name].config;
         let row = generateRowID();
 
         let attributes = {};
-        attributes["repeating_inventory_"+row+"_itemname"] = item.name;
-        attributes["repeating_inventory_"+row+"_equipped"] = '0';
-        attributes["repeating_inventory_"+row+"_itemcount"] = quantity;
-        attributes["repeating_inventory_"+row+"_itemweight"] = item.weight;
-        attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.description);
+        attributes["repeating_"+config.sheet_repeating_attr_name+"_"+row+"_"+config.sheet_repeating_attr_field_name] = item.name;
+        attributes["repeating_"+config.sheet_repeating_attr_name+"_"+row+"_equipped"] = '0';
+        attributes["repeating_"+config.sheet_repeating_attr_name+"_"+row+"_"+config.sheet_repeating_attr_field_quantity] = quantity;
+        attributes["repeating_"+config.sheet_repeating_attr_name+"_"+row+"_"+config.sheet_repeating_attr_field_weight] = item.weight;
+        attributes["repeating_"+config.sheet_repeating_attr_name+"_"+row+"_"+config.sheet_repeating_attr_field_description] = replaceChars(item.description);
 
         setAttrs(character.get('id'), attributes);
     },
@@ -364,7 +367,6 @@ var LazyLoot = LazyLoot || (function() {
                     let title = (loot[i].given) ? '<span style="text-decoration: line-through;">'+loot[i].name+'</span>' : loot[i].name;
                     let itemButton = make.button(title, command + ' loot_table ' + i, styles.textButton + styles.float.left);
                     let giveButton = (loot[i].items.length && !loot[i].given) ? make.button('G', command + ' loot_table ' + i + ' give', styles.button + styles.float.right) : '';
-                    //let removeButton = make.button('R', command + ' loot_table ' + i + ' remove', styles.button + styles.float.right);
                     lootListItems.push(itemButton + giveButton);
                 }
             }else{
@@ -433,6 +435,8 @@ var LazyLoot = LazyLoot || (function() {
                 command: make.button('!'+config.command, command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
                 auto_inv: make.button(config.auto_inv, command + ' config auto_inv|'+!config.auto_inv, styles.button + styles.float.right),
                 save_treasure_handout: make.button(config.save_treasure_handout, command + ' config save_treasure_handout|'+!config.save_treasure_handout, styles.button + styles.float.right),
+                lootMenu: make.button('Loot Menu', command, styles.button),
+                sheetMenu: make.button('Sheet Config', command + ' config sheet', styles.button),
                 reset: make.button('Reset Config', command + ' reset ?{Are you sure? Type Yes}', styles.button + styles.fullWidth + ' background-color: red;'),
                 importConfig: make.button('Import Config', command + ' import config ?{JSON}', styles.button + styles.fullWidth),
                 exportConfig: make.button('Export Config', command + ' export config', styles.button + styles.fullWidth),
@@ -442,7 +446,7 @@ var LazyLoot = LazyLoot || (function() {
 
             let configListItems = [];
             configListItems.push(make.buttonListItem('Command', buttons.command));
-            configListItems.push(make.buttonListItem('Auto Inventory (5eOgl)', buttons.auto_inv));
+            configListItems.push(make.buttonListItem('Auto Inventory', buttons.auto_inv));
             configListItems.push(make.buttonListItem('Save Handout', buttons.save_treasure_handout));
 
             let importListItems = [
@@ -458,9 +462,42 @@ var LazyLoot = LazyLoot || (function() {
             let contents = (message) ? '<p>'+message+'</p>' : '';
             contents += make.list(configListItems);
             contents += '<hr>';
+            contents += buttons.lootMenu + '<br>';
+            contents += (config.auto_inv) ? buttons.sheetMenu + '<br>' : '';
+            contents += '<hr>';
             contents += '<p style="font-size: 80%">You can always come back to this config by typing `!'+config.command+' config`.</p>';
             contents += '<hr>';
             contents += make.list(importListItems, styles.reset + styles.list + styles.overflow + ' margin-right: -5px');
+
+            make.menu(contents, title, 'gm');
+        },
+
+        sheet: () => {
+            let config = state[state_name].config,
+                command = '!' + config.command;
+
+            let buttons = {
+                repeating_name: make.button(config.sheet_repeating_attr_name, command + ' config sheet sheet_repeating_attr_name|'+config.sheet_repeating_attr_name, styles.button + styles.float.right),
+                repeating_field_name: make.button(config.sheet_repeating_attr_field_name, command + ' config sheet sheet_repeating_attr_field_name|?{Field Name|'+config.sheet_repeating_attr_field_name+'}', styles.button + styles.float.right),
+                repeating_field_weight: make.button(config.sheet_repeating_attr_field_weight, command + ' config sheet sheet_repeating_attr_field_weight|?{Field Name|'+config.sheet_repeating_attr_field_weight+'}', styles.button + styles.float.right),
+                repeating_field_quantity: make.button(config.sheet_repeating_attr_field_quantity, command + ' config sheet sheet_repeating_attr_field_quantity|?{Field Name|'+config.sheet_repeating_attr_field_quantity+'}', styles.button + styles.float.right),
+                repeating_field_description: make.button(config.sheet_repeating_attr_field_description, command + ' config sheet sheet_repeating_attr_field_description|?{Field Name|'+config.sheet_repeating_attr_field_description+'}', styles.button + styles.float.right),
+                back: make.button('< Back', command + ' config', styles.button + styles.fullWidth),
+            }
+
+            let configListItems = [];
+            configListItems.push(make.buttonListItem('Inventory Attr. Name', buttons.repeating_name));
+            configListItems.push(make.buttonListItem('Field - Name', buttons.repeating_field_name));
+            configListItems.push(make.buttonListItem('Field - Weight', buttons.repeating_field_weight));
+            configListItems.push(make.buttonListItem('Field - Quantity', buttons.repeating_field_quantity));
+            configListItems.push(make.buttonListItem('Field - Description', buttons.repeating_field_description));
+
+            let title = script_name + ' Sheet Config';
+
+            let contents = '';
+            contents += make.list(configListItems);
+            contents += '<hr>';
+            contents += buttons.back;
 
             make.menu(contents, title, 'gm');
         },
@@ -634,7 +671,12 @@ var LazyLoot = LazyLoot || (function() {
             config: {
                 command: 'loot',
                 auto_inv: false,
-                save_treasure_handout: true
+                save_treasure_handout: true,
+                sheet_repeating_attr_name: 'inventory',
+                sheet_repeating_attr_field_name: 'itemname',
+                sheet_repeating_attr_field_weight: 'itemweight',
+                sheet_repeating_attr_field_quantity: 'itemcount',
+                sheet_repeating_attr_field_description: 'itemcontent',
             },
             loot: [
                 {
@@ -691,6 +733,21 @@ var LazyLoot = LazyLoot || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('save_treasure_handout')){
                 state[state_name].config.save_treasure_handout = defaults.config.save_treasure_handout;
+            }
+            if(!state[state_name].config.hasOwnProperty('sheet_repeating_attr_name')){
+                state[state_name].config.sheet_repeating_attr_name = defaults.config.sheet_repeating_attr_name;
+            }
+            if(!state[state_name].config.hasOwnProperty('sheet_repeating_attr_field_name')){
+                state[state_name].config.sheet_repeating_attr_field_name = defaults.config.sheet_repeating_attr_field_name;
+            }
+            if(!state[state_name].config.hasOwnProperty('sheet_repeating_attr_field_weight')){
+                state[state_name].config.sheet_repeating_attr_field_weight = defaults.config.sheet_repeating_attr_field_weight;
+            }
+            if(!state[state_name].config.hasOwnProperty('sheet_repeating_attr_field_quantity')){
+                state[state_name].config.sheet_repeating_attr_field_quantity = defaults.config.sheet_repeating_attr_field_quantity;
+            }
+            if(!state[state_name].config.hasOwnProperty('sheet_repeating_attr_field_description')){
+                state[state_name].config.sheet_repeating_attr_field_description = defaults.config.sheet_repeating_attr_field_description;
             }
         }
         if(!state[state_name].loot){
