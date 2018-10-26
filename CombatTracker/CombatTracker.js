@@ -1,5 +1,5 @@
 /* 
- * Version 0.2.5
+ * Version 0.2.6
  * Made By Robin Kuiper
  * Changes in Version 0.2.1 by The Aaron
  * Skype: RobinKuiper.eu
@@ -127,6 +127,8 @@ var CombatTracker = CombatTracker || (function() {
                         let key = setting.shift();
                         let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : setting[0];
 
+                        if(key === 'ini_die') value = parseInt(value);
+
                         state[state_name].config.turnorder[key] = value;
                     }
 
@@ -162,6 +164,10 @@ var CombatTracker = CombatTracker || (function() {
 
                     sendConfigMenu();
                 }                 
+            break;
+
+            case 'sort':
+                sortTurnorder();
             break;
 
             case 'prev':
@@ -539,13 +545,15 @@ var CombatTracker = CombatTracker || (function() {
     },
 
     rollInitiative = (selected, sort) => {
+        let config = state[state_name].config;
+
         selected.forEach(s => {
             if(s._type !== 'graphic') return;
 
             let token = getObj('graphic', s._id),
                 whisper = (token.get('layer') === 'gmlayer') ? 'gm ' : '',
                 bonus = parseFloat(getAttrByName(token.get('represents'), state[state_name].config.initiative_attribute_name, 'current')) || 0;
-                let roll = randomInteger(20);
+                let roll = (config.turnorder.ini_die) ? randomInteger(config.turnorder.ini_die) : 0;
                 //pr = (Math.round(pr) !== pr) ? pr.toFixed(2) : pr;
                 
             if(state[state_name].config.turnorder.show_initiative_roll){
@@ -614,7 +622,11 @@ var CombatTracker = CombatTracker || (function() {
 
         let turn = getCurrentTurn();
 
-        if(turn.id === '-1'){
+        if(turn.id === '-1'){ // If custom item.
+            if(turn.formula){
+                updatePR(turn, parseInt(turn.formula));
+            }
+
             if(!state[state_name].config.turnorder.skip_custom) resetMarker();
             else NextTurn();
             return;
@@ -657,6 +669,18 @@ var CombatTracker = CombatTracker || (function() {
 
         Pull(token);
         doFX(token);
+    },
+
+    updatePR = (turn, modifier) => {
+        let turnorder = getTurnorder();
+
+        turnorder.forEach((t, i) => {
+            if(turn.id === t.id && turn.custom === t.custom){
+                turnorder[i].pr = parseInt(t.pr) + modifier;
+            }
+        });
+
+        setTurnorder(turnorder);
     },
 
     doFX = (token) => {
@@ -1131,6 +1155,7 @@ var CombatTracker = CombatTracker || (function() {
 
     sendConfigTurnorderMenu = () => {
         let throwIniButton = makeButton(state[state_name].config.turnorder.throw_initiative, '!' + state[state_name].config.command + ' config turnorder throw_initiative|'+!state[state_name].config.turnorder.throw_initiative, styles.button + styles.float.right),
+            iniDieButton = makeButton('d' + state[state_name].config.turnorder.ini_die, '!' + state[state_name].config.command + ' config turnorder ini_die|?{Die (without the d)|'+state[state_name].config.turnorder.ini_die+'}', styles.button + styles.float.right),
             showRollButton = makeButton(state[state_name].config.turnorder.show_initiative_roll, '!' + state[state_name].config.command + ' config turnorder show_initiative_roll|'+!state[state_name].config.turnorder.show_initiative_roll, styles.button + styles.float.right),
             autoSortButton = makeButton(state[state_name].config.turnorder.auto_sort, '!' + state[state_name].config.command + ' config turnorder auto_sort|'+!state[state_name].config.turnorder.auto_sort, styles.button + styles.float.right),
             rerollIniButton = makeButton(state[state_name].config.turnorder.reroll_ini_round, '!' + state[state_name].config.command + ' config turnorder reroll_ini_round|'+!state[state_name].config.turnorder.reroll_ini_round, styles.button + styles.float.right),
@@ -1146,7 +1171,11 @@ var CombatTracker = CombatTracker || (function() {
             ];
 
             if(state[state_name].config.turnorder.throw_initiative){
-                listItems.push('<span style="'+styles.float.left+'">Show Initiative:</span> ' + showRollButton)
+                listItems.push('<span style="'+styles.float.left+'">Ini Die:</span> ' + iniDieButton);
+            }
+
+            if(state[state_name].config.turnorder.throw_initiative){
+                listItems.push('<span style="'+styles.float.left+'">Show Initiative:</span> ' + showRollButton);
             }
 
         let contents = makeList(listItems, styles.reset + styles.list + styles.overflow, styles.overflow)+'<hr>'+backButton;
@@ -1370,6 +1399,7 @@ var CombatTracker = CombatTracker || (function() {
                 pull: true,
                 turnorder: {
                     throw_initiative: true,
+                    ini_die: 20,
                     show_initiative_roll: false,
                     auto_sort: true,
                     reroll_ini_round: false,
@@ -1429,6 +1459,9 @@ var CombatTracker = CombatTracker || (function() {
                 }
                 if(!state[state_name].config.turnorder.hasOwnProperty('throw_initiative')){
                     state[state_name].config.turnorder.throw_initiative = defaults.config.turnorder.throw_initiative;
+                }
+                if(!state[state_name].config.turnorder.hasOwnProperty('ini_die')){
+                    state[state_name].config.turnorder.ini_die = defaults.config.turnorder.ini_die;
                 }
                 if(!state[state_name].config.turnorder.hasOwnProperty('auto_sort')){
                     state[state_name].config.turnorder.auto_sort = defaults.config.turnorder.auto_sort;

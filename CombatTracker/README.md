@@ -34,6 +34,7 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **!ct stop** - Stops the combat (closes the turntracker, removes the marker, clears the turnorder list, etc.).
 * **!ct next** - Goes to the next turn (a player can also use this if it is his turn).
 * **!ct prev** - Goes to the previous turn (gm only).
+* **!ct sort** - Sort the turnorder.
 * **!ct add [condition name] [?duration] [?direction] [?message]** - Adds a condition to the selected token(s) (duration is optionally (how much rounds.)).
     * **[?duration]** - Optional duration, set `0` for no duration.
     * **[?direction]** - The direction per turn, eg. `-1`, `-3`, `+1`, `+3`.
@@ -129,6 +130,11 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.2.6**
+* Custom items will now count down/up correctly when applied.
+* Set initiative die in the config.
+* Sort turnorder with `!ct sort`.
+
 **v0.2.5**
 * Fixed a "bug" where the marker wouldn't show on the first turn when initiative is not rolled with CT.
 * Toggle auto skip turn when timer runs out.
