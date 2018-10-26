@@ -19,6 +19,7 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 
 ![Concentration Reminder](https://i.imgur.com/yQwYL1F.png "Concentration Reminder")
 ![Spell Cast](https://i.imgur.com/HucNIDc.png "Spell Cast")
+![New Concentration](https://i.imgur.com/qIKFjkn.png "New Concentration")
 
 ### Commands
 
@@ -42,6 +43,15 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 ![Auto Roll](https://i.imgur.com/WHUV5iw.png "Auto Roll")
 ![Advantage](https://i.imgur.com/ciSttkH.png "Advantage")
 
+## Automatic add concentration
+
+Concentration can be added automatically when you put the option to true in the config menu, and a player cast a concentration spell with a spellcard.
+Due to Roll20 it's not possible by default to read this from spell attacks/damage types.
+
+You can add `!concentration` somewhere in the spells description to work around this restriction. Don't forget to also put `Include spell description in attack` on `on`.
+
+![Workaround](https://i.imgur.com/kwLRzg6.png "Workaround")
+
 ---
 
 [![Become a Patron](https://c5.patreon.com/external/logo/become_a_patron_button.png "Become a Patron")](https://www.patreon.com/bePatron?u=10835266)
@@ -49,6 +59,10 @@ If you use the 5e OGL character sheet, it can also automaticly add the concentra
 ---
 
 #### Changelog:
+**0.1.15**
+* Workaround for concentration on attack spells.
+* Message when the player starts concentrating on something else.
+
 **0.1.14**
 * Changed advantage system on autoroll.
 * Fix where huge damage would crash the api.
