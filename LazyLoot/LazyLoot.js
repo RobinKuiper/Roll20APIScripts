@@ -477,7 +477,7 @@ var LazyLoot = LazyLoot || (function() {
                 command = '!' + config.command;
 
             let buttons = {
-                repeating_name: make.button(config.sheet_repeating_attr_name, command + ' config sheet sheet_repeating_attr_name|'+config.sheet_repeating_attr_name, styles.button + styles.float.right),
+                repeating_name: make.button(config.sheet_repeating_attr_name, command + ' config sheet sheet_repeating_attr_name|?{Attribute Name|'+config.sheet_repeating_attr_name+'}', styles.button + styles.float.right),
                 repeating_field_name: make.button(config.sheet_repeating_attr_field_name, command + ' config sheet sheet_repeating_attr_field_name|?{Field Name|'+config.sheet_repeating_attr_field_name+'}', styles.button + styles.float.right),
                 repeating_field_weight: make.button(config.sheet_repeating_attr_field_weight, command + ' config sheet sheet_repeating_attr_field_weight|?{Field Name|'+config.sheet_repeating_attr_field_weight+'}', styles.button + styles.float.right),
                 repeating_field_quantity: make.button(config.sheet_repeating_attr_field_quantity, command + ' config sheet sheet_repeating_attr_field_quantity|?{Field Name|'+config.sheet_repeating_attr_field_quantity+'}', styles.button + styles.float.right),
