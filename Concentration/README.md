@@ -59,6 +59,9 @@ You can add `!concentration` somewhere in the spells description to work around 
 ---
 
 #### Changelog:
+**0.1.16**
+* Shaped sheet support.
+
 **0.1.15**
 * Workaround for concentration on attack spells.
 * Message when the player starts concentrating on something else.
