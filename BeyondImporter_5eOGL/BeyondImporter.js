@@ -344,16 +344,18 @@
                         Object.assign(repeating_attributes, attrs);
                     }
                     // Custom Background Feature
-                    if(character.background.customBackground.name != null) {
-                        let btrait = {
-                            name: character.background.customBackground.featuresBackground.featureName,
-                            description: replaceChars(character.background.customBackground.featuresBackground.featureDescription),
-                            source: 'Background',
-                            source_type: character.background.customBackground.name
-                        };
+                    if(character.background.customBackground != null) {
+                        if(character.background.customBackground.featuresBackground != null) {
+                            let btrait = {
+                                name: character.background.customBackground.featuresBackground.featureName,
+                                description: replaceChars(character.background.customBackground.featuresBackground.featureDescription),
+                                source: 'Background',
+                                source_type: character.background.customBackground.name
+                            };
 
-                        let attrs = createRepeatingTrait(object, btrait);
-                        Object.assign(repeating_attributes, attrs);
+                            let attrs = createRepeatingTrait(object, btrait);
+                            Object.assign(repeating_attributes, attrs);
+                        }
                     }
                     // Feats
                     character.feats.forEach((feat, fi) => {
