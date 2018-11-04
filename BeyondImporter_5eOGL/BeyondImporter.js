@@ -799,15 +799,17 @@
                                     }
                                 }
                             });
-                            if(item.definition.hasOwnProperty('armorClass')){
+                            if(item.definition.hasOwnProperty('armorClass')) {
                                 let ac = itemArmorClass;
-                                // This includes features such as defense fighting style, which require the user to wear armor
-                                let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                aac.forEach((aacb) => {
-                                    ac = parseInt(ac) + parseInt(aacb.value);
-                                });
+                                if(["Light Armor", "Medium Armor", "Heavy Armor"].indexOf(item.definition.type) >= 0) {
+                                    // This includes features such as defense fighting style, which require the user to wear armor
+                                    let aac = getObjects(character, 'subType', 'armored-armor-class');
+                                    aac.forEach((aacb) => {
+                                        ac = parseInt(ac) + parseInt(aacb.value);
+                                    });
+                                    hasArmor = true;
+                                }
                                 _itemmodifiers += ', AC: ' + ac;
-                                if(["Light Armor", "Medium Armor", "Heavy Armor"].indexOf(item.definition.type) >= 0) hasArmor = true;
                             }
                             attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
                             Object.assign(repeating_attributes, attributes);
