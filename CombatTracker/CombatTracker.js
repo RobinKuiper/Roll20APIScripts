@@ -1,5 +1,5 @@
 /* 
- * Version 0.2.6
+ * Version 0.2.7
  * Made By Robin Kuiper
  * Changes in Version 0.2.1 by The Aaron
  * Skype: RobinKuiper.eu
@@ -501,6 +501,10 @@ var CombatTracker = CombatTracker || (function() {
         if(getCurrentTurn().id === obj.get('id')){
             changeMarker(obj);
         }
+
+        if(getCurrentTurn().shift().id === obj.get('id')){
+            changeMarker(obj, true);
+        }
     },
 
     array_diff = (a, b) => {
@@ -582,7 +586,7 @@ var CombatTracker = CombatTracker || (function() {
 
     stopCombat = () => {
         if(timerObj) timerObj.remove();
-        removeMarker();
+        removeMarkers();
         stopTimer();
         paused = false;
         Campaign().set({
@@ -598,16 +602,17 @@ var CombatTracker = CombatTracker || (function() {
         state[state_name].turnorder = {};
     },
 
-    removeMarker = () => {
+    removeMarkers = () => {
         stopRotate();
         getOrCreateMarker().remove();
+        getOrCreateMarker(true).remove();
     },
 
-    resetMarker = () => {
-        let marker = getOrCreateMarker();
+    resetMarker = (next=false) => {
+        let marker = getOrCreateMarker(next);
         marker.set({
-            name: 'Round ' + round,
-            imgsrc: state[state_name].config.marker_img,
+            name: (next) ? 'NextMarker' : 'Round ' + round,
+            imgsrc: (next) ? state[state_name].config.next_marker_img : state[state_name].config.marker_img,
             pageid: Campaign().get('playerpageid'),
             layer: 'gmlayer',
             left: 35, top: 35,
@@ -639,36 +644,48 @@ var CombatTracker = CombatTracker || (function() {
 
         let token = getObj('graphic', turn.id);
 
-		if(!token){
+		if(token){
+            toFront(token);
+
+            if(state[state_name].config.timer.use_timer){
+                startTimer(token);
+            }
+
+            changeMarker(token || false);
+
+            if(state[state_name].config.macro.run_macro){
+                let ability = findObjs({ _characterid: token.get('represents'), _type: 'ability', name: state[state_name].config.macro.macro_name })
+                if(ability && ability.length){
+                    sendChat(token.get('name'), ability[0].get('action'), null, {noarchive:true} );
+                }
+            }
+
+            if(state[state_name].config.announcements.announce_turn){
+                announceTurn(token || turn.custom, (token.get('layer') === 'objects') ? '' : 'gm');
+            }else if(state[state_name].config.announcements.announce_conditions){
+                let name = token.get('name') || turn.custom;
+                let conditions = getConditionString(token);
+                if(conditions && conditions !== '') makeAndSendMenu(conditions, 'Conditions - ' + name, (token.get('layer') === 'objects') ? '' : 'gm');
+            }
+
+            Pull(token);
+            doFX(token);
+        }else{
             resetMarker();
-			return;
-		}
-
-        toFront(token);
-
-        if(state[state_name].config.timer.use_timer){
-            startTimer(token);
         }
 
-        changeMarker(token || false);
+        if(state[state_name].config.next_marker){
+            let nextTurn = getNextTurn();
+            let nextToken = getObj('graphic', nextTurn.id);
 
-        if(state[state_name].config.macro.run_macro){
-            let ability = findObjs({ _characterid: token.get('represents'), _type: 'ability', name: state[state_name].config.macro.macro_name })
-            if(ability && ability.length){
-                sendChat(token.get('name'), ability[0].get('action'), null, {noarchive:true} );
+            if(nextToken){
+                toFront(nextToken);
+
+                changeMarker(nextToken || false, true);
+            }else{
+                resetMarker(true);
             }
         }
-
-        if(state[state_name].config.announcements.announce_turn){
-            announceTurn(token || turn.custom, (token.get('layer') === 'objects') ? '' : 'gm');
-        }else if(state[state_name].config.announcements.announce_conditions){
-            let name = token.get('name') || turn.custom;
-            let conditions = getConditionString(token);
-            if(conditions && conditions !== '') makeAndSendMenu(conditions, 'Conditions - ' + name, (token.get('layer') === 'objects') ? '' : 'gm');
-        }
-
-        Pull(token);
-        doFX(token);
     },
 
     updatePR = (turn, modifier) => {
@@ -859,11 +876,11 @@ var CombatTracker = CombatTracker || (function() {
         PrevTurn();
     },
 
-    changeMarker = (token) => {
-        let marker = getOrCreateMarker();
+    changeMarker = (token, next=false) => {
+        let marker = getOrCreateMarker(next);
 
         if(!token){
-            resetMarker();
+            resetMarker(next);
             return;
         }
 
@@ -895,33 +912,43 @@ var CombatTracker = CombatTracker || (function() {
         toBack(marker);
     },
 
-    getOrCreateMarker = () => {
-        let marker,
-            img = state[state_name].config.marker_img,
-            playerpageid = Campaign().get('playerpageid'),
+    getOrCreateMarker = (next=false) => {
+        let marker, markers,
+            imgsrc = (next) ? state[state_name].config.next_marker_img : state[state_name].config.marker_img,
+            pageid = Campaign().get('playerpageid');
+
+        if(next){
             markers = findObjs({
-                pageid: playerpageid,
-                imgsrc: img
+                pageid,
+                imgsrc,
+                name: 'NextMarker'
             });
 
+        }else{
+            markers = findObjs({
+                pageid,
+                imgsrc
+            });
+        }
+
         markers.forEach((marker, i) => {
-            if(i > 0) marker.remove();
+            if(i > 0 && !next && marker.get('name') !== 'NextMarker') marker.remove();
         });
 
         marker = markers.shift();
         if(!marker) {
             marker = createObj('graphic', {
-                name: 'Round 0',
-                imgsrc: img,
-                pageid: playerpageid,
+                name: (next) ? 'NextMarker' : 'Round 0',
+                imgsrc,
+                pageid,
                 layer: 'gmlayer',
                 showplayers_name: true,
                 left: 35, top: 35,
                 width: 70, height: 70
             });
         }
-        checkMarkerturn(marker);
-        toBack(marker);
+        if(!next) checkMarkerturn(marker);
+        //toBack(marker);
 
         //marker.set({ layer: 'gmlayer' });
 
@@ -981,6 +1008,17 @@ var CombatTracker = CombatTracker || (function() {
 
     getCurrentTurn = () => {
         return getTurnorder().shift();
+    },
+
+    getNextTurn = () => {
+        let returnturn;
+        getTurnorder().every((turn, i) => {
+            if(i > 0 && turn.id !== '-1' && turn.id !== getOrCreateMarker().get('id')){
+                returnturn = turn;
+                return false;
+            }else return true
+        });
+        return returnturn;
     },
 
     addToTurnorder = (turn) => {
@@ -1146,6 +1184,8 @@ var CombatTracker = CombatTracker || (function() {
     sendConfigMenu = (first, message) => {
         let commandButton = makeButton('!'+state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
             markerImgButton = makeButton('<img src="'+state[state_name].config.marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config marker_img|?{Image Url}', styles.button + styles.float.right),
+            nextMarkerButton = makeButton(state[state_name].config.next_marker, '!' + state[state_name].config.command + ' config next_marker|'+!state[state_name].config.next_marker, styles.button + styles.float.right),
+            nextMarkerImgButton = makeButton('<img src="'+state[state_name].config.next_marker_img+'" width="30px" height="30px" />', '!' + state[state_name].config.command + ' config next_marker_img|?{Image Url}', styles.button + styles.float.right),
             iniAttrButton = makeButton(state[state_name].config.initiative_attribute_name, '!' + state[state_name].config.command + ' config initiative_attribute_name|?{Attribute|'+state[state_name].config.initiative_attribute_name+'}', styles.button + styles.float.right),
             closeStopButton = makeButton(state[state_name].config.close_stop, '!' + state[state_name].config.command + ' config close_stop|'+!state[state_name].config.close_stop, styles.button + styles.float.right),
             pullButton = makeButton(state[state_name].config.pull, '!' + state[state_name].config.command + ' config pull|'+!state[state_name].config.pull, styles.button + styles.float.right),
@@ -1154,6 +1194,8 @@ var CombatTracker = CombatTracker || (function() {
                 '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
                 '<span style="'+styles.float.left+'">Ini. Attribute:</span> ' + iniAttrButton,
                 '<span style="'+styles.float.left+'">Marker Img:</span> ' + markerImgButton,
+                '<span style="'+styles.float.left+'">Use Next Marker:</span> ' + nextMarkerButton,
+                '<span style="'+styles.float.left+'">Next Marker Img:</span> ' + nextMarkerImgButton,
                 '<span style="'+styles.float.left+'">Stop on close:</span> ' + closeStopButton,
                 '<span style="'+styles.float.left+'">Auto Pull Map:</span> ' + pullButton,
             ],
@@ -1412,6 +1454,8 @@ var CombatTracker = CombatTracker || (function() {
             config: {
                 command: 'ct',
                 marker_img: 'https://s3.amazonaws.com/files.d20.io/images/52550079/U-3U950B3wk_KRtspSPyuw/thumb.png?1524507826',
+                next_marker: false,
+                next_marker_img: 'https://s3.amazonaws.com/files.d20.io/images/66352183/90UOrT-_Odg2WvvLbKOthw/thumb.png?1541422636',
                 initiative_attribute_name: 'initiative_bonus',
                 close_stop: true,
                 pull: true,
@@ -1459,6 +1503,12 @@ var CombatTracker = CombatTracker || (function() {
             }
             if(!state[state_name].config.hasOwnProperty('marker_img')){
                 state[state_name].config.marker_img = defaults.config.marker_img;
+            }
+            if(!state[state_name].config.hasOwnProperty('next_marker')){
+                state[state_name].config.next_marker = defaults.config.next_marker;
+            }
+            if(!state[state_name].config.hasOwnProperty('next_marker_img')){
+                state[state_name].config.next_marker_img = defaults.config.next_marker_img;
             }
             if(!state[state_name].config.hasOwnProperty('initiative_attribute_name')){
                 state[state_name].config.initiative_attribute_name = defaults.config.initiative_attribute_name;

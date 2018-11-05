@@ -133,6 +133,7 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 **v0.2.7**
 * Better gmlayer hiding for the marker.
 * No announcement when the timer runs out on a gmlayer token.
+* Optionally use "next" marker.
 * Bugfixes.
 
 **v0.2.6**
