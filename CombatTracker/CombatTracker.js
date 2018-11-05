@@ -733,7 +733,7 @@ var CombatTracker = CombatTracker || (function() {
                 if(timerObj) timerObj.remove();
                 clearInterval(intervalHandle);
                 if(state[state_name].config.timer.auto_skip) NextTurn();
-                else makeAndSendMenu(token.get('name') + "'s time ran out!", '');
+                else if(token.get('layer') !== 'gmlayer') makeAndSendMenu(token.get('name') + "'s time ran out!", '');
             }
 
             time--;
