@@ -502,7 +502,7 @@ var CombatTracker = CombatTracker || (function() {
             changeMarker(obj);
         }
 
-        if(getCurrentTurn().shift().id === obj.get('id')){
+        if(getNextTurn().id === obj.get('id')){
             changeMarker(obj, true);
         }
     },
@@ -912,10 +912,9 @@ var CombatTracker = CombatTracker || (function() {
         toBack(marker);
     },
 
-    getOrCreateMarker = (next=false) => {
+    getOrCreateMarker = (next=false, pageid=Campaign().get('playerpageid')) => {
         let marker, markers,
-            imgsrc = (next) ? state[state_name].config.next_marker_img : state[state_name].config.marker_img,
-            pageid = Campaign().get('playerpageid');
+            imgsrc = (next) ? state[state_name].config.next_marker_img : state[state_name].config.marker_img
 
         if(next){
             markers = findObjs({
@@ -948,7 +947,7 @@ var CombatTracker = CombatTracker || (function() {
             });
         }
         if(!next) checkMarkerturn(marker);
-        //toBack(marker);
+        toBack(marker);
 
         //marker.set({ layer: 'gmlayer' });
 
