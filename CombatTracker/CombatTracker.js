@@ -867,15 +867,31 @@ var CombatTracker = CombatTracker || (function() {
             return;
         }
 
-        let settings = {
-            layer: token.get('layer'),
+        let position = {
             top: token.get('top'),
             left: token.get('left'),
             width: token.get('width')+(token.get('width')*0.35),
-            height: token.get('height')+(token.get('height')*0.35)
+            height: token.get('height')+(token.get('height')*0.35),
         };
 
-        marker.set(settings);
+        if(token.get('layer') !== marker.get('layer')){
+            if(marker.get('layer') === 'gmlayer'){ // Go from gmlayer to tokenlayer
+                marker.set(position);
+
+                setTimeout(() => {
+                    marker.set({ layer: 'objects' });
+                }, 500);
+            }else{ // Go from tokenlayer to gmlayer
+                marker.set({ layer: 'gmlayer' });
+
+                setTimeout(() => {
+                    marker.set(position);
+                }, 500);
+            }
+        }else{
+            marker.set(position);
+        }
+
         toBack(marker);
     },
 
@@ -906,6 +922,8 @@ var CombatTracker = CombatTracker || (function() {
         }
         checkMarkerturn(marker);
         toBack(marker);
+
+        //marker.set({ layer: 'gmlayer' });
 
         //startRotate(marker);
 
@@ -1334,7 +1352,7 @@ var CombatTracker = CombatTracker || (function() {
             return;
         }
 
-        if(!StatusInfo.version || StatusInfo.version !== "0.3.8"){
+        if(!StatusInfo.version || StatusInfo.version !== "0.3.10"){
             makeAndSendMenu('Please update '+makeButton('StatusInfo', 'https://github.com/RobinKuiper/Roll20APIScripts/tree/master/StatusInfo', styles.textButton)+' to the latest version.', '', 'gm');
             return;
         }

@@ -130,6 +130,10 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.2.7**
+* Better gmlayer hiding for the marker.
+* Bugfixes.
+
 **v0.2.6**
 * Custom items will now count down/up correctly when applied.
 * Set initiative die in the config.
