@@ -210,7 +210,7 @@ var CombatTracker = CombatTracker || (function() {
 
                 let tokens = msg.selected.map(s => getObj('graphic', s._id));
 
-                sendTokenConditionMenu(tokens);
+                sendTokenConditionMenu(tokens, (args.shift() === 'p'));
 			}
             break;
 
@@ -1045,7 +1045,7 @@ var CombatTracker = CombatTracker || (function() {
         return Math.floor(Math.random()*(max-min+1)+min);
     },
 
-    sendTokenConditionMenu = (tokens) => {
+    sendTokenConditionMenu = (tokens, toPlayers) => {
         let contents = '<table style="width: 100%;">';
 
         let i = 0;
@@ -1089,7 +1089,7 @@ var CombatTracker = CombatTracker || (function() {
 
         contents += '</table>';
 
-        makeAndSendMenu(contents, '', 'gm');
+        makeAndSendMenu(contents, '', (toPlayers) ? '' : 'gm');
     },
 
     sendConditionsMenu = () => {
