@@ -13,6 +13,7 @@
 ---
 
 ![Turn](https://i.imgur.com/rqfiZZD.png "Turn")
+![](http://roll20.robinkuiper.eu/images/combattracker/turntrack.gif)
 
 CombatTracker will be a great help in battles. Easily keep tracks of who's turn it is, use a turn timer, let players progress to the next turn by themselves, adding/removing conditions, etc.
 It has a lot of customizable configuration options.
