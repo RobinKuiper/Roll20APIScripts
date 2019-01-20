@@ -1205,6 +1205,25 @@
                     'mancer_cancel': 'on'
                 });
 
+                // check for bad attribute values and change them to empty strings, because these will cause a crash otherwise
+                // ('Error: Firebase.update failed: First argument contains undefined in property 'current'')
+                let illegal = [];
+                for (scan in single_attributes) {
+                    if ((single_attributes[scan] === undefined) || (single_attributes[scan] === null)) {
+                        single_attributes[scan] = '';
+                        illegal.push(scan);
+                    }
+                }
+                for (scan in repeating_attributes) {
+                    if ((repeating_attributes[scan] === undefined) || (repeating_attributes[scan] === null)) {
+                        repeating_attributes[scan] = '';
+                        illegal.push(scan);
+                    }
+                }
+                if (illegal.length > 0) {
+                    log(`beyond: errors during import: the following imported attributes had undefined or null values: ${illegal}`);
+                }
+
                 // make work queue
                 let items = createSingleWriteQueue(single_attributes);
                 processItem(character, items, single_attributes, repeating_attributes, total_level)
@@ -1259,7 +1278,8 @@
     const processItem = (character, items, single_attributes, repeating_attributes, total_level) => {
         let nextItem = items.shift();
 
-        if (!nextItem) {
+        // check if the write queue was empty
+        if (nextItem === undefined) {
             // do one giant write for all the single attributes, before we create a bunch of attacks 
             // and other things that depend on stat changes
             setAttrs(object.id, single_attributes);
@@ -1398,7 +1418,9 @@
                 onSheetWorkerCompleted(doChunk);
             } else {
                 log('beyond: spells imported, updating spell attack proficiency');
-                onSheetWorkerCompleted(() => { updateSpellAttackProf(character, 0); });
+                onSheetWorkerCompleted(() => { 
+                    updateSpellAttackProf(character, 0); 
+                });
             }
         }
         doChunk();
