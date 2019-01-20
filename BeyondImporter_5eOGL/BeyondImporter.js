@@ -1,5 +1,5 @@
 /*
- * Version 0.3.9
+ * Version 0.4.unreleased
  *
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
@@ -34,6 +34,38 @@
     const intelligence_skills = ['arcana','history','investigation','nature','religion'];
     const wisdom_skills = ['animal_handling','insight','medicine','perception','survival'];
     const charisma_skills = ['deception','intimidation','performance','persuasion']
+
+    // these class features are hidden
+    const silent_class_features = [
+        'Spellcasting', 
+        'Bonus Proficiency', 
+        'Ability Score Improvement', 
+        'Bonus Cantrip', 
+        'Proficiencies', 
+        'Hit Points', 
+        'Pact Magic', 
+        'Expanded Spell List', 
+        'Druidic', 
+        'Expertise', 
+        'Oath Spells'
+    ];
+   
+    // these are added by showing the selected options as class features
+    const option_class_features = [
+        'Maneuvers',
+        'Fighting Style', 
+        'Divine Domain', 
+        'Arcane Tradition', 
+        'Otherworldly Patron', 
+        'Ranger Archetype', 
+        'Druid Circle', 
+        'Sorcerous Origin', 
+        'Monastic Tradition', 
+        'Bardic College', 
+        'Roguish Archetype', 
+        'Sacred Oath', 
+        'Martial Archetype'
+    ];
 
     let class_spells = [];
     let spellAttacks = [];
@@ -450,7 +482,11 @@
                         if(state[state_name][beyond_caller.id].config.imports.class_traits){
                             let ti = 0;
                             current_class.definition.classFeatures.forEach((trait) => {
-                                if(['Spellcasting', 'Divine Domain', 'Ability Score Improvement', 'Bonus Cantrip', 'Proficiencies', 'Hit Points', 'Arcane Tradition', 'Otherworldly Patron', 'Pact Magic', 'Expanded Spell List', 'Ranger Archetype', 'Druidic', 'Druid Circle', 'Sorcerous Origin', 'Monastic Tradition', 'Bardic College', 'Expertise', 'Roguish Archetype', 'Sacred Oath', 'Oath Spells', 'Martial Archetype'].indexOf(trait.name) !== -1) {
+                                if(silent_class_features.indexOf(trait.name) !== -1) {
+                                    return;
+                                }
+                                if(option_class_features.indexOf(trait.name) !== -1) {
+                                    ti = importClassOptions(repeating_attributes, trait, current_class, character.options.class, ti);
                                     return;
                                 }
                                 if(trait.requiredLevel > current_class.level) return;
@@ -504,7 +540,11 @@
                             if(current_class.subclassDefinition != null) {
                                 let ti = 0;
                                 current_class.subclassDefinition.classFeatures.forEach((trait) => {
-                                    if(['Spellcasting', 'Bonus Proficiency', 'Divine Domain', 'Ability Score Improvement', 'Bonus Cantrip', 'Proficiencies', 'Hit Points', 'Arcane Tradition', 'Otherworldly Patron', 'Pact Magic', 'Expanded Spell List', 'Ranger Archetype', 'Druidic', 'Druid Circle', 'Sorcerous Origin', 'Monastic Tradition', 'Bardic College', 'Expertise', 'Roguish Archetype', 'Sacred Oath', 'Oath Spells', 'Martial Archetype'].indexOf(trait.name) !== -1) {
+                                    if(silent_class_features.indexOf(trait.name) !== -1) {
+                                        return;
+                                    }
+                                    if(option_class_features.indexOf(trait.name) !== -1) {
+                                        ti = importClassOptions(repeating_attributes, trait, current_class, character.options.class, ti);
                                         return;
                                     }
                                     if(trait.requiredLevel > current_class.level) return;
@@ -1664,9 +1704,10 @@
 
     const replaceChars = (text) => {
         text = text.replace('\&rsquo\;', '\'').replace('\&mdash\;','—').replace('\ \;',' ').replace('\&hellip\;','…');
+        text = text.replace('\&nbsp\;', ' ');
         text = text.replace('\û\;','û').replace('’', '\'').replace(' ', ' ');
         text = text.replace(/<li[^>]+>/gi,'• ').replace(/<\/li>/gi,'');
-
+        text = text.replace(/\r\n(\r\n)+/gm,'\r\n');
         return text;
     };
 
@@ -1924,5 +1965,32 @@
                 state[state_name][player.id].config.firsttime = false;
             }
         });
+    };
+
+    const importClassOptions = (repeating_attributes, trait, current_class, class_options, repeat_index) => {
+        if(trait.requiredLevel > current_class.level) {
+            // not applied to this character, trait is available at higher levels
+            return repeat_index;
+        }
+
+        // search for selected options for the given trait
+        let selections = getObjects(class_options, 'componentId', trait.id);
+        if (selections.length < 1) {
+            // no selections, ignore trait
+            return repeat_index;
+        }
+
+        let index = repeat_index;
+        for (selection of selections) {
+            let text = replaceChars(`${selection.definition.description}`);
+            let trait_docs = {
+                name: selection.definition.name,
+                description: text,
+                source: 'Class',
+                source_type: current_class.definition.name
+            }        
+            Object.assign(repeating_attributes, createRepeatingTrait(object, trait_docs, index++));
+        }
+        return index;
     };
 })();
