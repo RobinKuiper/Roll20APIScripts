@@ -712,7 +712,7 @@
 
                                 // process each fighting style only once
                                 fightingStylesSelected.forEach((fightingStyle) => {
-                                    if(fightingStyle == 'Great Weapon Fighting' && twohanded) {
+                                    if(fightingStyle == 'Great Weapon Fighting' && twohanded && (!ranged)) {
                                         gwf = true;
                                     }
                                     if(fightingStyle == 'Archery' && ranged) {
