@@ -1,5 +1,5 @@
 /*
- * Version 0.4.unreleased
+ * Version 0.4.0
  *
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
