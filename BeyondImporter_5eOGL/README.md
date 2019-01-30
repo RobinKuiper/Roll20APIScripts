@@ -68,8 +68,21 @@ Roll20 Thread: https://app.roll20.net/forum/post/6248700/script-beta-beyondimpor
 --- 
 
 #### Changelog:
+**v0.4.0**
+* added configurable feature 'Spell Info in Attacks' (enabled by default) which adds more information to spell attacks
+* fixed items not being added to Armor Class #34
+* rewrite of proficiencies and bonuses, fixing many cases of combinations of modifiers
+* Alert feat now supported, including in combination with other initiative bonuses #33
+* Jack of All Trades now implemented by Roll20 feature instead of fixed bonuses
+* Items that grant ability score bonus now work
+* Backgrounds with missing feature no longer crash #38
+* Class features with options like Fighting Style imported correctly #42
+* Great Weapon Fighting no longer applied to heavy ranged weapons #41
+* fixed crashes with 'Firebase.update failed' message #46
+* performance improvements
+* minor bug fixes
 
-**For further updates [click here](https://github.com/sillvva/Roll20-API-Scripts/commits/master)**
+**For changes made in v0.2.7 - v0.3.10 [click here](https://github.com/sillvva/Roll20-API-Scripts/commits/master)**
 
 **v0.2.6 - by Matt DeKok (Sillvva)**
 * Implemented updates made by Roll20 5eOGL character sheet
