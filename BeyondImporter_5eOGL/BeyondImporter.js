@@ -28,12 +28,13 @@
     const _ABILITY = {'STR': 'strength', 'DEX': 'dexterity', 'CON': 'constitution', 'INT': 'intelligence', 'WIS': 'wisdom', 'CHA': 'charisma'}
     const abilities = ['STR','DEX','CON','INT','WIS','CHA'];
     const alignments = ['','Lawful Good', 'Neutral Good', 'Chaotic Good', 'Lawful Neutral', 'Neutral', 'Chaotic Neutral', 'Lawful Evil', 'Neutral Evil', 'Chaotic Evil'];
-    const skills = ['acrobatics', 'animal_handling', 'arcana', 'athletics', 'deception', 'history', 'insight', 'intimidation', 'investigation', 'medicine', 'nature', 'perception', 'performance', 'persuasion', 'religion', 'sleight_of_hand', 'stealth', 'survival'];
     const strength_skills = ['athletics'];
-    const dexterity_skills = ['acrobatics', 'sleight of hand', 'stealth'];
+    const dexterity_skills = ['acrobatics', 'sleight_of_hand', 'stealth'];
     const intelligence_skills = ['arcana','history','investigation','nature','religion'];
     const wisdom_skills = ['animal_handling','insight','medicine','perception','survival'];
     const charisma_skills = ['deception','intimidation','performance','persuasion']
+    const saving_throws = ['strength_save', 'dexterity_save', 'constitution_save', 'intelligence_save', 'wisdom_save', 'charisma_save'];
+    const all_skills = strength_skills.concat(dexterity_skills, intelligence_skills, wisdom_skills, charisma_skills);
 
     // these class features are hidden
     const silent_class_features = [
@@ -67,6 +68,8 @@
         'Martial Archetype'
     ];
 
+    const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
+
     let class_spells = [];
     let spellAttacks = [];
     let beyond_caller = {};
@@ -76,7 +79,8 @@
     const style = "margin-left: 0px; overflow: hidden; background-color: #fff; border: 1px solid #000; padding: 5px; border-radius: 5px;";
     const buttonStyle = "background-color: #000; border: 1px solid #292929; border-radius: 3px; padding: 5px; color: #fff; text-align: center; float: right;"
 
-    let jack = '0';
+    //  jack of all trades feature in input, or undefined
+    let jack_feature;
 
     const script_name = 'BeyondImporter';
     const state_name = 'BEYONDIMPORTER';
@@ -98,348 +102,461 @@
 
         beyond_caller = getObj('player', msg.playerid);
 
-        if (command == 'beyond') {
-            let importData = '';
-            if(args.length < 1) { sendHelpMenu(beyond_caller); return; }
+        if (command !== 'beyond') {
+            return;
+        }
+        let importData = '';
+        if(args.length < 1) { sendHelpMenu(beyond_caller); return; }
 
-            let config = state[state_name][beyond_caller.id].config;
-            let initTiebreaker = config.initTieBreaker;
-            let languageGrouping = config.languageGrouping;
-            
-            // if not set, we default to true even without a config reset
-            if (config.hasOwnProperty('spellTargetInAttacks')) {
-                spellTargetInAttacks = config.spellTargetInAttacks;
-            }
+        let config = state[state_name][beyond_caller.id].config;
+        let initTiebreaker = config.initTieBreaker;
+        let languageGrouping = config.languageGrouping;
+        
+        // if not set, we default to true even without a config reset
+        if (config.hasOwnProperty('spellTargetInAttacks')) {
+            spellTargetInAttacks = config.spellTargetInAttacks;
+        }
 
-            for(let i = 0; i < args.length; i+=2) {
-                let k = args[i].trim();
-                let v = args[i+1] != null ? args[i+1].trim() : null;
+        for(let i = 0; i < args.length; i+=2) {
+            let k = args[i].trim();
+            let v = args[i+1] != null ? args[i+1].trim() : null;
 
-                switch(k) {
-                    case 'help':
-                        sendHelpMenu(beyond_caller);
-                        return;
+            switch(k) {
+                case 'help':
+                    sendHelpMenu(beyond_caller);
+                    return;
 
-                    case 'reset':
-                        state[state_name][beyond_caller] = {};
-                        setDefaults(true);
-                        sendConfigMenu(beyond_caller);
-                        return;
+                case 'reset':
+                    state[state_name][beyond_caller] = {};
+                    setDefaults(true);
+                    sendConfigMenu(beyond_caller);
+                    return;
 
-                    case 'config':
-                        if(args.length > 0){
-                            let setting = v.split('|');
-                            let key = setting.shift();
-                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : (setting[0] === '[NONE]') ? '' : setting[0];
+                case 'config':
+                    if(args.length > 0){
+                        let setting = v.split('|');
+                        let key = setting.shift();
+                        let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : (setting[0] === '[NONE]') ? '' : setting[0];
 
-                            if(key === 'prefix' && value.charAt(0) !== '_' && value.length > 0) { value = value + ' ';}
-                            if(key === 'suffix' && value.charAt(0) !== '_' && value.length > 0) { value = ' ' + value}
+                        if(key === 'prefix' && value.charAt(0) !== '_' && value.length > 0) { value = value + ' ';}
+                        if(key === 'suffix' && value.charAt(0) !== '_' && value.length > 0) { value = ' ' + value}
 
-                            state[state_name][beyond_caller.id].config[key] = value;
-                        }
-
-                        sendConfigMenu(beyond_caller);
-                        return;
-
-                    case 'imports':
-                        if(args.length > 0){
-                            let setting = v.split('|');
-                            let key = setting.shift();
-                            let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : (setting[0] === '[NONE]') ? '' : setting[0];
-
-                            state[state_name][beyond_caller.id].config.imports[key] = value;
-                        }
-
-                        sendConfigMenu(beyond_caller);
-                        return;
-
-                    case 'import':
-                        importData = v;
-                        break;
-
-                    default:
-                        sendHelpMenu(beyond_caller);
-                        return;
-                }
-            }
-
-            if(importData != '') {
-                // REVISIT: maybe put this here?
-                // sendChat(script_name, '<div style="'+style+'">Character sheet import started.<br><p>Please do not start additional imports until it completes.</p></div>', null, {noarchive:true});
-
-                let json = importData;
-                let character = JSON.parse(json).character;
-
-                sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is starting.</div>', null, {noarchive:true});
-
-                class_spells = [];
-
-                // these are automatically sorted into attributes that are written individually, in alphabetical order
-                // and other attributes that are then written as a bulk write, but all are written before repeating_attributes
-                let single_attributes = {};
-
-                // these are written in one large write once everything else is written
-                // NOTE: changing any stats after all these are imported would create a lot of updates, so it is
-                // good that we write these when all the stats are done
-                let repeating_attributes = {};
-
-                object = null;
-
-                // Remove characters with the same name if overwrite is enabled.
-                if(state[state_name][beyond_caller.id].config.overwrite) {
-                    let objects = findObjs({
-                        _type: "character",
-                        name: state[state_name][beyond_caller.id].config.prefix + character.name + state[state_name][beyond_caller.id].config.suffix
-                    }, {caseInsensitive: true});
-
-                    if(objects.length > 0) {
-                        object = objects[0];
-                        for(let i = 1; i < objects.length; i++){
-                            objects[i].remove();
-                        }
+                        state[state_name][beyond_caller.id].config[key] = value;
                     }
-                }
 
-                if(!object) {
-                    // Create character object
-                    object = createObj("character", {
-                        name: state[state_name][beyond_caller.id].config.prefix + character.name + state[state_name][beyond_caller.id].config.suffix,
-                        inplayerjournals: playerIsGM(msg.playerid) ? state[state_name][beyond_caller.id].config.inplayerjournals : msg.playerid,
-                        controlledby: playerIsGM(msg.playerid) ? state[state_name][beyond_caller.id].config.controlledby : msg.playerid
-                    });
-                }
+                    sendConfigMenu(beyond_caller);
+                    return;
 
-                // base class, if set
-                if (character.classes && (character.classes.length > 0)) {
-                    Object.assign(single_attributes, {
-                        'class': character.classes[0].definition.name,
-                        'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
-                        'base_level': character.classes[0].level
-                    });
-                }
-                
-                // Make Speed String
-                let weightSpeeds = character.race.weightSpeeds;
-                if(weightSpeeds == null) {
-                    weightSpeeds = {
-                        "normal": {
-                            "walk": 30,
-                            "fly": 0,
-                            "burrow": 0,
-                            "swim": 0,
-                            "climb": 0
-                        }
-                    };
-                }
+                case 'imports':
+                    if(args.length > 0){
+                        let setting = v.split('|');
+                        let key = setting.shift();
+                        let value = (setting[0] === 'true') ? true : (setting[0] === 'false') ? false : (setting[0] === '[NONE]') ? '' : setting[0];
 
-                let speedMods = getObjects(character.modifiers, 'subType', 'speed');
-                if(speedMods != null) {
-                    speedMods.forEach((speedMod) => {
-                        // REVISIT: what item is this for?  boots of striding and springing use set: innate-speed-walking and Loadstone uses bonus: speed
-                        // so maybe this is for some feat or class feature? we could scope the search to not the whole character to clarify this
-                        if(speedMod.type == 'set') {
-                            weightSpeeds.normal.walk = (speedMod.value > weightSpeeds.normal.walk ? speedMod.value : weightSpeeds.normal.walk);
-                        }
-                    });
-                }
-
-                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-flying');
-                if(speedMods != null) {
-                    speedMods.forEach((speedMod) => {
-                        if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
-                            if(speedMod.value == null) speedMod.value = weightSpeeds.normal.walk;
-                            weightSpeeds.normal.fly = (speedMod.value > weightSpeeds.normal.fly ? speedMod.value : weightSpeeds.normal.fly);
-                        }
-                    });
-                }
-
-                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-swimming');
-                if(speedMods != null) {
-                    speedMods.forEach((speedMod) => {
-                        if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
-                            if(speedMod.value == null) speedMod.value = weightSpeeds.normal.walk;
-                            weightSpeeds.normal.swim = (speedMod.value > weightSpeeds.normal.swim ? speedMod.value : weightSpeeds.normal.swim);
-                        }
-                    });
-                }
-
-                speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-climbing');
-                if(speedMods != null) {
-                    speedMods.forEach((speedMod) => {
-                        if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
-                            if(speedMod.value == null) speedMod.value = weightSpeeds.normal.walk;
-                            weightSpeeds.normal.climb = (speedMod.value > weightSpeeds.normal.climb ? speedMod.value : weightSpeeds.normal.climb);
-                        }
-                    });
-                }
-
-                speedMods = getObjects(character.modifiers, 'subType', 'unarmored-movement');
-                if(speedMods != null) {
-                    speedMods.forEach((speedMod) => {
-                        if(speedMod.type == 'bonus') {
-                            speedMod.value = isNaN(weightSpeeds.normal.walk + speedMod.value) ? 0 : speedMod.value;
-                            weightSpeeds.normal.walk += speedMod.value;
-                            if(weightSpeeds.normal.fly > 0) weightSpeeds.normal.fly += speedMod.value;
-                            if(weightSpeeds.normal.swim > 0) weightSpeeds.normal.swim += speedMod.value;
-                            if(weightSpeeds.normal.climb > 0) weightSpeeds.normal.climb += speedMod.value;
-                        }
-                    });
-                }
-
-                speedMods = getObjects(character.modifiers, 'subType', 'speed');
-                if(speedMods != null) {
-                    speedMods.forEach((speedMod) => {
-                        if(speedMod.type == 'bonus') {
-                            speedMod.value = isNaN(weightSpeeds.normal.walk + speedMod.value) ? 0 : speedMod.value;
-                            weightSpeeds.normal.walk += speedMod.value;
-                            if(weightSpeeds.normal.fly > 0) weightSpeeds.normal.fly += speedMod.value;
-                            if(weightSpeeds.normal.swim > 0) weightSpeeds.normal.swim += speedMod.value;
-                            if(weightSpeeds.normal.climb > 0) weightSpeeds.normal.climb += speedMod.value;
-                        }
-                    });
-                }
-
-                let speed = weightSpeeds.normal.walk + 'ft.';
-                for(let key in weightSpeeds.normal){
-                    if(key !== 'walk' && weightSpeeds.normal[key] !== 0){
-                        speed += ', ' + key + ' ' + weightSpeeds.normal[key] + 'ft.';
+                        state[state_name][beyond_caller.id].config.imports[key] = value;
                     }
+
+                    sendConfigMenu(beyond_caller);
+                    return;
+
+                case 'import':
+                    importData = v;
+                    break;
+
+                default:
+                    sendHelpMenu(beyond_caller);
+                    return;
+            }
+        }
+
+        if(importData === '') {
+            return;
+        }
+        
+        let json = importData;
+        let character = JSON.parse(json).character;
+
+        sendChat(script_name, '<div style="'+style+'">Import of <b>' + character.name + '</b> is starting.</div>', null, {noarchive:true});
+
+        class_spells = [];
+
+        // these are automatically sorted into attributes that are written individually, in alphabetical order
+        // and other attributes that are then written as a bulk write, but all are written before repeating_attributes
+        let single_attributes = {};
+
+        // these are written in one large write once everything else is written
+        // NOTE: changing any stats after all these are imported would create a lot of updates, so it is
+        // good that we write these when all the stats are done
+        let repeating_attributes = {};
+
+        object = null;
+
+        // Remove characters with the same name if overwrite is enabled.
+        if(state[state_name][beyond_caller.id].config.overwrite) {
+            let objects = findObjs({
+                _type: "character",
+                name: state[state_name][beyond_caller.id].config.prefix + character.name + state[state_name][beyond_caller.id].config.suffix
+            }, {caseInsensitive: true});
+
+            if(objects.length > 0) {
+                object = objects[0];
+                for(let i = 1; i < objects.length; i++){
+                    objects[i].remove();
+                }
+            }
+        }
+
+        if(!object) {
+            // Create character object
+            object = createObj("character", {
+                name: state[state_name][beyond_caller.id].config.prefix + character.name + state[state_name][beyond_caller.id].config.suffix,
+                inplayerjournals: playerIsGM(msg.playerid) ? state[state_name][beyond_caller.id].config.inplayerjournals : msg.playerid,
+                controlledby: playerIsGM(msg.playerid) ? state[state_name][beyond_caller.id].config.controlledby : msg.playerid
+            });
+        }
+
+        // base class, if set
+        if (character.classes && (character.classes.length > 0)) {
+            Object.assign(single_attributes, {
+                'class': character.classes[0].definition.name,
+                'subclass': character.classes[0].subclassDefinition == null ? '' : character.classes[0].subclassDefinition.name,
+                'base_level': character.classes[0].level
+            });
+        }
+        
+        // Make Speed String
+        let weightSpeeds = character.race.weightSpeeds;
+        if(weightSpeeds == null) {
+            weightSpeeds = {
+                "normal": {
+                    "walk": 30,
+                    "fly": 0,
+                    "burrow": 0,
+                    "swim": 0,
+                    "climb": 0
+                }
+            };
+        }
+
+        let speedMods = getObjects(character.modifiers, 'subType', 'speed');
+        if(speedMods != null) {
+            speedMods.forEach((speedMod) => {
+                // REVISIT: what item is this for?  boots of striding and springing use set: innate-speed-walking and Loadstone uses bonus: speed
+                // so maybe this is for some feat or class feature? we could scope the search to not the whole character to clarify this
+                if(speedMod.type == 'set') {
+                    weightSpeeds.normal.walk = (speedMod.value > weightSpeeds.normal.walk ? speedMod.value : weightSpeeds.normal.walk);
+                }
+            });
+        }
+
+        speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-flying');
+        if(speedMods != null) {
+            speedMods.forEach((speedMod) => {
+                if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
+                    if(speedMod.value == null) speedMod.value = weightSpeeds.normal.walk;
+                    weightSpeeds.normal.fly = (speedMod.value > weightSpeeds.normal.fly ? speedMod.value : weightSpeeds.normal.fly);
+                }
+            });
+        }
+
+        speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-swimming');
+        if(speedMods != null) {
+            speedMods.forEach((speedMod) => {
+                if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
+                    if(speedMod.value == null) speedMod.value = weightSpeeds.normal.walk;
+                    weightSpeeds.normal.swim = (speedMod.value > weightSpeeds.normal.swim ? speedMod.value : weightSpeeds.normal.swim);
+                }
+            });
+        }
+
+        speedMods = getObjects(character.modifiers, 'subType', 'innate-speed-climbing');
+        if(speedMods != null) {
+            speedMods.forEach((speedMod) => {
+                if(speedMod.type == 'set' && speedMod.id.indexOf('spell') == -1) {
+                    if(speedMod.value == null) speedMod.value = weightSpeeds.normal.walk;
+                    weightSpeeds.normal.climb = (speedMod.value > weightSpeeds.normal.climb ? speedMod.value : weightSpeeds.normal.climb);
+                }
+            });
+        }
+
+        speedMods = getObjects(character.modifiers, 'subType', 'unarmored-movement');
+        if(speedMods != null) {
+            speedMods.forEach((speedMod) => {
+                if(speedMod.type == 'bonus') {
+                    speedMod.value = isNaN(weightSpeeds.normal.walk + speedMod.value) ? 0 : speedMod.value;
+                    weightSpeeds.normal.walk += speedMod.value;
+                    if(weightSpeeds.normal.fly > 0) weightSpeeds.normal.fly += speedMod.value;
+                    if(weightSpeeds.normal.swim > 0) weightSpeeds.normal.swim += speedMod.value;
+                    if(weightSpeeds.normal.climb > 0) weightSpeeds.normal.climb += speedMod.value;
+                }
+            });
+        }
+
+        speedMods = getObjects(character.modifiers, 'subType', 'speed');
+        if(speedMods != null) {
+            speedMods.forEach((speedMod) => {
+                if(speedMod.type == 'bonus') {
+                    speedMod.value = isNaN(weightSpeeds.normal.walk + speedMod.value) ? 0 : speedMod.value;
+                    weightSpeeds.normal.walk += speedMod.value;
+                    if(weightSpeeds.normal.fly > 0) weightSpeeds.normal.fly += speedMod.value;
+                    if(weightSpeeds.normal.swim > 0) weightSpeeds.normal.swim += speedMod.value;
+                    if(weightSpeeds.normal.climb > 0) weightSpeeds.normal.climb += speedMod.value;
+                }
+            });
+        }
+
+        let speed = weightSpeeds.normal.walk + 'ft.';
+        for(let key in weightSpeeds.normal){
+            if(key !== 'walk' && weightSpeeds.normal[key] !== 0){
+                speed += ', ' + key + ' ' + weightSpeeds.normal[key] + 'ft.';
+            }
+        }
+
+        let weapon_critical_range = 20;
+        let critical_range = 20;
+
+        // Languages
+        if(state[state_name][beyond_caller.id].config.imports.languages) {
+            let languages = getObjects(character, 'type', 'language');
+            if(languageGrouping) {
+                let langs = [];
+                if(languages != null) {
+                    languages.forEach((language) => {
+                        langs.push(language.friendlySubtypeName);
+                    });
                 }
 
-                let weapon_critical_range = 20;
-                let critical_range = 20;
+                let row = getRepeatingRowIds('proficiencies', 'prof_type', 'LANGUAGE')[0];
 
-                // Languages
-                if(state[state_name][beyond_caller.id].config.imports.languages) {
-                    let languages = getObjects(character, 'type', 'language');
-                    if(languageGrouping) {
-                        let langs = [];
-                        if(languages != null) {
-                            languages.forEach((language) => {
-                                langs.push(language.friendlySubtypeName);
-                            });
-                        }
+                let attributes = {};
+                attributes["repeating_proficiencies_"+row+"_name"] = langs.join(', ');
+                attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
+                attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
-                        let row = getRepeatingRowIds('proficiencies', 'prof_type', 'LANGUAGE')[0];
-
+                Object.assign(repeating_attributes, attributes);
+            }
+            else {
+                if(languages != null) {
+                    languages.forEach((language) => {
+                        let row = getRepeatingRowIds('proficiencies', 'name', language.friendlySubtypeName)[0];
                         let attributes = {};
-                        attributes["repeating_proficiencies_"+row+"_name"] = langs.join(', ');
+                        attributes["repeating_proficiencies_"+row+"_name"] = language.friendlySubtypeName;
                         attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
                         attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
 
                         Object.assign(repeating_attributes, attributes);
-                    }
-                    else {
-                        if(languages != null) {
-                            languages.forEach((language) => {
-                                let row = getRepeatingRowIds('proficiencies', 'name', language.friendlySubtypeName)[0];
-                                let attributes = {};
-                                attributes["repeating_proficiencies_"+row+"_name"] = language.friendlySubtypeName;
-                                attributes["repeating_proficiencies_"+row+"_prof_type"] = 'LANGUAGE';
-                                attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
-
-                                Object.assign(repeating_attributes, attributes);
-                            });
-                        }
-                    }
-                }
-
-                // Import Proficiencies
-                const weapons = ['Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin', 'Light hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear', 'Crossbow, Light', 'Dart', 'Shortbow', 'Sling', 'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword', 'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar', 'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident', 'War pick', 'Warhammer', 'Whip', 'Blowgun', 'Crossbow, Hand', 'Crossbow, Heavy', 'Longbow', 'Net'];
-                let proficiencies = getObjects(character, 'type', 'proficiency');
-                let profs = [];
-                if(proficiencies != null) {
-                    proficiencies.forEach((prof) => {
-                        let skill = prof.subType.replace(/-/g, '_');
-                        if(skills.includes(skill)){
-                            let attributes = {};
-                            attributes[skill + '_prof'] = '(@{pb}*@{'+skill+'_type})';
-                            Object.assign(single_attributes, attributes);
-                        }
-                        else if(state[state_name][beyond_caller.id].config.imports.proficiencies) {
-                            if(profs.indexOf(prof.friendlySubtypeName) !== -1) return;
-                            profs.push(prof.friendlySubtypeName);
-
-                            let row = getRepeatingRowIds('proficiencies', 'name', prof.friendlySubtypeName)[0];
-
-                            let attributes = {}
-                            attributes["repeating_proficiencies_" + row + "_name"] = prof.friendlySubtypeName;
-                            attributes["repeating_proficiencies_" + row + "_prof_type"] = (prof.subType.includes('weapon') || weapons.includes(prof.friendlySubtypeName)) ? 'WEAPON' : (prof.subType.includes('armor') || prof.subType.includes('shield')) ? 'ARMOR' : 'OTHER';
-                            attributes["repeating_proficiencies_" + row + "_options-flag"] = '0';
-
-                            Object.assign(repeating_attributes, attributes);
-                        }
                     });
                 }
+            }
+        }
 
-                if(state[state_name][beyond_caller.id].config.imports.traits) {
-                    // Background Feature
-                    if(character.background.definition != null) {
-                        let btrait = {
-                            name: character.background.definition.featureName,
-                            description: replaceChars(character.background.definition.featureDescription),
-                            source: 'Background',
-                            source_type: character.background.definition.name
+        if(state[state_name][beyond_caller.id].config.imports.traits) {
+            // Background Feature
+            if(character.background.definition != null) {
+                let btrait = {
+                    name: character.background.definition.featureName,
+                    description: replaceChars(character.background.definition.featureDescription),
+                    source: 'Background',
+                    source_type: character.background.definition.name
+                }
+
+                let attrs = createRepeatingTrait(object, btrait);
+                Object.assign(repeating_attributes, attrs);
+            }
+            // Custom Background Feature
+            if(character.background.customBackground != null) {
+                if(character.background.customBackground.featuresBackground != null) {
+                    let btrait = {
+                        name: character.background.customBackground.featuresBackground.featureName,
+                        description: replaceChars(character.background.customBackground.featuresBackground.featureDescription),
+                        source: 'Background',
+                        source_type: character.background.customBackground.name
+                    };
+
+                    let attrs = createRepeatingTrait(object, btrait);
+                    Object.assign(repeating_attributes, attrs);
+                }
+            }
+            // Feats
+            character.feats.forEach((feat, fi) => {
+                let t = {
+                    name: feat.definition.name,
+                    description: replaceChars(feat.definition.description),
+                    source: 'Feat',
+                    source_type: feat.definition.name
+                };
+
+                let attrs = createRepeatingTrait(object, t, fi);
+                Object.assign(repeating_attributes, attrs);
+            });
+            // Race Features
+            if(character.race.racialTraits != null) {
+                let ti = 0;
+                character.race.racialTraits.forEach((trait) => {
+                    if(['Languages', 'Darkvision', 'Superior Darkvision', 'Skills', 'Ability Score Increase', 'Feat', 'Age', 'Alignment', 'Size', 'Speed', 'Skill Versatility', 'Dwarven Combat Training', 'Keen Senses', 'Elf Weapon Training', 'Extra Language', 'Tool Proficiency'].indexOf(trait.definition.name) !== -1) {
+                        return;
+                    }
+
+                    let description = '';
+                    if(trait.options != null) {
+                        trait.options.forEach((option) => {
+                            description += option.name + '\n';
+                            description += (option.description !== '') ? option.description + '\n\n' : '\n';
+                        });
+                    }
+
+                    description += trait.definition.description;
+
+                    let t = {
+                        name: trait.definition.name,
+                        description: replaceChars(description),
+                        source: 'Race',
+                        source_type: character.race.fullName
+                    };
+
+                    let attrs = createRepeatingTrait(object, t, ti);
+                    Object.assign(repeating_attributes, attrs);
+
+                    let spells = getFeatureSpells(character, trait.id, 'race');
+                    spells.forEach((spell) => {
+                        spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
+                        class_spells.push(spell);
+                    });
+
+                    ti++;
+                });
+            }
+        }
+
+        // Handle (Multi)Class Features
+        let multiclass_level = 0;
+        let total_level = 0;
+        let monk_level = 0;
+        if(state[state_name][beyond_caller.id].config.imports.classes) {
+            let multiclasses = {};
+            character.classes.forEach((current_class, i) => {
+                total_level += current_class.level;
+
+                if(!current_class.isStartingClass){
+                    multiclasses['multiclass'+i+'_flag'] = '1';
+                    multiclasses['multiclass'+i+'_lvl'] = current_class.level;
+                    multiclasses['multiclass'+i] = current_class.definition.name.toLowerCase();
+                    multiclasses['multiclass'+i+'_subclass'] = current_class.subclassDefinition == null ? '' : current_class.subclassDefinition.name;
+                    multiclass_level += current_class.level;
+                }
+
+                // Set Pact Magic as class resource
+                if(current_class.definition.name.toLowerCase() === 'warlock') {
+                    let attributes = {}
+                    attributes['other_resource_name'] = 'Pact Magic';
+                    attributes['other_resource_max'] = getPactMagicSlots(current_class.level);
+                    attributes['other_resource'] = getPactMagicSlots(current_class.level);
+                    Object.assign(single_attributes, attributes);
+                }
+
+                if(current_class.definition.name == 'Monk') monk_level = current_class.level;
+
+                if(current_class.definition.name.toLowerCase() === 'fighter' && current_class.subclassDefinition != null) {
+                    if(current_class.subclassDefinition.name.toLowerCase() == 'champion') {
+                        current_class.subclassDefinition.classFeatures.forEach((feature, i) => {
+                            if(feature.id == 215 && current_class.level >= feature.requiredLevel) { // improved critical
+                                critical_range = Math.min(19, critical_range);
+                            }
+                            if(feature.id == 218 && current_class.level >= feature.requiredLevel) {
+                                critical_range = Math.min(18, critical_range);
+                            }
+                        });
+                    }
+                }
+
+                if(state[state_name][beyond_caller.id].config.imports.class_traits){
+                    let ti = 0;
+                    current_class.definition.classFeatures.forEach((trait) => {
+                        if(silent_class_features.indexOf(trait.name) !== -1) {
+                            return;
+                        }
+                        if(option_class_features.indexOf(trait.name) !== -1) {
+                            ti = importClassOptions(repeating_attributes, trait, current_class, character.options.class, ti);
+                            return;
+                        }
+                        if(trait.requiredLevel > current_class.level) return;
+
+                        if(trait.name.includes('Jack of All Trades')){
+                            jack_feature = trait;
                         }
 
-                        let attrs = createRepeatingTrait(object, btrait);
-                        Object.assign(repeating_attributes, attrs);
-                    }
-                    // Custom Background Feature
-                    if(character.background.customBackground != null) {
-                        if(character.background.customBackground.featuresBackground != null) {
-                            let btrait = {
-                                name: character.background.customBackground.featuresBackground.featureName,
-                                description: replaceChars(character.background.customBackground.featuresBackground.featureDescription),
-                                source: 'Background',
-                                source_type: character.background.customBackground.name
-                            };
+                        let description = '';
 
-                            let attrs = createRepeatingTrait(object, btrait);
-                            Object.assign(repeating_attributes, attrs);
-                        }
-                    }
-                    // Feats
-                    character.feats.forEach((feat, fi) => {
+                        description += trait.description;
+
                         let t = {
-                            name: feat.definition.name,
-                            description: replaceChars(feat.definition.description),
-                            source: 'Feat',
-                            source_type: feat.definition.name
+                            name: trait.name,
+                            description: replaceChars(description),
+                            source: 'Class',
+                            source_type: current_class.definition.name
                         };
 
-                        let attrs = createRepeatingTrait(object, t, fi);
-                        Object.assign(repeating_attributes, attrs);
+                        Object.assign(repeating_attributes, createRepeatingTrait(object, t, ti));
+
+                        let spells = getFeatureSpells(character, trait.id, 'class');
+                        spells.forEach((spell) => {
+                            spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
+                            class_spells.push(spell);
+                        });
+
+                        if(trait.name == 'Metamagic') {
+                            character.choices.class.forEach((option) => {
+                                if(option.type == 3 && (option.optionValue >= 106 && option.optionValue <= 113)) {
+                                    let item = getObjects(option.options, 'id', option.optionValue);
+
+                                    if(item.length > 0) {
+                                        item = item[0];
+                                        let o = {
+                                            name: item.label,
+                                            description: item.description,
+                                            source: 'Class',
+                                            source_type: current_class.definition.name
+                                        };
+
+                                        Object.assign(repeating_attributes, createRepeatingTrait(object, o));
+                                    }
+                                }
+                            });
+                        }
+
+                        ti++;
                     });
-                    // Race Features
-                    if(character.race.racialTraits != null) {
+
+                    if(current_class.subclassDefinition != null) {
                         let ti = 0;
-                        character.race.racialTraits.forEach((trait) => {
-                            if(['Languages', 'Darkvision', 'Superior Darkvision', 'Skills', 'Ability Score Increase', 'Feat', 'Age', 'Alignment', 'Size', 'Speed', 'Skill Versatility', 'Dwarven Combat Training', 'Keen Senses', 'Elf Weapon Training', 'Extra Language', 'Tool Proficiency'].indexOf(trait.definition.name) !== -1) {
+                        current_class.subclassDefinition.classFeatures.forEach((trait) => {
+                            if(silent_class_features.indexOf(trait.name) !== -1) {
                                 return;
+                            }
+                            if(option_class_features.indexOf(trait.name) !== -1) {
+                                ti = importClassOptions(repeating_attributes, trait, current_class, character.options.class, ti);
+                                return;
+                            }
+                            if(trait.requiredLevel > current_class.level) return;
+
+                            if(trait.name.includes('Jack of All Trades')){
+                                jack_feature = trait;
                             }
 
                             let description = '';
-                            if(trait.options != null) {
-                                trait.options.forEach((option) => {
-                                    description += option.name + '\n';
-                                    description += (option.description !== '') ? option.description + '\n\n' : '\n';
-                                });
-                            }
 
-                            description += trait.definition.description;
+                            description += trait.description;
 
                             let t = {
-                                name: trait.definition.name,
+                                name: trait.name,
                                 description: replaceChars(description),
-                                source: 'Race',
-                                source_type: character.race.fullName
-                            };
+                                source: 'Class',
+                                source_type: current_class.definition.name
+                            }
 
-                            let attrs = createRepeatingTrait(object, t, ti);
-                            Object.assign(repeating_attributes, attrs);
+                            Object.assign(repeating_attributes, createRepeatingTrait(object, t, ti));
 
-                            let spells = getFeatureSpells(character, trait.id, 'race');
+                            let spells = getFeatureSpells(character, trait.id, 'class');
                             spells.forEach((spell) => {
                                 spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
                                 class_spells.push(spell);
@@ -450,786 +567,608 @@
                     }
                 }
 
-                // Handle (Multi)Class Features
-                let multiclass_level = 0;
-                let total_level = 0;
-                let monk_level = 0;
-                if(state[state_name][beyond_caller.id].config.imports.classes) {
-                    let multiclasses = {};
-                    character.classes.forEach((current_class, i) => {
-                        total_level += current_class.level;
-
-                        if(!current_class.isStartingClass){
-                            multiclasses['multiclass'+i+'_flag'] = '1';
-                            multiclasses['multiclass'+i+'_lvl'] = current_class.level;
-                            multiclasses['multiclass'+i] = current_class.definition.name.toLowerCase();
-                            multiclasses['multiclass'+i+'_subclass'] = current_class.subclassDefinition == null ? '' : current_class.subclassDefinition.name;
-                            multiclass_level += current_class.level;
-                        }
-
-                        // Set Pact Magic as class resource
-                        if(current_class.definition.name.toLowerCase() === 'warlock') {
-                            let attributes = {}
-                            attributes['other_resource_name'] = 'Pact Magic';
-                            attributes['other_resource_max'] = getPactMagicSlots(current_class.level);
-                            attributes['other_resource'] = getPactMagicSlots(current_class.level);
-                            Object.assign(single_attributes, attributes);
-                        }
-
-                        if(current_class.definition.name == 'Monk') monk_level = current_class.level;
-
-                        if(current_class.definition.name.toLowerCase() === 'fighter' && current_class.subclassDefinition != null) {
-                            if(current_class.subclassDefinition.name.toLowerCase() == 'champion') {
-                                current_class.subclassDefinition.classFeatures.forEach((feature, i) => {
-                                    if(feature.id == 215 && current_class.level >= feature.requiredLevel) { // improved critical
-                                        critical_range = Math.min(19, critical_range);
-                                    }
-                                    if(feature.id == 218 && current_class.level >= feature.requiredLevel) {
-                                        critical_range = Math.min(18, critical_range);
-                                    }
-                                });
-                            }
-                        }
-
-                        if(state[state_name][beyond_caller.id].config.imports.class_traits){
-                            let ti = 0;
-                            current_class.definition.classFeatures.forEach((trait) => {
-                                if(silent_class_features.indexOf(trait.name) !== -1) {
-                                    return;
-                                }
-                                if(option_class_features.indexOf(trait.name) !== -1) {
-                                    ti = importClassOptions(repeating_attributes, trait, current_class, character.options.class, ti);
-                                    return;
-                                }
-                                if(trait.requiredLevel > current_class.level) return;
-
-                                if(trait.name.includes('Jack')){
-                                    jack = '@{jack}';
-                                }
-
-                                let description = '';
-
-                                description += trait.description;
-
-                                let t = {
-                                    name: trait.name,
-                                    description: replaceChars(description),
-                                    source: 'Class',
-                                    source_type: current_class.definition.name
-                                };
-
-                                Object.assign(repeating_attributes, createRepeatingTrait(object, t, ti));
-
-                                let spells = getFeatureSpells(character, trait.id, 'class');
-                                spells.forEach((spell) => {
-                                    spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
-                                    class_spells.push(spell);
-                                });
-
-                                if(trait.name == 'Metamagic') {
-                                    character.choices.class.forEach((option) => {
-                                        if(option.type == 3 && (option.optionValue >= 106 && option.optionValue <= 113)) {
-                                            let item = getObjects(option.options, 'id', option.optionValue);
-
-                                            if(item.length > 0) {
-                                                item = item[0];
-                                                let o = {
-                                                    name: item.label,
-                                                    description: item.description,
-                                                    source: 'Class',
-                                                    source_type: current_class.definition.name
-                                                };
-
-                                                Object.assign(repeating_attributes, createRepeatingTrait(object, o));
-                                            }
-                                        }
-                                    });
-                                }
-
-                                ti++;
+                // Class Spells
+                if(state[state_name][beyond_caller.id].config.imports.class_spells){
+                    for(let i in character.classSpells) {
+                        let spells = character.classSpells[i];
+                        if(character.classSpells[i].characterClassId == current_class.id) {
+                            character.classSpells[i].spells.forEach((spell) => {
+                                spell.spellCastingAbility = _ABILITIES[current_class.definition.spellCastingAbilityId];
+                                class_spells.push(spell);
                             });
-
-                            if(current_class.subclassDefinition != null) {
-                                let ti = 0;
-                                current_class.subclassDefinition.classFeatures.forEach((trait) => {
-                                    if(silent_class_features.indexOf(trait.name) !== -1) {
-                                        return;
-                                    }
-                                    if(option_class_features.indexOf(trait.name) !== -1) {
-                                        ti = importClassOptions(repeating_attributes, trait, current_class, character.options.class, ti);
-                                        return;
-                                    }
-                                    if(trait.requiredLevel > current_class.level) return;
-
-                                    if(trait.name.includes('Jack')){
-                                        jack = '@{jack}';
-                                    }
-
-                                    let description = '';
-
-                                    description += trait.description;
-
-                                    let t = {
-                                        name: trait.name,
-                                        description: replaceChars(description),
-                                        source: 'Class',
-                                        source_type: current_class.definition.name
-                                    }
-
-                                    Object.assign(repeating_attributes, createRepeatingTrait(object, t, ti));
-
-                                    let spells = getFeatureSpells(character, trait.id, 'class');
-                                    spells.forEach((spell) => {
-                                        spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
-                                        class_spells.push(spell);
-                                    });
-
-                                    ti++;
-                                });
-                            }
                         }
-
-                        // Class Spells
-                        if(state[state_name][beyond_caller.id].config.imports.class_spells){
-                            for(let i in character.classSpells) {
-                                let spells = character.classSpells[i];
-                                if(character.classSpells[i].characterClassId == current_class.id) {
-                                    character.classSpells[i].spells.forEach((spell) => {
-                                        spell.spellCastingAbility = _ABILITIES[current_class.definition.spellCastingAbilityId];
-                                        class_spells.push(spell);
-                                    });
-                                }
-                            }
-                        }
-                    });
-                    Object.assign(single_attributes, multiclasses);
-                }
-
-                // Import Character Inventory
-                let hasArmor = false;
-                if(state[state_name][beyond_caller.id].config.imports.inventory) {
-                    // accumulate unique fighting styles selected
-                    let fightingStylesSelected = new Set()
-                    let fightingStyles = getObjects(character.classes, 'name', 'Fighting Style');
-                    fightingStyles.forEach((fS) => {
-                        let fsOpts = getObjects(character.choices, 'componentId', fS.id);
-                        fsOpts.forEach((fsOpt) => {
-                            if(fsOpt.optionValue != null) {
-                                let selOpts = getObjects(fsOpt.options, 'id', fsOpt.optionValue);
-                                selOpts.forEach((selOpt) => {
-                                    fightingStylesSelected.add(selOpt.label)
-                                });
-                            }
-                        });
-                    });
-
-                    const inventory = character.inventory;
-                    let prevAdded = [];
-                    if(inventory != null) {
-                        let shieldEquipped = false;
-                        inventory.forEach((item, i) => {
-                            if(item.definition.type == 'Shield' && item.equipped) shieldEquipped = true;
-                        });
-                        inventory.forEach((item, i) => {
-                            log('beyond: found inventory item ' + item.definition.name);
-                            let paIndex = prevAdded.filter((pAdded) => { return pAdded == item.definition.name; }).length;
-                            let row = getRepeatingRowIds('inventory', 'itemname', item.definition.name, paIndex);
-                            prevAdded.push(item.definition.name);
-
-                            let attributes = {};
-                            attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
-                            attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
-                            attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
-                            attributes["repeating_inventory_"+row+"_itemweight"] = (item.definition.bundleSize != 0 ? item.definition.weight / item.definition.bundleSize : item.definition.weight);
-                            attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
-                            let _itemmodifiers = 'Item Type: ' + item.definition.type;
-                            if(typeof item.definition.damage === 'object' && item.definition.type !== 'Ammunition') {
-                                let properties = '';
-                                let finesse = false;
-                                let twohanded = false;
-                                let ranged = false;
-                                let hasOffhand = false;
-                                let isOffhand = false;
-                                let versatile = false;
-                                let versatileDice = '';
-                                item.definition.properties.forEach((prop) => {
-                                    if(prop.name == 'Two-Handed') {
-                                        twohanded = true;
-                                    }
-                                    if(prop.name == 'Range') {
-                                        ranged = true;
-                                    }
-                                    if(prop.name == 'Finesse') {
-                                        finesse = true;
-                                    }
-                                    if(prop.name == 'Versatile') {
-                                        versatile = true;
-                                        versatileDice = prop.notes;
-                                    }
-
-                                    properties += prop.name + ', ';
-                                });
-
-                                let cv = getObjects(character.characterValues, 'valueTypeId', item.entityTypeId);
-                                cv.forEach((v) => {
-                                    if(v.typeId == 18 && v.value === true) {
-                                        hasOffhand = true;
-                                        if(v.valueId == item.id) {
-                                            isOffhand = true;
-                                        }
-                                    }
-                                });
-
-                                attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
-                                attributes["repeating_inventory_"+row+"_hasattack"] = '0';
-                                _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + (item.definition.damage != null ? ', Damage: ' + item.definition.damage.diceString : '') + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
-
-                                let magic = 0;
-                                item.definition.grantedModifiers.forEach((grantedMod) => {
-                                    if(grantedMod.type == 'bonus' && grantedMod.subType == 'magic') {
-                                        magic += grantedMod.value;
-                                    }
-                                });
-
-                                // Finesse Weapon
-                                let isFinesse = item.definition.properties.filter((property) => { return property.name == 'Finesse'; }).length > 0;
-                                if(isFinesse && getTotalAbilityScore(character, 2) > getTotalAbilityScore(character, item.definition.attackType)) {
-                                    item.definition.attackType = 2;
-                                }
-
-                                // Hexblade's Weapon
-                                let characterValues = getObjects(character.characterValues, 'valueId', item.id);
-                                characterValues.forEach((cv) => {
-                                    if(cv.typeId == 29 && getTotalAbilityScore(character, 6) >= getTotalAbilityScore(character, item.definition.attackType)) {
-                                        item.definition.attackType = 6;
-                                    }
-                                });
-
-                                let gwf = false;
-                                let atkmod = 0;
-                                let dmgmod = 0;
-                                let hasTWFS = false;
-
-                                // process each fighting style only once
-                                fightingStylesSelected.forEach((fightingStyle) => {
-                                    if(fightingStyle == 'Great Weapon Fighting' && twohanded && (!ranged)) {
-                                        gwf = true;
-                                    }
-                                    if(fightingStyle == 'Archery' && ranged) {
-                                        atkmod += 2;
-                                    }
-                                    if(fightingStyle== 'Dueling' && !(hasOffhand || ranged || twohanded)) {
-                                        log('applying Dueling +2 to ' + item.definition.name)
-                                        dmgmod += 2;
-                                        log('damage mod now ' + dmgmod)
-                                    }
-                                    if(fightingStyle == 'Two-Weapon Fighting') {
-                                        hasTWFS = true;
-                                    }
-                                });
-
-                                if(versatile && !(hasOffhand || shieldEquipped)) {
-                                    item.definition.damage.diceString = versatileDice;
-                                }
-
-                                if(item.definition.isMonkWeapon && monk_level > 0) {
-                                    let itemAvgDmg = 0;
-                                    if(item.definition.damage != null) {
-                                        let dS = item.definition.damage.diceString;
-                                        let itemDieCount = parseInt(dS.substr(0, dS.indexOf('d')));
-                                        let itemDieSize = parseInt(dS.substr(dS.indexOf('d')+1));
-                                        itemAvgDmg = (itemDieCount * (itemDieSize + 1)) / 2;
-                                    }
-
-                                    let monkDieSize = Math.floor((monk_level - 1) / 4) * 2 + 4;
-                                    let monkAvgDmg = (1 + monkDieSize) / 2;
-
-                                    if(monkAvgDmg > itemAvgDmg) {
-                                        item.definition.damage.diceString = '1d'+monkDieSize;
-                                    }
-
-                                    let str = getTotalAbilityScore(character, 1);
-                                    let dex = getTotalAbilityScore(character, 2);
-                                    if(dex > str) {
-                                        item.definition.attackType = 2;
-                                    }
-                                }
-
-                                let dmgattr = _ABILITY[_ABILITIES[item.definition.attackType]];
-                                if(!hasTWFS && isOffhand) dmgattr = '0';
-
-                                // CREATE ATTACK
-                                let attack = {
-                                    name: item.definition.name,
-                                    range: item.definition.range + (item.definition.range != item.definition.longRange ? '/' + item.definition.longRange : '') + 'ft.',
-                                    attack: {
-                                        attribute: _ABILITY[_ABILITIES[item.definition.attackType]],
-                                        mod: atkmod
-                                    },
-                                    damage: {
-                                        diceString: item.definition.damage != null ? item.definition.damage.diceString + (gwf ? 'ro<2' : '') : '',
-                                        type: item.definition.damageType,
-                                        attribute: dmgattr,
-                                        mod: dmgmod
-                                    },
-                                    description: replaceChars(item.definition.description),
-                                    magic: magic,
-                                    critrange: Math.min(weapon_critical_range, critical_range)
-                                };
-
-                                item.definition.grantedModifiers.forEach((grantedMod) => {
-                                    if(grantedMod.type == 'damage') {
-                                        if(grantedMod.dice != null) {
-                                            attack.damage2 = {
-                                                diceString: grantedMod.dice.diceString,
-                                                type: grantedMod.friendlySubtypeName,
-                                                attribute: grantedMod.statId == null ? '0' : _ABILITY[_ABILITIES[grantedMod.statId]]
-                                            };
-                                        }
-                                    }
-                                });
-
-                                let repAttack = createRepeatingAttack(object, attack, {index: paIndex, itemid: row});
-                                Object.assign(repeating_attributes, repAttack);
-                                // /CREATE ATTACK
-                            }
-                            let itemArmorClass = 0;
-                            itemArmorClass += (item.definition.armorClass == null ? 0 : item.definition.armorClass);
-                            item.definition.grantedModifiers.forEach((grantedMod) => {
-                                for(let abilityId in _ABILITIES) {
-                                    let ABL = _ABILITIES[abilityId];
-                                    if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
-                                        _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
-                                    }
-                                }
-                                if(grantedMod.type == 'bonus') {
-                                    switch (grantedMod.subType) {
-                                        case 'armor-class':
-                                            // wielding a shield or wearing other item which only give a bonus to armor class doesn't qualify as wearing armor
-                                            // including items such as staff of power, ring of protection, etc.
-                                            // fall through
-                                        case 'unarmored-armor-class':
-                                            if(item.definition.hasOwnProperty('armorClass')) {
-                                                itemArmorClass += grantedMod.value;
-                                            }
-                                            else {
-                                                _itemmodifiers += ', AC +' + grantedMod.value;
-                                            }
-                                            break;
-                                        case 'saving-throws':
-                                            _itemmodifiers += ', Saving Throws +' + grantedMod.value;
-                                            break;
-                                        case 'ability-checks':
-                                            _itemmodifiers += ', Ability Checks +' + grantedMod.value;
-                                            break;
-                                        case 'speed':
-                                            // Speed attribute in Roll20 OGL sheets is not calculated. They must be manually set
-                                            break;
-                                        case 'magic':
-                                            // these are picked up in the weapons code above
-                                            break;
-                                        default:
-                                            // these may indicate an unimplemented conversion
-                                            log('ignoring item ' + item.definition.name + ' bonus modifier for ' + grantedMod.subType);
-                                    }
-                                }
-                                if(grantedMod.type == 'set') {
-                                    switch (grantedMod.subType) {
-                                        case 'armor-class':
-                                            // If an item qualifies as armor, it will be given the .armorClass property and a type property of "Light/Medium/Heavy Armor".
-                                            // Items with modifiers like this don't qualify as armor. I don't know of any items that have this specific modifier.
-                                            // fall through
-                                        case 'unarmored-armor-class':
-                                            _itemmodifiers += ', AC: ' + grantedMod.value;
-                                            break;
-                                        case 'innate-speed-walking':
-                                            // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
-                                            // fall through and log as ignored
-                                        default:
-                                            // these may indicate an unimplemented conversion
-                                            log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
-                                    }
-                                }
-                            });
-                            if(item.definition.hasOwnProperty('armorClass')) {
-                                let ac = itemArmorClass;
-                                if(["Light Armor", "Medium Armor", "Heavy Armor"].indexOf(item.definition.type) >= 0) {
-                                    // This includes features such as defense fighting style, which require the user to wear armor
-                                    let aac = getObjects(character, 'subType', 'armored-armor-class');
-                                    aac.forEach((aacb) => {
-                                        ac = parseInt(ac) + parseInt(aacb.value);
-                                    });
-                                    hasArmor = true;
-                                }
-                                _itemmodifiers += ', AC: ' + ac;
-                            }
-                            attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
-                            Object.assign(repeating_attributes, attributes);
-                        });
                     }
                 }
+            });
+            Object.assign(single_attributes, multiclasses);
+        }
 
-                // If character has unarmored defense, add it to the inventory, so a player can enable/disable it.
-                let unarmored = getObjects(character.modifiers, 'subType', 'unarmored-armor-class', ['item']);
-                let x = 0;
-                if(unarmored != null) unarmored.forEach((ua, i) => {
-                    if(ua.type != 'set') return;
-                    if(ua.value == null) {
-                        ua.value = Math.floor((getTotalAbilityScore(character, ua.statId) - 10) / 2);
-                    }
-
-                    let row = getRepeatingRowIds('inventory', 'itemname', 'Unarmored Defense')[x];
-
-                    let name = 'Unarmored Defense';
-                    let modifiers = '';
-
-                    // Label the unarmored armor class based on the feature it originates from
-                    character.classes.forEach((charClass) => {
-                        charClass.definition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
-                            name = cF.name;
+        // Import Character Inventory
+        let hasArmor = false;
+        if(state[state_name][beyond_caller.id].config.imports.inventory) {
+            // accumulate unique fighting styles selected
+            let fightingStylesSelected = new Set()
+            let fightingStyles = getObjects(character.classes, 'name', 'Fighting Style');
+            fightingStyles.forEach((fS) => {
+                let fsOpts = getObjects(character.choices, 'componentId', fS.id);
+                fsOpts.forEach((fsOpt) => {
+                    if(fsOpt.optionValue != null) {
+                        let selOpts = getObjects(fsOpt.options, 'id', fsOpt.optionValue);
+                        selOpts.forEach((selOpt) => {
+                            fightingStylesSelected.add(selOpt.label)
                         });
-                        if(charClass.subclassDefinition != null) {
-                            charClass.subclassDefinition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
-                                name = cF.name;
-                            });
-                        }
-                    });
-                    character.race.racialTraits.filter(rT => rT.id == ua.componentId).forEach((rT) => {
-                        name = rT.name;
-                    })
-
-                    if(ua.componentTypeId == 306912077) { // Integrated Protection (Armor Type Option)
-                        row = getRepeatingRowIds('inventory', 'itemname', 'Integrated Potection', 0);
-
-                        name = 'Integrated Protection';
-                        hasArmor = false;
-                        if(ua.value == 6) {
-                            modifiers = 'Item Type: Heavy Armor';
-                            ua.value = 10 + parseInt(ua.value);
-                        }
-                        else if(ua.value == 3) {
-                            modifiers == 'Item Type: Medium Armor'
-                            ua.value = 10 + parseInt(ua.value);
-                        }
-                        ua.value += Math.floor((total_level - 1) / 4) + 2;
-                    }
-
-                    modifiers += (modifiers == '' ? '' : ', ') + 'AC: '+ua.value
-
-                    let attributes = {}
-                    attributes["repeating_inventory_"+row+"_itemname"] = name;
-                    attributes["repeating_inventory_"+row+"_equipped"] = !hasArmor ? '1' : '0';
-                    attributes["repeating_inventory_"+row+"_itemcount"] = 1;
-                    attributes["repeating_inventory_"+row+"_itemmodifiers"] = modifiers;
-                    Object.assign(repeating_attributes, attributes);
-
-                    if(ua.componentTypeId == 306912077) { hasArmor = true; }
-
-                    x++;
-                });
-
-                if(character.spells.race.length > 0) {
-                    let spells = character.spells.race;
-                    spells.forEach((spell) => {
-                        spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
-                        class_spells.push(spell);
-                    });
-                }
-
-                //Skill Bonuses and Half Proficiencies
-                let bonuses = getObjects(character.modifiers, 'type', 'bonus').filter(bonus => skills.includes(bonus.subType.replace(/-/g, '_')) && !bonus.id.includes('spell'));
-                let bonus_attributes = {};
-                bonuses.forEach((bonus) => {
-                    bonus_attributes[type + '_flat'] = bonus.value;
-                });
-                Object.assign(single_attributes, bonus_attributes);
-
-                skills.forEach((skill) => {
-                    let skill_prof = getObjects(proficiencies, 'subType', skill.replace(/_/g, '-'));
-                    if(skill_prof.length == 0) {
-                        let hpModifiers = getObjects(character.modifiers, 'type', 'half-proficiency');
-                        let hprModifiers = getObjects(character.modifiers, 'type', 'half-proficiency-round-up');
-                        if(hprModifiers.length > 0) {
-                            hprModifiers.forEach((modifier) => {
-                                if(
-                                    modifier.subType == 'ability-checks'
-                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.includes(skill))
-                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.includes(skill))
-                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.includes(skill))
-                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.includes(skill))
-                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.includes(skill))
-                                ) {
-                                    let attributes = {};
-                                    attributes[skill + "_flat"] = Math.ceil((Math.floor((total_level - 1) / 4) + 2) / 2);
-                                    Object.assign(single_attributes, attributes);
-                                }
-                            });
-                        }
-                        else if(hpModifiers.length > 0) {
-                            hpModifiers.forEach((modifier) => {
-                                if(
-                                    modifier.subType == 'ability-checks'
-                                    || (modifier.subType == 'strength-ability-checks' && strength_skills.includes(skill))
-                                    || (modifier.subType == 'dexterity-ability-checks' && dexterity_skills.includes(skill))
-                                    || (modifier.subType == 'intelligence-ability-checks' && intelligence_skills.includes(skill))
-                                    || (modifier.subType == 'wisdom-ability-checks' && wisdom_skills.includes(skill))
-                                    || (modifier.subType == 'charisma-ability-checks' && charisma_skills.includes(skill))
-                                ) {
-                                    let attributes = {};
-                                    attributes[skill + "_flat"] = Math.floor((Math.floor((total_level - 1) / 4) + 2) / 2);
-                                    Object.assign(single_attributes, attributes);
-                                }
-                            });
-                        }
                     }
                 });
+            });
 
-                let hpModifiers = getObjects(character.modifiers, 'type', 'half-proficiency');
-                let hprModifiers = getObjects(character.modifiers, 'type', 'half-proficiency-round-up');
-                if(hprModifiers.length > 0) {
-                    hprModifiers.forEach((modifier) => {
-                        if(modifier.subType == 'initiative') {
-                            let attributes = {};
-                            attributes["initmod"] = Math.ceil((Math.floor((total_level - 1) / 4) + 2) / 2);
-                            Object.assign(single_attributes, attributes);
-                        }
-                    });
-                }
-                else if(hpModifiers.length > 0) {
-                    hpModifiers.forEach((modifier) => {
-                        if(modifier.subType == 'initiative') {
-                            let attributes = {};
-                            attributes["initmod"] = Math.floor((Math.floor((total_level - 1) / 4) + 2) / 2);
-                            Object.assign(single_attributes, attributes);
-                        }
-                    });
-                }
+            const inventory = character.inventory;
+            let prevAdded = [];
+            if(inventory != null) {
+                let shieldEquipped = false;
+                inventory.forEach((item, i) => {
+                    if(item.definition.type == 'Shield' && item.equipped) shieldEquipped = true;
+                });
+                inventory.forEach((item, i) => {
+                    log('beyond: found inventory item ' + item.definition.name);
+                    let paIndex = prevAdded.filter((pAdded) => { return pAdded == item.definition.name; }).length;
+                    let row = getRepeatingRowIds('inventory', 'itemname', item.definition.name, paIndex);
+                    prevAdded.push(item.definition.name);
 
-                // Expertise
-                let exp = getObjects(character, 'type', 'expertise');
-                for(let i in exp) {
-                    let expertise = exp[i];
-                    let type = expertise.subType.replace(/-/g, '_');
-                    if(skills.includes(type)){
-                        let attributes = {};
-                        attributes[type + '_type'] = "2";
-                        Object.assign(single_attributes, attributes);
-                    }
-
-                    if(expertise.subType === 'thieves-tools') {
-                        let row = getRepeatingRowIds('proficiencies', 'name', expertise.friendlySubtypeName)[0];
-
-                        let attributes = {}
-                        attributes["repeating_proficiencies_"+row+"_name"] = expertise.friendlySubtypeName;
-                        attributes["repeating_proficiencies_"+row+"_prof_type"] = 'OTHER';
-                        attributes["repeating_proficiencies_"+row+"_options-flag"] = '0';
-                        Object.assign(repeating_attributes, attributes);
-                    }
-                }
-
-                // Adhoc Expertise
-                let characterValues = getObjects(character.characterValues, 'typeId', 26);
-                characterValues.forEach((cv) => {
                     let attributes = {};
-                    if(cv.value == 4) {
-                        let objs = getObjects(character, 'type', 'proficiency');
-                        objs.forEach((obj) => {
-                            if(cv.valueId == obj.entityId && cv.valueTypeId == obj.entityTypeId) {
-                                let type = obj.subType.replace(/-/g, '_');
-                                if(skills.includes(type)){
-                                    attributes[type + '_type'] = "2";
+                    attributes["repeating_inventory_"+row+"_itemname"] = item.definition.name;
+                    attributes["repeating_inventory_"+row+"_equipped"] = (item.equipped) ? '1' : '0';
+                    attributes["repeating_inventory_"+row+"_itemcount"] = item.quantity;
+                    attributes["repeating_inventory_"+row+"_itemweight"] = (item.definition.bundleSize != 0 ? item.definition.weight / item.definition.bundleSize : item.definition.weight);
+                    attributes["repeating_inventory_"+row+"_itemcontent"] = replaceChars(item.definition.description);
+                    let _itemmodifiers = 'Item Type: ' + item.definition.type;
+                    if(typeof item.definition.damage === 'object' && item.definition.type !== 'Ammunition') {
+                        let properties = '';
+                        let finesse = false;
+                        let twohanded = false;
+                        let ranged = false;
+                        let hasOffhand = false;
+                        let isOffhand = false;
+                        let versatile = false;
+                        let versatileDice = '';
+                        item.definition.properties.forEach((prop) => {
+                            if(prop.name == 'Two-Handed') {
+                                twohanded = true;
+                            }
+                            if(prop.name == 'Range') {
+                                ranged = true;
+                            }
+                            if(prop.name == 'Finesse') {
+                                finesse = true;
+                            }
+                            if(prop.name == 'Versatile') {
+                                versatile = true;
+                                versatileDice = prop.notes;
+                            }
+
+                            properties += prop.name + ', ';
+                        });
+
+                        let cv = getObjects(character.characterValues, 'valueTypeId', item.entityTypeId);
+                        cv.forEach((v) => {
+                            if(v.typeId == 18 && v.value === true) {
+                                hasOffhand = true;
+                                if(v.valueId == item.id) {
+                                    isOffhand = true;
                                 }
                             }
                         });
-                    }
-                    Object.assign(single_attributes, attributes);
-                });
 
-                // Initiative Style
-                let init_mods = getObjects(character.modifiers, 'subType', 'initiative');
+                        attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
+                        attributes["repeating_inventory_"+row+"_hasattack"] = '0';
+                        _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + (item.definition.damage != null ? ', Damage: ' + item.definition.damage.diceString : '') + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
 
-                let init_style = '@{d20}';
-                let initadv = init_mods.filter(im => im.type == 'advantage').length > 0;
-                let initdis = init_mods.filter(im => im.type == 'disadvantage').length > 0;
-                if(initadv && !initdis) init_style = '{@{d20},@{d20}}kh1';
-                if(!initadv && initdis) init_style = '{@{d20},@{d20}}kl1';
+                        let magic = 0;
+                        item.definition.grantedModifiers.forEach((grantedMod) => {
+                            if(grantedMod.type == 'bonus' && grantedMod.subType == 'magic') {
+                                magic += grantedMod.value;
+                            }
+                        });
 
-                let initbon = 0;
-                init_mods.filter(im => im.type == 'bonus').forEach((bonus) => {
-                    if(bonus.statId != null) {
-                        initbon += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
-                    }
-                    if(bonus.value != null) {
-                        initbon += bonus.value;
-                    }
-                });
-
-                // Saving Throw Bonuses and proficiencies
-                let stBonuses = getObjects(character.modifiers, 'subType', 'saving-throws', ['item']);
-                let stBonTotals = [0,0,0,0,0,0,0];
-                stBonuses.forEach((bonus) => {
-                    if(bonus.statId != null) {
-                        stBonTotals[0] += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
-                    }
-                    if(bonus.value != null) {
-                        stBonTotals[0] += bonus.value;
-                    }
-                    if(bonus.type == 'proficiency') {
-                        // proficiency in all saves, such as Monk level 14 feature
-                        for(let ability of Object.values(_ABILITY)) {
-                            single_attributes[ability + '_save_prof'] = "(@{pb})";
+                        // Finesse Weapon
+                        let isFinesse = item.definition.properties.filter((property) => { return property.name == 'Finesse'; }).length > 0;
+                        if(isFinesse && getTotalAbilityScore(character, 2) > getTotalAbilityScore(character, item.definition.attackType)) {
+                            item.definition.attackType = 2;
                         }
+
+                        // Hexblade's Weapon
+                        let characterValues = getObjects(character.characterValues, 'valueId', item.id);
+                        characterValues.forEach((cv) => {
+                            if(cv.typeId == 29 && getTotalAbilityScore(character, 6) >= getTotalAbilityScore(character, item.definition.attackType)) {
+                                item.definition.attackType = 6;
+                            }
+                        });
+
+                        let gwf = false;
+                        let atkmod = 0;
+                        let dmgmod = 0;
+                        let hasTWFS = false;
+
+                        // process each fighting style only once
+                        fightingStylesSelected.forEach((fightingStyle) => {
+                            if(fightingStyle == 'Great Weapon Fighting' && twohanded && (!ranged)) {
+                                gwf = true;
+                            }
+                            if(fightingStyle == 'Archery' && ranged) {
+                                atkmod += 2;
+                            }
+                            if(fightingStyle== 'Dueling' && !(hasOffhand || ranged || twohanded)) {
+                                log('applying Dueling +2 to ' + item.definition.name)
+                                dmgmod += 2;
+                                log('damage mod now ' + dmgmod)
+                            }
+                            if(fightingStyle == 'Two-Weapon Fighting') {
+                                hasTWFS = true;
+                            }
+                        });
+
+                        if(versatile && !(hasOffhand || shieldEquipped)) {
+                            item.definition.damage.diceString = versatileDice;
+                        }
+
+                        if(item.definition.isMonkWeapon && monk_level > 0) {
+                            let itemAvgDmg = 0;
+                            if(item.definition.damage != null) {
+                                let dS = item.definition.damage.diceString;
+                                let itemDieCount = parseInt(dS.substr(0, dS.indexOf('d')));
+                                let itemDieSize = parseInt(dS.substr(dS.indexOf('d')+1));
+                                itemAvgDmg = (itemDieCount * (itemDieSize + 1)) / 2;
+                            }
+
+                            let monkDieSize = Math.floor((monk_level - 1) / 4) * 2 + 4;
+                            let monkAvgDmg = (1 + monkDieSize) / 2;
+
+                            if(monkAvgDmg > itemAvgDmg) {
+                                item.definition.damage.diceString = '1d'+monkDieSize;
+                            }
+
+                            let str = getTotalAbilityScore(character, 1);
+                            let dex = getTotalAbilityScore(character, 2);
+                            if(dex > str) {
+                                item.definition.attackType = 2;
+                            }
+                        }
+
+                        let dmgattr = _ABILITY[_ABILITIES[item.definition.attackType]];
+                        if(!hasTWFS && isOffhand) dmgattr = '0';
+
+                        // CREATE ATTACK
+                        let attack = {
+                            name: item.definition.name,
+                            range: item.definition.range + (item.definition.range != item.definition.longRange ? '/' + item.definition.longRange : '') + 'ft.',
+                            attack: {
+                                attribute: _ABILITY[_ABILITIES[item.definition.attackType]],
+                                mod: atkmod
+                            },
+                            damage: {
+                                diceString: item.definition.damage != null ? item.definition.damage.diceString + (gwf ? 'ro<2' : '') : '',
+                                type: item.definition.damageType,
+                                attribute: dmgattr,
+                                mod: dmgmod
+                            },
+                            description: replaceChars(item.definition.description),
+                            magic: magic,
+                            critrange: Math.min(weapon_critical_range, critical_range)
+                        };
+
+                        item.definition.grantedModifiers.forEach((grantedMod) => {
+                            if(grantedMod.type == 'damage') {
+                                if(grantedMod.dice != null) {
+                                    attack.damage2 = {
+                                        diceString: grantedMod.dice.diceString,
+                                        type: grantedMod.friendlySubtypeName,
+                                        attribute: grantedMod.statId == null ? '0' : _ABILITY[_ABILITIES[grantedMod.statId]]
+                                    };
+                                }
+                            }
+                        });
+
+                        let repAttack = createRepeatingAttack(object, attack, {index: paIndex, itemid: row});
+                        Object.assign(repeating_attributes, repAttack);
+                        // /CREATE ATTACK
                     }
-                });
-                for(let i in _ABILITIES) {
-                    let abl = _ABILITY[_ABILITIES[i]];
-                    let stBonuses = getObjects(character.modifiers, 'subType', abl+'-saving-throws', ['item']);
-                    stBonuses.forEach((bonus) => {
-                        if(bonus.statId != null) {
-                            stBonTotals[parseInt(i)] += Math.floor((getTotalAbilityScore(character, bonus.statId) - 10) / 2);
+                    let itemArmorClass = 0;
+                    itemArmorClass += (item.definition.armorClass == null ? 0 : item.definition.armorClass);
+                    item.definition.grantedModifiers.forEach((grantedMod) => {
+                        for(let abilityId in _ABILITIES) {
+                            let ABL = _ABILITIES[abilityId];
+                            if(grantedMod.type == 'set' && grantedMod.subType == _ABILITY[ABL]+'-score') {
+                                _itemmodifiers += ', '+ucFirst(_ABILITY[ABL])+': '+grantedMod.value;
+                            }
                         }
-                        if(bonus.value != null) {
-                            stBonTotals[parseInt(i)] += bonus.value;
+                        if(grantedMod.type == 'bonus') {
+                            switch (grantedMod.subType) {
+                                case 'armor-class':
+                                    // wielding a shield or wearing other item which only give a bonus to armor class doesn't qualify as wearing armor
+                                    // including items such as staff of power, ring of protection, etc.
+                                    // fall through
+                                case 'unarmored-armor-class':
+                                    if(item.definition.hasOwnProperty('armorClass')) {
+                                        itemArmorClass += grantedMod.value;
+                                    }
+                                    else {
+                                        _itemmodifiers += ', AC +' + grantedMod.value;
+                                    }
+                                    break;
+                                case 'saving-throws':
+                                    _itemmodifiers += ', Saving Throws +' + grantedMod.value;
+                                    break;
+                                case 'ability-checks':
+                                    _itemmodifiers += ', Ability Checks +' + grantedMod.value;
+                                    break;
+                                case 'speed':
+                                    // Speed attribute in Roll20 OGL sheets is not calculated. They must be manually set
+                                    break;
+                                case 'magic':
+                                    // these are picked up in the weapons code above
+                                    break;
+                                default:
+                                    // these may indicate an unimplemented conversion
+                                    log('ignoring item ' + item.definition.name + ' bonus modifier for ' + grantedMod.subType);
+                            }
                         }
-                        if(bonus.type == 'proficiency') {
-                            single_attributes[abl + '_save_prof'] = "(@{pb})";
+                        if(grantedMod.type == 'set') {
+                            switch (grantedMod.subType) {
+                                case 'armor-class':
+                                    // If an item qualifies as armor, it will be given the .armorClass property and a type property of "Light/Medium/Heavy Armor".
+                                    // Items with modifiers like this don't qualify as armor. I don't know of any items that have this specific modifier.
+                                    // fall through
+                                case 'unarmored-armor-class':
+                                    _itemmodifiers += ', AC: ' + grantedMod.value;
+                                    break;
+                                case 'innate-speed-walking':
+                                    // REVISIT boots of striding and springing give a floor to walking speed through this, but no way to do that in an item in Roll20?
+                                    // fall through and log as ignored
+                                default:
+                                    // these may indicate an unimplemented conversion
+                                    log('ignoring item ' + item.definition.name + ' set modifier for ' + grantedMod.subType);
+                            }
                         }
                     });
-                }
-
-                let contacts = '',
-                    treasure = '',
-                    otherNotes = '';
-                if(state[state_name][beyond_caller.id].config.imports.notes){
-                    contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
-                    contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
-                    contacts += (character.notes.enemies) ? 'ENEMIES:\n' + character.notes.enemies : '';
-
-                    treasure += (character.notes.personalPossessions) ? 'PERSONAL POSSESSIONS:\n' + character.notes.personalPossessions + '\n\n' : '';
-                    treasure += (character.notes.otherHoldings) ? 'OTHER HOLDINGS:\n' + character.notes.otherHoldings : '';
-
-                    otherNotes += (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes + '\n\n' : '';
-                    otherNotes += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
-                    otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.' : '';
-                }
-
-                let background = '';
-                if(character.background.definition != null) background = character.background.definition.name;
-                if(background == '' && character.background.customBackground.name != null) background = character.background.customBackground.name;
-
-                let other_attributes = {
-                    // Base Info
-                    'level': character.classes[0].level + multiclass_level,
-                    'experience': character.currentXp,
-                    'race': (character.race.baseName || character.race.fullName),
-                    'subrace': character.race.subRaceShortName,
-                    'background': background,
-                    'speed': speed,
-                    'hp_temp': character.temporaryHitPoints || '',
-                    'inspiration': (character.inspiration) ? 'on' : 0,
-                    'alignment': character.alignmentId == null ? '' : alignments[character.alignmentId],
-
-                    // Bio Info
-                    'age': (character.age || ''),
-                    'size': (character.size || ''),
-                    'height': (character.height || ''),
-                    'weight': (character.weight || ''),
-                    'eyes': (character.eyes || ''),
-                    'hair': (character.hair || ''),
-                    'skin': (character.skin || ''),
-                    'character_appearance': (character.traits.appearance || ''),
-
-                    // Ability Scores
-                    'strength_base': getTotalAbilityScore(character, 1),
-                    'dexterity_base': getTotalAbilityScore(character, 2),
-                    'constitution_base': getTotalAbilityScore(character, 3),
-                    'intelligence_base': getTotalAbilityScore(character, 4),
-                    'wisdom_base': getTotalAbilityScore(character, 5),
-                    'charisma_base': getTotalAbilityScore(character, 6),
-
-                    // Saving Throw Bonuses
-                    'globalsavemod': stBonTotals[0],
-                    'strength_save_mod': stBonTotals[1],
-                    'dexterity_save_mod': stBonTotals[2],
-                    'constitution_save_mod': stBonTotals[3],
-                    'intelligence_save_mod': stBonTotals[4],
-                    'wisdom_save_mod': stBonTotals[5],
-                    'charisma_save_mod': stBonTotals[6],
-
-                    // Traits
-                    'personality_traits': character.traits.personalityTraits,
-                    'options-flag-personality': '0',
-                    'ideals': character.traits.ideals,
-                    'options-flag-ideals': '0',
-                    'bonds': character.traits.bonds,
-                    'options-flag-bonds': '0',
-                    'flaws': character.traits.flaws,
-                    'options-flag-flaws': '0',
-
-                    // currencies
-                    'cp': character.currencies.cp,
-                    'sp': character.currencies.sp,
-                    'gp': character.currencies.gp,
-                    'ep': character.currencies.ep,
-                    'pp': character.currencies.pp,
-
-                    // Notes/Bio
-                    'character_backstory': character.notes.backstory,
-                    'allies_and_organizations': contacts,
-                    'additional_feature_and_traits': otherNotes,
-                    'treasure': treasure,
-
-                    'global_save_mod_flag': 1,
-                    'global_skill_mod_flag': 1,
-                    'global_attack_mod_flag': 1,
-                    'global_damage_mod_flag': 1,
-                    'dtype': 'full',
-                    'init_tiebreaker': initTiebreaker ? '@{dexterity}/100' : '',
-                    'initiative_style': init_style,
-                    'initmod': initbon,
-                    // 'jack_of_all_trades': jack
-                };
-
-                Object.assign(single_attributes, other_attributes);
-
-                // XXX what is the status of these?
-                // Object.assign(single_attributes, bonus_attributes);
-
-                // these do not need to be written carefully, because they aren't looked at until the sheet is opened
-                Object.assign(single_attributes, {
-                    // prevent upgrades, because they recalculate the class (saves etc.)
-                    'version': '2.5',
-
-                    // prevent character mancer from doing anything
-                    'l1mancer_status': 'complete',
-                    'mancer_cancel': 'on'
+                    if(item.definition.hasOwnProperty('armorClass')) {
+                        let ac = itemArmorClass;
+                        if(["Light Armor", "Medium Armor", "Heavy Armor"].indexOf(item.definition.type) >= 0) {
+                            // This includes features such as defense fighting style, which require the user to wear armor
+                            let aac = getObjects(character, 'subType', 'armored-armor-class');
+                            aac.forEach((aacb) => {
+                                ac = parseInt(ac) + parseInt(aacb.value);
+                            });
+                            hasArmor = true;
+                        }
+                        _itemmodifiers += ', AC: ' + ac;
+                    }
+                    attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
+                    Object.assign(repeating_attributes, attributes);
                 });
-
-                // check for bad attribute values and change them to empty strings, because these will cause a crash otherwise
-                // ('Error: Firebase.update failed: First argument contains undefined in property 'current'')
-                let illegal = [];
-                for (scan in single_attributes) {
-                    if ((single_attributes[scan] === undefined) || (single_attributes[scan] === null)) {
-                        single_attributes[scan] = '';
-                        illegal.push(scan);
-                    }
-                }
-                for (scan in repeating_attributes) {
-                    if ((repeating_attributes[scan] === undefined) || (repeating_attributes[scan] === null)) {
-                        repeating_attributes[scan] = '';
-                        illegal.push(scan);
-                    }
-                }
-                if (illegal.length > 0) {
-                    log(`beyond: errors during import: the following imported attributes had undefined or null values: ${illegal}`);
-                }
-
-                // make work queue
-                let items = createSingleWriteQueue(single_attributes);
-                processItem(character, items, single_attributes, repeating_attributes, total_level)
             }
         }
+
+        // if applicable, create pseudo-armor item for unarmored defense
+        createUnarmoredDefense(repeating_attributes, character, total_level);
+
+        if(character.spells.race.length > 0) {
+            let spells = character.spells.race;
+            spells.forEach((spell) => {
+                spell.spellCastingAbility = _ABILITIES[spell.spellCastingAbilityId];
+                class_spells.push(spell);
+            });
+        }
+        
+        // calculate final skill bonuses and proficiencies (including initiative), then write results
+        const 
+            PROFICIENCY_NONE = 0,
+            PROFICIENCY_HALF = 1,
+            PROFICIENCY_HALF_ROUND_UP = 2,
+            PROFICIENCY_FULL = 3;
+            PROFICIENCY_EXPERTISE = 4;
+        let modifiers = {};
+
+        if (state[state_name][beyond_caller.id].config.imports.proficiencies) {     
+            for (let half_proficiency of getObjects(character.modifiers, 'type', 'half-proficiency')) {
+                if ((jack_feature !== undefined) &&
+                    (half_proficiency.componentId === jack_feature.id) && 
+                    // XXX technically, we should get the follwing constant from classes/classFeatures[]/definition
+                    (half_proficiency.componentTypeId === 12168134)) {
+                    // filter out all jack of all trade mods
+                    continue;
+                }
+                updateProficiency(modifiers, half_proficiency, PROFICIENCY_HALF);
+            }
+            for (let half_proficiency_round_up of getObjects(character.modifiers, 'type', 'half-proficiency-round-up')) {
+                updateProficiency(modifiers, half_proficiency_round_up, PROFICIENCY_HALF_ROUND_UP);
+            }
+            for (let proficiency of getObjects(character.modifiers, 'type', 'proficiency')) {
+                updateProficiency(modifiers, proficiency, PROFICIENCY_FULL);
+            }
+            for (let expertise of getObjects(character, 'type', 'expertise')) {
+                updateProficiency(modifiers, expertise, PROFICIENCY_EXPERTISE);
+            }
+
+            // Adhoc Expertise (REVISIT: check into whether this can be handled more elegantly)
+            for (let cv of getObjects(character.characterValues, 'typeId', 26)) {
+                if(cv.value == 4) {
+                    for (let obj of getObjects(character, 'type', 'proficiency')) {
+                        if(cv.valueId == obj.entityId && cv.valueTypeId == obj.entityTypeId) {
+                            updateProficiency(modifiers, obj, PROFICIENCY_FULL);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (state[state_name][beyond_caller.id].config.imports.bonuses) {
+            // import bonuses that are not from items
+            // XXX write separate code to implement those item modifiers that we cannot import in the inventory code, e.g. passive-perception
+            // XXX and read those only if both bonuses and inventory are enabled
+            for (let bonus of getObjects(character.modifiers, 'type', 'bonus', ['item'])) {
+                if (bonus.id.includes('spell')) {
+                    continue;
+                }
+                let attribute_basename = bonus.subType.replace(/-/g, '_');
+                if (modifiers[attribute_basename] === undefined) {
+                    log(`beyond: modifier '${attribute_basename}' bonus ${bonus.value}`);
+                    modifiers[attribute_basename] = { bonus: bonus.value, proficiency: PROFICIENCY_NONE, friendly: bonus.friendlySubtypeName };
+                } else {
+                    log(`beyond: modifier '${attribute_basename}' bonus increased by ${bonus.value}`);
+                    modifiers[attribute_basename].bonus += bonus.value;
+                }
+            }
+        }
+
+
+        // emit the final calculated bonuses and proficiencies
+        emitAttributesForModifiers(single_attributes, repeating_attributes, modifiers, total_level);
+
+        let contacts = '',
+            treasure = '',
+            otherNotes = '';
+        if(state[state_name][beyond_caller.id].config.imports.notes){
+            contacts += (character.notes.allies) ? 'ALLIES:\n' + character.notes.allies + '\n\n' : '';
+            contacts += (character.notes.organizations) ? 'ORGANIZATIONS:\n' + character.notes.organizations + '\n\n' : '';
+            contacts += (character.notes.enemies) ? 'ENEMIES:\n' + character.notes.enemies : '';
+
+            treasure += (character.notes.personalPossessions) ? 'PERSONAL POSSESSIONS:\n' + character.notes.personalPossessions + '\n\n' : '';
+            treasure += (character.notes.otherHoldings) ? 'OTHER HOLDINGS:\n' + character.notes.otherHoldings : '';
+
+            otherNotes += (character.notes.otherNotes) ? 'OTHER NOTES:\n' + character.notes.otherNotes + '\n\n' : '';
+            otherNotes += (character.faith) ? 'FAITH: ' + character.faith + '\n' : '';
+            otherNotes += (character.lifestyle) ? 'Lifestyle: ' + character.lifestyle.name + ' with a ' + character.lifestyle.cost + ' cost.' : '';
+        }
+
+        let background = '';
+        if(character.background.definition != null) background = character.background.definition.name;
+        if(background == '' && character.background.customBackground.name != null) background = character.background.customBackground.name;
+
+        let other_attributes = {
+            // Base Info
+            'level': character.classes[0].level + multiclass_level,
+            'experience': character.currentXp,
+            'race': (character.race.baseName || character.race.fullName),
+            'subrace': character.race.subRaceShortName,
+            'background': background,
+            'speed': speed,
+            'hp_temp': character.temporaryHitPoints || '',
+            'inspiration': (character.inspiration) ? 'on' : 0,
+            'alignment': character.alignmentId == null ? '' : alignments[character.alignmentId],
+
+            // Bio Info
+            'age': (character.age || ''),
+            'size': (character.size || ''),
+            'height': (character.height || ''),
+            'weight': (character.weight || ''),
+            'eyes': (character.eyes || ''),
+            'hair': (character.hair || ''),
+            'skin': (character.skin || ''),
+            'character_appearance': (character.traits.appearance || ''),
+
+            // Ability Scores
+            'strength_base': getTotalAbilityScore(character, 1),
+            'dexterity_base': getTotalAbilityScore(character, 2),
+            'constitution_base': getTotalAbilityScore(character, 3),
+            'intelligence_base': getTotalAbilityScore(character, 4),
+            'wisdom_base': getTotalAbilityScore(character, 5),
+            'charisma_base': getTotalAbilityScore(character, 6),
+
+            // Traits
+            'personality_traits': character.traits.personalityTraits,
+            'options-flag-personality': '0',
+            'ideals': character.traits.ideals,
+            'options-flag-ideals': '0',
+            'bonds': character.traits.bonds,
+            'options-flag-bonds': '0',
+            'flaws': character.traits.flaws,
+            'options-flag-flaws': '0',
+
+            // currencies
+            'cp': character.currencies.cp,
+            'sp': character.currencies.sp,
+            'gp': character.currencies.gp,
+            'ep': character.currencies.ep,
+            'pp': character.currencies.pp,
+
+            // Notes/Bio
+            'character_backstory': character.notes.backstory,
+            'allies_and_organizations': contacts,
+            'additional_feature_and_traits': otherNotes,
+            'treasure': treasure,
+
+            'global_save_mod_flag': 1,
+            'global_skill_mod_flag': 1,
+            'global_attack_mod_flag': 1,
+            'global_damage_mod_flag': 1, 
+            'dtype': 'full',
+            'init_tiebreaker': initTiebreaker ? '@{dexterity}/100' : '',
+            'initiative_style': calculateInitiativeStyle(character),
+            'initmod': ('initiative' in modifiers)?modifiers.initiative.bonus:0,
+            'jack_of_all_trades': (jack_feature !== undefined)?'@{jack}':'0'
+        };
+
+        Object.assign(single_attributes, other_attributes);
+
+        // these do not need to be written carefully, because they aren't looked at until the sheet is opened
+        Object.assign(single_attributes, {
+            // prevent upgrades, because they recalculate the class (saves etc.)
+            'version': '2.5',
+
+            // prevent character mancer from doing anything
+            'l1mancer_status': 'complete',
+            'mancer_cancel': 'on'
+        });
+
+        // check for bad attribute values and change them to empty strings, because these will cause a crash otherwise
+        // ('Error: Firebase.update failed: First argument contains undefined in property 'current'')
+        let illegal = [];
+        for (scan in single_attributes) {
+            if ((single_attributes[scan] === undefined) || (single_attributes[scan] === null)) {
+                single_attributes[scan] = '';
+                illegal.push(scan);
+            }
+        }
+        for (scan in repeating_attributes) {
+            if ((repeating_attributes[scan] === undefined) || (repeating_attributes[scan] === null)) {
+                repeating_attributes[scan] = '';
+                illegal.push(scan);
+            }
+        }
+        if (illegal.length > 0) {
+            log(`beyond: errors during import: the following imported attributes had undefined or null values: ${illegal}`);
+        }
+
+        // make work queue
+        let items = createSingleWriteQueue(single_attributes);
+        processItem(character, items, single_attributes, repeating_attributes, total_level)
     });
+
+    const calculateInitiativeStyle = (character) => {
+        let init_mods = getObjects(character.modifiers, 'subType', 'initiative');
+        let initadv = init_mods.some(im => im.type == 'advantage');
+        let initdis = init_mods.some(im => im.type == 'disadvantage');
+        if(initadv && !initdis) {
+            return '{@{d20},@{d20}}kh1';
+        }
+        if(!initadv && initdis) {
+            return '{@{d20},@{d20}}kl1';
+        }
+        return '@{d20}';
+    }
+
+    const updateProficiency = (modifiers, input, proficiency_level) => {
+        let attribute_bases = [];
+        switch (input.subType) {
+            case 'ability-checks':
+                attribute_bases = all_skills;
+                break;
+            case 'strength-ability-checks':
+                attribute_bases = strength_skills;
+                break;
+            case 'dexterity-ability-checks':
+                attribute_bases = dexterity_skills;
+                break;
+            case 'intelligence-ability-checks':
+                attribute_bases = intelligence_skills;
+                break;
+            case 'wisdom-ability-checks':
+                attribute_bases = wisdom_skills;
+                break;
+            case 'charisma-ability-checks':
+                attribute_bases = charisma_skills;
+                break;
+            case 'saving-throws':
+                attribute_bases = saving_throws;
+                break;
+            case 'strength-saving-throws':
+            case 'dexterity-saving-throws':
+            case 'constitution-saving-throws':
+            case 'intelligence-saving-throws':
+            case 'wisdom-saving-throws':
+            case 'charisma-saving-throws':
+                attribute_bases = [ input.subType.replace('-saving-throws', '_save')];
+                break;            
+            default:
+                attribute_bases = [ input.subType.replace(/-/g, '_') ];
+                break;
+        }
+        for (let attribute_base of attribute_bases) {
+            if (modifiers[attribute_base] === undefined) {
+                log(`beyond: modifier '${attribute_base}' profiency set to ${proficiency_level}`);
+                modifiers[attribute_base] = { bonus: 0, proficiency: proficiency_level, friendly: input.friendlySubtypeName };
+                continue;
+            } else {
+                if (proficiency_level > modifiers[attribute_base].proficiency) {
+                    // store the maximum proficiency level
+                    log(`beyond: modifier '${attribute_base}' profiency increased to ${proficiency_level}`);
+                    modifiers[attribute_base].proficiency = proficiency_level;
+                }
+            }
+        }
+    }
+
+    const createUnarmoredDefense = (repeating_attributes, character, total_level, hasArmor) => {
+        // If character has unarmored defense, add it to the inventory, so a player can enable/disable it.
+        let unarmored = getObjects(character.modifiers, 'subType', 'unarmored-armor-class', ['item']);
+        if (unarmored.length < 1) {
+            return;
+        }
+        let x = 0;
+        for (let ua of unarmored) {
+            if(ua.type != 'set') {
+                // ignore unarmored armor class bonus
+                return;
+            }
+            if(ua.value == null) {
+                ua.value = Math.floor((getTotalAbilityScore(character, ua.statId) - 10) / 2);
+            }
+
+            let row = getRepeatingRowIds('inventory', 'itemname', 'Unarmored Defense')[x];
+            let name = 'Unarmored Defense';
+            let modifiers = '';
+
+            // Label the unarmored armor class based on the feature it originates from
+            character.classes.forEach((charClass) => {
+                charClass.definition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
+                    name = cF.name;
+                });
+                if(charClass.subclassDefinition != null) {
+                    charClass.subclassDefinition.classFeatures.filter(cF => cF.id == ua.componentId).forEach((cF) => {
+                        name = cF.name;
+                    });
+                }
+            });
+            character.race.racialTraits.filter(rT => rT.id == ua.componentId).forEach((rT) => {
+                name = rT.name;
+            })
+
+            let integrated = false;
+            if(ua.componentTypeId == 306912077) { // Integrated Protection (Armor Type Option)
+                row = getRepeatingRowIds('inventory', 'itemname', 'Integrated Protection', 0);
+                name = 'Integrated Protection';
+                integrated = true;
+                if(ua.value == 6) {
+                    modifiers = 'Item Type: Heavy Armor';
+                    ua.value = 10 + parseInt(ua.value);
+                }
+                else if(ua.value == 3) {
+                    modifiers == 'Item Type: Medium Armor'
+                    ua.value = 10 + parseInt(ua.value);
+                }
+                ua.value += Math.floor((total_level - 1) / 4) + 2;
+            }
+
+            modifiers += (modifiers == '' ? '' : ', ') + 'AC: '+ua.value
+
+            let attributes = {}
+            attributes["repeating_inventory_"+row+"_itemname"] = name;
+            attributes["repeating_inventory_"+row+"_equipped"] = (integrated || !hasArmor) ? '1' : '0';
+            attributes["repeating_inventory_"+row+"_itemcount"] = 1;
+            attributes["repeating_inventory_"+row+"_itemmodifiers"] = modifiers;
+            Object.assign(repeating_attributes, attributes);
+            x++;
+        }
+    }
 
     const createSingleWriteQueue = (attributes) => {
         // this is the list of trigger attributes that will trigger class recalculation, as of 5e OGL 2.5 October 2018
@@ -2093,4 +2032,91 @@
         }
         return index;
     };
+
+    const emitAttributesForModifiers = (single_attributes, repeating_attributes, modifiers, total_level) => {
+        let basenames = Object.keys(modifiers);
+        basenames.sort();
+        // for half proficiency types, we have to set a constant that is only valid for the current level, because
+        // the 5e OGL sheet does not understand these types of proficiency
+        let proficiency_bonus = (Math.floor((total_level - 1) / 4) + 2);
+        for (let basename of basenames) {
+            let modifier = modifiers[basename];
+            let mod = 0;
+            if (modifier.bonus !== undefined) {
+                mod = modifier.bonus;
+            }
+            log(`beyond: final modifier ${basename} (${modifier.friendly}) proficiency ${modifier.proficiency} bonus ${modifier.bonus}`)
+            if (all_skills.indexOf(basename) !== -1) {
+                switch (modifier.proficiency) {
+                    case 0:
+                        // no proficiency
+                        break;
+                    case 1:
+                        single_attributes[`${basename}_prof`] = '';
+                        single_attributes[`${basename}_flat`] = mod+ Math.floor(proficiency_bonus / 2);
+                        break;
+                    case 2:
+                        single_attributes[`${basename}_prof`] = '';
+                        single_attributes[`${basename}_flat`] = mod + Math.ceil(proficiency_bonus / 2);
+                        break;
+                    case 3:
+                        single_attributes[`${basename}_prof`] = `(@{pb}*@{${basename}_type})`;
+                        if (mod !== 0) {
+                            single_attributes[`${basename}_flat`] = mod;
+                        }
+                        break;
+                    case 4:
+                        single_attributes[`${basename}_prof`] = `(@{pb}*@{${basename}_type})`;
+                        single_attributes[`${basename}_type`] = 2;
+                        if (mod !== 0) {
+                            single_attributes[`${basename}_flat`] = mod;
+                        }
+                        break;                        
+                }
+            } else if (saving_throws.indexOf(basename) !== -1) {
+                switch (modifier.proficiency) {
+                    case 0:
+                        // no proficiency
+                        break;
+                    case 1:
+                        single_attributes[`${basename}_prof`] = '';
+                        single_attributes[`${basename}_mod`] = mod+ Math.floor(proficiency_bonus / 2);
+                        break;
+                    case 2:
+                        single_attributes[`${basename}_prof`] = '';
+                        single_attributes[`${basename}_mod`] = mod + Math.ceil(proficiency_bonus / 2);
+                        break;
+                    case 3:
+                        single_attributes[`${basename}_prof`] = `(@{pb})`;
+                        if (mod !== 0) {
+                            single_attributes[`${basename}_mod`] = mod;
+                        }
+                        break;
+                    case 4:
+                        // this case probably does not exist in the 5e rules, but we can at least support
+                        // it in the constant for current level style
+                        single_attributes[`${basename}_prof`] = '(@{pb})';
+                        single_attributes[`${basename}_mod`] = proficiency_bonus + mod;
+                        break;                        
+                } 
+            } else if (modifier.proficiency > 0) {
+                // general proficiency 
+                let type = 'OTHER';
+                if (basename.includes('weapon')) {
+                    type = 'WEAPON';
+                } else if (basename.includes('armor')) {
+                    type = 'ARMOR';
+                } else if (basename.includes('shield')) {
+                    type = 'ARMOR';
+                } else if (weapons.indexOf(modifier.friendly) !== -1) {
+                    type = 'WEAPON';
+                }
+                let row = getRepeatingRowIds('proficiencies', 'name', modifier.friendly)[0];
+                repeating_attributes["repeating_proficiencies_" + row + "_name"] = modifier.friendly;
+                repeating_attributes["repeating_proficiencies_" + row + "_prof_type"] = type; 
+                repeating_attributes["repeating_proficiencies_" + row + "_options-flag"] = '0'; // XXX why is this set as string?
+            }
+            // XXX implement passive-perception bonus ('passiveperceptionmod') etc.
+        }
+    }; 
 })();
