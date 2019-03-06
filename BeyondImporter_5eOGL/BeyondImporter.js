@@ -1012,7 +1012,7 @@
         // these do not need to be written carefully, because they aren't looked at until the sheet is opened
         Object.assign(single_attributes, {
             // prevent upgrades, because they recalculate the class (saves etc.)
-            'version': '2.5',
+            'version': '2.7',
 
             // prevent character mancer from doing anything
             'l1mancer_status': 'complete',
