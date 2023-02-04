@@ -291,7 +291,7 @@ var LazyLoot = LazyLoot || (function() {
 
             notes = (notes === "null") ? '' : notes;
 
-            let re = new RegExp('[0-9]x ' + item.name, 'gm');
+            let re = new RegExp('[0-9]+x ' + item.name, 'gm');
             if(notes.match(re)){
                 quantity += parseInt(notes.match(re)[0].split(' ')[0]);
                 notes = notes.replace(re, quantity + 'x ' + item.name);
