@@ -19,15 +19,22 @@ NOTICE: I will not update this for now. Probably going to update it when we have
 Beyond Importer let's you import a character sheet from DNDBeyond into Roll20.
 There are 2 versions of the Beyond Importer, one for the [5e Shaped Sheet](https://bitbucket.org/mlenser/5eshaped/wiki/Home) and one for the [5e OGL sheet](https://wiki.roll20.net/5th_Edition_OGL_by_Roll20).
 
-**Both version work the same.**
+**Both versions work the same.**
 
 At the moment this is still in development. But the main import is working, let me know if you find any errors or if you have any suggestions.
 
 ### How it works
-Go to the character page on DNDBeyond and put '/json' after the url, eg:
+
+Go to the character page on DNDBeyond and retrieve the Character ID. The character ID is a numerical ID consisting of at least 6 characters. In the below example URL, the character ID is `1307201`.
 
 ```
-https://www.dndbeyond.com/profile/Atheos/characters/1307201/json
+https://www.dndbeyond.com/profile/Atheos/characters/1307201
+```
+
+Once you have the character ID, open another browser window, enter the below URL and **add the character ID to the end of it**. 
+
+```
+https://character-service.dndbeyond.com/character/v3/character/
 ```
 
 Copy the entire content of that page, and go to Roll20.
