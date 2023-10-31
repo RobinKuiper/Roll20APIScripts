@@ -601,7 +601,7 @@
                 });
             });
 
-            /*const inventory = character.inventory;
+            const inventory = character.inventory;
             let prevAdded = [];
             if(inventory != null) {
                 let shieldEquipped = false;
@@ -661,6 +661,7 @@
                         attributes["repeating_inventory_"+row+"_itemproperties"] = properties;
                         attributes["repeating_inventory_"+row+"_hasattack"] = '0';
                         _itemmodifiers = 'Item Type: ' + item.definition.attackType + ' ' + item.definition.filterType + (item.definition.damage != null ? ', Damage: ' + item.definition.damage.diceString : '') + ', Damage Type: ' + item.definition.damageType + ', Range: ' + item.definition.range + '/' + item.definition.longRange;
+
                         let magic = 0;
                         item.definition.grantedModifiers.forEach((grantedMod) => {
                             if(grantedMod.type == 'bonus' && grantedMod.subType == 'magic') {
@@ -843,8 +844,8 @@
                     attributes["repeating_inventory_"+row+"_itemmodifiers"] = _itemmodifiers;
                     Object.assign(repeating_attributes, attributes);
                 });
-            } */
-        } 
+            }
+        }
 
         // if applicable, create pseudo-armor item for unarmored defense
         createUnarmoredDefense(repeating_attributes, character, total_level);
@@ -1637,7 +1638,7 @@
         // let silentSpellsButton = makeButton(state[state_name][playerid].config.silentSpells, '!beyond --config silentSpells|'+!state[state_name][playerid].config.silentSpells, buttonStyle);
 
         let listItems = [
-            '<span style="float: left; margin-top: 6px;">Overwrite:</span> '+overwriteButton+'<br /><small style="clear: both; display: inherit;">This option will overwrite an existing character sheet with a matching character.name. I recommend making a backup copy just in case.</small>',
+            '<span style="float: left; margin-top: 6px;">Overwrite:</span> '+overwriteButton+'<br /><small style="clear: both; display: inherit;">This option will overwrite an existing character sheet with a matching character name. I recommend making a backup copy just in case.</small>',
             '<span style="float: left; margin-top: 6px;">Prefix:</span> '+prefixButton,
             '<span style="float: left; margin-top: 6px;">Suffix:</span> '+suffixButton,
             '<span style="float: left; margin-top: 6px;">Debug:</span> '+debugButton,
