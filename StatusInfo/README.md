@@ -90,6 +90,9 @@ Roll20 Thread: https://app.roll20.net/forum/post/6252784/script-statusinfo
 ---
 
 #### Changelog
+**v0.3.11**
+* Possibility to add a number to a statusmarker.
+
 **v0.3.10**
 * Added `Player Show` and `Player Toggle` config option.
 

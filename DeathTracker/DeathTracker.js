@@ -1,5 +1,5 @@
 /*
- * Version 0.1.8
+ * Version 0.1.9
  * Made By Robin Kuiper
  * Minor changes by The Aaron
  * Skype: RobinKuiper.eu
@@ -97,41 +97,66 @@ var DeathTracker = DeathTracker || (function () {
             let bar = 'bar' + state[state_name].config.bar;
 
             if (!obj || !prev || !obj.get('represents') || obj.get(bar + '_value') === prev[bar + '_value']) {
-                return;
+                return; // Don't continue if values are the same, or token is not a character.
             }
+
+            // Get current and prev hp, and calc damage taken.
+            let currentHP = parseInt(obj.get(bar + '_value')),
+                prevCurrentHP = parseInt(prev[bar + '_value']),
+                maxHP = parseInt(obj.get(bar + '_max')),
+                damageTaken = prevCurrentHP - currentHP;
 
             let attributes = {};
 
-            let deathMarker = state[state_name].config.death_statusmarker;
-            let halfMarker = state[state_name].config.half_statusmarker;
-            let unconsciousMarker = state[state_name].config.pc_unconscious_statusmarker;
+            // Get marker settings.
+            let deathMarker = state[state_name].config.death_statusmarker,
+                halfMarker = state[state_name].config.half_statusmarker,
+                unconsciousMarker = state[state_name].config.pc_unconscious_statusmarker;
 
+            // Get playerid
             let playerid = (obj.get('controlledby') && obj.get('controlledby') !== '') ? obj.get('controlledby') : (getObj('character', obj.get('represents'))) ? getObj('character', obj.get('represents')).get('controlledby') : false;
+            // Check if it is a player.
             let isPlayer = (playerid && !playerIsGM(playerid));
 
-            if (deathMarker !== 'none' && obj.get(bar + '_value') <= 0) {
-                let marker = (unconsciousMarker !== 'none' && isPlayer) ? unconsciousMarker : deathMarker;
+            // If no death marker is set yet, and target becomes below 0 hp, add marker.
+            if (deathMarker !== 'none' && currentHP <= 0) {
+                let marker;
+
+                if(!isPlayer){
+                    marker = deathMarker;
+                }else if(state[state_name].config.massive_damage && damageTaken > prevCurrentHP && (damageTaken - prevCurrentHP) > maxHP){
+                    // MASSIVE DAMAGE
+                    marker = deathMarker;
+                    makeAndSendMenu(obj.get('name') + ' took massive damage, and instantly died.', '', '');
+                }else{
+                    marker = (unconsciousMarker !== 'none') ? unconsciousMarker : deathMarker;
+                }
+                
                 attributes['status_' + marker] = true;
-                attributes['status_' + halfMarker] = false;
+                attributes['status_' + halfMarker] = false; // Remove halfmarker.
             } else {
+            // If hp is above 0, remove markers, check for halfmarker.
                 attributes['status_' + deathMarker] = false;
                 attributes['status_' + unconsciousMarker] = false;
-                attributes['status_' + halfMarker] = (halfMarker !== 'none' && obj.get(bar + '_max') !== '' && obj.get(bar + '_value') <= obj.get(bar + '_max') / 2);
+                attributes['status_' + halfMarker] = (halfMarker !== 'none' && maxHP !== '' && currentHP <= maxHP / 2);
             }
 
+            // Do tints
             if(state[state_name].config.change_player_tint && isPlayer || state[state_name].config.change_npc_tint && !isPlayer){
-                let color = getColor(1 - (obj.get(bar + '_value') / obj.get(bar + '_max')));
-                attributes.tint_color = (obj.get(bar + '_max') == obj.get(bar + '_value')) ? 'transparent' : color;
+                let color = getColor(1 - (currentHP / maxHP));
+                attributes.tint_color = (maxHP == currentHP) ? 'transparent' : color;
             }
 
-            if(state[state_name].config.fx && parseInt(obj.get(bar + '_value')) < parseInt(prev[bar + '_value'])){
+            // Do damage fx
+            if(state[state_name].config.fx && currentHP < parseInt(prev[bar + '_value'])){
                 let x = parseInt(obj.get('left')),
                     y = parseInt(obj.get('top'));
 
                 spawnFxBetweenPoints({ x, y }, { x, y }, state[state_name].config.fx_type, obj.get('pageid'))
             }
 
-            if(state[state_name].config.heal_fx && parseInt(obj.get(bar + '_value')) > parseInt(prev[bar + '_value'])){
+            // Do heal fx
+            if(state[state_name].config.heal_fx && currentHP > parseInt(prev[bar + '_value'])){
                 let x = parseInt(obj.get('left')),
                     y = parseInt(obj.get('top'));
 
@@ -186,7 +211,8 @@ var DeathTracker = DeathTracker || (function () {
             })
             markerDropdown += '}';
 
-            let death_markerButton = makeButton(state[state_name].config.death_statusmarker, '!' + state[state_name].config.command + ' config death_statusmarker|' + markerDropdown, styles.button + styles.float.right),
+            let massiveDmgButton = makeButton(state[state_name].config.massive_damage, '!' + state[state_name].config.command + ' config massive_damage|' + !state[state_name].config.massive_damage, styles.button + styles.float.right),
+                death_markerButton = makeButton(state[state_name].config.death_statusmarker, '!' + state[state_name].config.command + ' config death_statusmarker|' + markerDropdown, styles.button + styles.float.right),
                 half_markerButton = makeButton(state[state_name].config.half_statusmarker, '!' + state[state_name].config.command + ' config half_statusmarker|' + markerDropdown, styles.button + styles.float.right),
                 commandButton = makeButton('!' + state[state_name].config.command, '!' + state[state_name].config.command + ' config command|?{Command (without !)}', styles.button + styles.float.right),
                 barButton = makeButton('bar ' + state[state_name].config.bar, '!' + state[state_name].config.command + ' config bar|?{Bar|Bar 1 (green),1|Bar 2 (blue),2|Bar 3 (red),3}', styles.button + styles.float.right),
@@ -200,6 +226,7 @@ var DeathTracker = DeathTracker || (function () {
 
                 listItems = [
                     '<span style="'+styles.float.left+'">Command:</span> ' + commandButton,
+                    '<span style="'+styles.float.left+'">Massive Damage:</span> ' + massiveDmgButton,
                     '<span style="'+styles.float.left+'">HP Bar:</span> ' + barButton,
                     '<span style="'+styles.float.left+'">Dead Statusmarker:</span> ' + death_markerButton,
                     '<span style="'+styles.float.left+'">Uncon. Statusmarker:<div style="font-size: 8pt">Unconscious marker if PC.</div></span> ' + pc_unconscious_markerButton,
@@ -296,6 +323,7 @@ var DeathTracker = DeathTracker || (function () {
                     command: 'dead',
                     death_statusmarker: 'dead',
                     half_statusmarker: 'red',
+                    massive_damage: true,
                     bar: 1,
                     firsttime: (reset) ? false : true,
                     pc_unconscious_statusmarker: 'sleepy',
@@ -319,6 +347,9 @@ var DeathTracker = DeathTracker || (function () {
                 }
                 if (!state[state_name].config.hasOwnProperty('half_statusmarker')) {
                     state[state_name].config.half_statusmarker = defaults.config.half_statusmarker;
+                }
+                if (!state[state_name].config.hasOwnProperty('massive_damage')) {
+                    state[state_name].config.massive_damage = defaults.config.massive_damage;
                 }
                 if (!state[state_name].config.hasOwnProperty('bar')) {
                     state[state_name].config.bar = defaults.config.bar;

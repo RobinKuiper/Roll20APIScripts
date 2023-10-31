@@ -1,5 +1,5 @@
 /*
- * Version 0.1.14
+ * Version 0.1.16
  * Made By Robin Kuiper
  * Skype: RobinKuiper.eu
  * Discord: Atheos#1095
@@ -37,7 +37,11 @@ var Concentration = Concentration || (function() {
     markers = ['blue', 'brown', 'green', 'pink', 'purple', 'red', 'yellow', '-', 'all-for-one', 'angel-outfit', 'archery-target', 'arrowed', 'aura', 'back-pain', 'black-flag', 'bleeding-eye', 'bolt-shield', 'broken-heart', 'broken-shield', 'broken-skull', 'chained-heart', 'chemical-bolt', 'cobweb', 'dead', 'death-zone', 'drink-me', 'edge-crack', 'fishing-net', 'fist', 'fluffy-wing', 'flying-flag', 'frozen-orb', 'grab', 'grenade', 'half-haze', 'half-heart', 'interdiction', 'lightning-helix', 'ninja-mask', 'overdrive', 'padlock', 'pummeled', 'radioactive', 'rolling-tomb', 'screaming', 'sentry-gun', 'skull', 'sleepy', 'snail', 'spanner',   'stopwatch','strong', 'three-leaves', 'tread', 'trophy', 'white-tower'],
 
     handleInput = (msg) => {
-        if(state[state_name].config.auto_add_concentration_marker && msg && msg.rolltemplate && msg.rolltemplate === 'spell' && (msg.content.includes("{{concentration=1}}"))){
+        if(state[state_name].config.auto_add_concentration_marker && 
+            msg && msg.rolltemplate && 
+            ((msg.rolltemplate === 'spell' && msg.content.includes("{{concentration=1}}")) || 
+            (msg.rolltemplate === '5e-shaped' && msg.content.includes("{{duration=^{CONCENTRATION")) || 
+            ((msg.rolltemplate === 'dmg' || msg.rolltemplate === 'atk') && msg.content.includes('!concentration')))){
             handleConcentrationSpellCast(msg);
         }
 
@@ -164,9 +168,9 @@ var Concentration = Concentration || (function() {
     handleConcentrationSpellCast = (msg) => {
         const marker = state[state_name].config.statusmarker
 
-        let character_name = msg.content.match(/charname=([^\n{}]*[^"\n{}])/);            
+        let character_name = msg.content.match(/charname=([^\n{}]*[^"\n{}])/) /* 5eOGL */ || msg.content.match(/character_name=([^\n{}]*[^"\n{}])/) /* Shaped */;    
         character_name = RegExp.$1;
-        let spell_name = msg.content.match(/name=([^\n{}]*[^"\n{}])/);  
+        let spell_name = msg.content.match(/title=([^\n{}]*[^"\n{}])/) /* Shaped */ || msg.content.match(/name=([^\n{}]*[^"\n{}])/) /* 5eOGL */;  
         spell_name = RegExp.$1;
         let player = getObj('player', msg.playerid),
             characterid = findObjs({ name: character_name, _type: 'character' }).shift().get('id'),                 
@@ -184,16 +188,13 @@ var Concentration = Concentration || (function() {
         search_attributes['status_'+marker] = true;
         let is_concentrating = (findObjs(search_attributes).length > 0);
 
-        if(is_concentrating){
-            message = '<b>'+character_name+'</b> is concentrating already.';
-        }else{
-            represented_tokens.forEach(token => {
-                let attributes = {};
-                attributes['status_'+marker] = true;
-                token.set(attributes);
-                message = '<b>'+character_name+'</b> is now concentrating on <b>'+spell_name+'</b>.';
-            });
-        }
+        represented_tokens.forEach(token => {
+            let attributes = {};
+            attributes['status_'+marker] = true;
+            token.set(attributes);
+            message = (is_concentrating) ? '<p style="font-size: 9pt; color: red;">Previous concentration cancelled.</p>' : '';
+            message += '<b>'+character_name+'</b> is now concentrating on <b>'+spell_name+'</b>.';
+        });
 
         if(target === 'character'){
             target = createWhisperName(character_name);
@@ -346,7 +347,7 @@ var Concentration = Concentration || (function() {
                 '<span style="'+styles.float.left+'">Statusmarker:</span> ' + markerButton,
                 '<span style="'+styles.float.left+'">HP Bar:</span> ' + barButton,
                 '<span style="'+styles.float.left+'">Send Reminder To:</span> ' + sendToButton,
-                '<span style="'+styles.float.left+'">Auto Add Con. Marker: <p style="font-size: 8pt;">Works only for 5e OGL Sheet.</p></span> ' + addConMarkerButton,
+                '<span style="'+styles.float.left+'">Auto Add Con. Marker: <p style="font-size: 8pt;">Works only for 5e OGL and Shaped sheets.</p></span> ' + addConMarkerButton,
                 '<span style="'+styles.float.left+'">Auto Roll Save:</span> ' + autoRollButton,
             ],
 

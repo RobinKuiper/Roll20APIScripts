@@ -13,6 +13,7 @@
 ---
 
 ![Turn](https://i.imgur.com/rqfiZZD.png "Turn")
+![](http://roll20.robinkuiper.eu/images/combattracker/turntrack.gif)
 
 CombatTracker will be a great help in battles. Easily keep tracks of who's turn it is, use a turn timer, let players progress to the next turn by themselves, adding/removing conditions, etc.
 It has a lot of customizable configuration options.
@@ -29,11 +30,12 @@ If you use my [StatusInfo](https://github.com/RobinKuiper/Roll20APIScripts/tree/
 * **!ct config** - Shows the config menu.
 * **!ct favorites** - Shows the favorites menu.
 * **!ct conditions** - Shows a list of known conditions from StatusInfo and favorites.
-* **!ct show** - Shows a list of conditions on selected tokens.
+* **!ct show [p?]** - Shows a list of conditions on selected tokens, add `p` to send the menu to the players also.
 * **!ct start** - Starts the combat, if you have tokens selected it will try to roll initiative for them and add them to the tracker.
 * **!ct stop** - Stops the combat (closes the turntracker, removes the marker, clears the turnorder list, etc.).
 * **!ct next** - Goes to the next turn (a player can also use this if it is his turn).
 * **!ct prev** - Goes to the previous turn (gm only).
+* **!ct sort** - Sort the turnorder.
 * **!ct add [condition name] [?duration] [?direction] [?message]** - Adds a condition to the selected token(s) (duration is optionally (how much rounds.)).
     * **[?duration]** - Optional duration, set `0` for no duration.
     * **[?direction]** - The direction per turn, eg. `-1`, `-3`, `+1`, `+3`.
@@ -129,6 +131,18 @@ Roll20 Thread: https://app.roll20.net/forum/post/6349145/script-combattracker
 ---
 
 #### Changelog
+**v0.2.7**
+* Send `!ct show` to players by adding `p`, eg. `!ct show p`.
+* Better gmlayer hiding for the marker.
+* No announcement when the timer runs out on a gmlayer token.
+* Optionally use "next" marker.
+* Bugfixes.
+
+**v0.2.6**
+* Custom items will now count down/up correctly when applied.
+* Set initiative die in the config.
+* Sort turnorder with `!ct sort`.
+
 **v0.2.5**
 * Fixed a "bug" where the marker wouldn't show on the first turn when initiative is not rolled with CT.
 * Toggle auto skip turn when timer runs out.
